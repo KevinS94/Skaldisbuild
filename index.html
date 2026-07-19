@@ -1,0 +1,1224 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="SKALDIS BUILD configurator voor modulaire tabletopwerelden." />
+  <title>SKALDIS BUILD Configurator</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0e1013;
+      --panel: #171a1f;
+      --panel-2: #20242a;
+      --line: #343a43;
+      --text: #f2f4f6;
+      --muted: #9aa3ad;
+      --accent: #d7ff3f;
+      --accent-dark: #11170a;
+      --danger: #ff675f;
+      --valid: #70df93;
+      --placeholder: #8d959e;
+      --selected: #d7ff3f;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      min-height: 100vh;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    button { font: inherit; }
+
+    .app { height: 100vh; display: grid; grid-template-rows: auto 1fr; }
+    header {
+      min-height: 62px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 11px 16px;
+      border-bottom: 1px solid var(--line);
+      background: #121518;
+      z-index: 20;
+    }
+    .brand { display: flex; align-items: baseline; gap: 9px; white-space: nowrap; }
+    .brand strong { letter-spacing: .12em; font-size: 14px; }
+    .brand span { color: var(--muted); font-size: 13px; }
+    .toolbar { display: flex; align-items: center; justify-content: flex-end; gap: 7px; flex-wrap: wrap; }
+    button {
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover { border-color: #59636f; }
+    button:disabled { opacity: .4; cursor: not-allowed; }
+    button.primary { background: var(--accent); color: var(--accent-dark); border-color: var(--accent); font-weight: 700; }
+    button.danger { color: #ffb5b1; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 22px;
+      height: 20px;
+      padding: 0 6px;
+      margin-left: 5px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.22);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    main { min-height: 0; display: grid; grid-template-columns: 250px minmax(390px, 1.15fr) minmax(310px, .85fr); }
+    aside, section { min-height: 0; }
+    .sidebar {
+      border-right: 1px solid var(--line);
+      background: var(--panel);
+      padding: 14px;
+      overflow: auto;
+    }
+    .sidebar h2 {
+      margin: 0 0 9px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .category-title { margin-top: 20px !important; }
+    .category-title:first-of-type { margin-top: 0 !important; }
+    .help { color: var(--muted); font-size: 12px; line-height: 1.5; margin: 0 0 12px; }
+    .part-list { display: grid; gap: 8px; }
+    .pack-stack { display: grid; gap: 9px; }
+    .pack-accordion { border: 1px solid var(--line); border-radius: 10px; background: #14181d; overflow: hidden; }
+    .pack-accordion[open] { border-color: #46505b; }
+    .pack-summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 12px; cursor: pointer; list-style: none; user-select: none; font-size: 13px; font-weight: 700; letter-spacing: .03em; }
+    .pack-summary::-webkit-details-marker { display: none; }
+    .pack-summary::after { content: '▾'; color: var(--muted); transition: transform .16s ease; }
+    .pack-accordion:not([open]) .pack-summary::after { transform: rotate(-90deg); }
+    .pack-count { margin-left: auto; color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: 0; }
+    .pack-content { padding: 0 9px 10px; border-top: 1px solid var(--line); }
+    .pack-subtitle { margin: 12px 1px 7px; color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    .pack-empty { margin: 10px 0 0; padding: 12px; border: 1px dashed #404852; border-radius: 8px; color: var(--muted); font-size: 12px; line-height: 1.5; text-align: center; }
+    .part-meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .inventory-pill { flex: 0 0 auto; display: inline-flex; align-items: center; min-width: 25px; justify-content: center; padding: 2px 6px; border-radius: 999px; background: var(--accent); color: var(--accent-dark) !important; font-size: 10px !important; font-weight: 800; }
+
+    .part-card {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 50px 1fr;
+      gap: 9px;
+      align-items: center;
+      padding: 9px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: var(--panel-2);
+      cursor: grab;
+      user-select: none;
+    }
+    .part-card:hover, .part-card.active { border-color: var(--accent); }
+    .part-card.active { box-shadow: inset 0 0 0 1px var(--accent); }
+    .part-card:active { cursor: grabbing; }
+    .part-icon {
+      height: 38px;
+      border: 1px solid #4c5662;
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #121518;
+      color: #aab1b9;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .part-card strong { display: block; font-size: 13px; margin-bottom: 2px; }
+    .part-card span { color: var(--muted); font-size: 11px; }
+    .legend { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; line-height: 1.55; }
+    .kbd { display: inline-flex; min-width: 22px; justify-content: center; padding: 1px 5px; border: 1px solid #46505b; border-bottom-width: 2px; border-radius: 5px; color: var(--text); background: #15191d; font-size: 11px; }
+
+    .editor-panel { min-width: 0; display: grid; grid-template-rows: auto 1fr auto; background: #0f1114; }
+    .panel-title { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 13px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+    .canvas-wrap { min-height: 0; display: flex; align-items: center; justify-content: center; padding: 14px; overflow: auto; }
+    #gridCanvas { max-width: 100%; max-height: 100%; background: #15191d; border: 1px solid var(--line); border-radius: 8px; touch-action: none; cursor: crosshair; }
+    .statusbar { min-height: 42px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 13px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+    .statusbar .ok { color: var(--valid); }
+    .statusbar .bad { color: var(--danger); }
+
+    .right-panel { min-width: 0; position: relative; border-left: 1px solid var(--line); background: var(--panel); overflow: hidden; }
+    .three-wrap { position: absolute; inset: 0; background: #101317; }
+    #threeView { position: absolute; inset: 0; }
+    .three-label { position: absolute; z-index: 2; left: 12px; top: 10px; right: 12px; color: var(--muted); font-size: 12px; pointer-events: none; }
+
+    .drawer-backdrop { position: fixed; inset: 62px 0 0; background: rgba(0,0,0,.48); opacity: 0; pointer-events: none; transition: opacity .2s ease; z-index: 30; }
+    .drawer-backdrop.open { opacity: 1; pointer-events: auto; }
+    .bom-drawer {
+      position: fixed;
+      top: 62px;
+      right: 0;
+      bottom: 0;
+      width: min(390px, 92vw);
+      transform: translateX(100%);
+      transition: transform .24s ease;
+      border-left: 1px solid var(--line);
+      background: #171a1f;
+      z-index: 40;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+    }
+    .bom-drawer.open { transform: translateX(0); }
+    .drawer-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 15px 16px; border-bottom: 1px solid var(--line); }
+    .drawer-head h2 { margin: 0; font-size: 15px; }
+    .drawer-body { padding: 14px 16px; overflow: auto; }
+    .bom-list { display: grid; gap: 8px; }
+    .bom-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel-2); font-size: 13px; }
+    .bom-row span:last-child { min-width: 28px; text-align: right; font-weight: 700; color: var(--accent); }
+    .empty { color: var(--muted); font-size: 13px; padding: 8px 0; }
+    .drawer-foot { padding: 12px 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+
+    [hidden] { display: none !important; }
+    .library-mode .config-action { display: none; }
+    .library-screen { position: fixed; inset: 62px 0 0; z-index: 15; min-height: 0; overflow: auto; padding: 24px; background: var(--bg); }
+    .library-shell { width: min(1040px, 100%); margin: 0 auto; }
+    .library-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 20px; }
+    .library-head h1 { margin: 0 0 7px; font-size: 24px; }
+    .library-head p { max-width: 690px; margin: 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
+    .library-stats { display: grid; grid-template-columns: repeat(2, minmax(130px, 1fr)); gap: 9px; min-width: 290px; }
+    .library-stat { padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+    .library-stat span { display: block; color: var(--muted); font-size: 11px; margin-bottom: 4px; }
+    .library-stat strong { font-size: 20px; }
+    .library-pack-list { display: grid; gap: 14px; }
+    .library-pack { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); overflow: hidden; }
+    .library-pack-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+    .library-pack-head h2 { margin: 0; font-size: 15px; }
+    .library-pack-head span { color: var(--muted); font-size: 12px; }
+    .library-assets { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 14px; }
+    .library-asset { display: grid; grid-template-columns: 46px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 10px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel-2); }
+    .library-asset .part-icon { height: 42px; }
+    .library-asset strong { display: block; font-size: 13px; margin-bottom: 2px; }
+    .library-asset small { display: block; color: var(--muted); font-size: 11px; }
+    .quantity-control { display: grid; grid-template-columns: 34px 55px 34px; align-items: stretch; }
+    .quantity-control button { border-radius: 0; padding: 6px; }
+    .quantity-control button:first-child { border-radius: 7px 0 0 7px; }
+    .quantity-control button:last-child { border-radius: 0 7px 7px 0; }
+    .quantity-control input { width: 55px; min-width: 0; border: 1px solid var(--line); border-left: 0; border-right: 0; background: #101317; color: var(--text); text-align: center; font: inherit; font-size: 13px; }
+    .quantity-control input::-webkit-inner-spin-button, .quantity-control input::-webkit-outer-spin-button { appearance: none; margin: 0; }
+    .library-empty { padding: 24px; color: var(--muted); font-size: 13px; text-align: center; }
+
+
+    @media (max-width: 1050px) {
+      main { grid-template-columns: 220px minmax(370px, 1fr); }
+      .right-panel { grid-column: 1 / -1; min-height: 390px; border-left: 0; border-top: 1px solid var(--line); }
+      body { overflow: auto; }
+      .app { height: auto; min-height: 100vh; }
+      main { min-height: 1020px; }
+    }
+    @media (max-width: 700px) {
+      header { align-items: flex-start; flex-direction: column; }
+      .toolbar { justify-content: flex-start; }
+      main { display: block; min-height: auto; }
+      .sidebar { border-right: 0; border-bottom: 1px solid var(--line); }
+      .part-list { grid-template-columns: 1fr 1fr; }
+      .editor-panel { min-height: 630px; }
+      .right-panel { min-height: 400px; }
+      .drawer-backdrop, .bom-drawer { top: 112px; }
+      .library-screen { inset: 112px 0 0; padding: 16px; }
+      .library-head { display: grid; }
+      .library-stats { min-width: 0; }
+      .library-assets { grid-template-columns: 1fr; }
+      .library-asset { grid-template-columns: 42px minmax(0, 1fr); }
+      .quantity-control { grid-column: 1 / -1; width: 100%; grid-template-columns: 42px 1fr 42px; }
+      .quantity-control input { width: 100%; }
+
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="brand"><strong>SKALDIS BUILD</strong><span>Configurator</span></div>
+      <div class="toolbar">
+        <button id="libraryBtn" type="button">Bibliotheek</button>
+        <button id="rotateBtn" class="config-action" type="button">Roteren <span class="kbd">R</span></button>
+        <button id="undoBtn" class="config-action" type="button">Undo</button>
+        <button id="redoBtn" class="config-action" type="button">Redo</button>
+        <button id="deleteBtn" class="config-action danger" type="button">Verwijder <span class="kbd">Del</span></button>
+        <button id="clearBtn" class="config-action" type="button">Leegmaken</button>
+        <button id="bomBtn" class="config-action" type="button">Stuklijst <span id="bomCount" class="badge">0</span></button>
+        <button id="openBtn" class="config-action" type="button">Ontwerp openen</button>
+        <button id="saveBtn" class="config-action primary" type="button">Ontwerp opslaan</button>
+        <input id="openFileInput" type="file" accept="application/json,.json" hidden />
+      </div>
+    </header>
+
+    <main id="configuratorScreen">
+      <aside class="sidebar">
+        <p class="help">Sleep een onderdeel naar het raster, of selecteer het en klik op een geldige positie.</p>
+        <div id="packAccordion" class="pack-stack"></div>
+        <div class="legend">
+          <strong>Besturing</strong><br />
+          Randstukken klikken op rasterlijnen.<br />Props klikken in het midden van een vak.<br />
+          Klik een geplaatst onderdeel om het te selecteren.<br />
+          Sleep om te verplaatsen.<br />
+          <span class="kbd">R</span> roteert 90°.<br />
+          <span class="kbd">Esc</span> annuleert.
+        </div>
+      </aside>
+
+      <section class="editor-panel">
+        <div class="panel-title"><span>Top-down editor</span><span>14 × 11 vakken · 1 vak = 25,4 mm</span></div>
+        <div class="canvas-wrap"><canvas id="gridCanvas" width="750" height="600" aria-label="Top-down grid editor"></canvas></div>
+        <div class="statusbar"><span id="statusText">Selecteer of sleep een onderdeel.</span><span id="selectionText">Niets geselecteerd</span></div>
+      </section>
+
+      <section class="right-panel">
+        <div class="three-wrap">
+          <div class="three-label">Live 3D-weergave · slepen om rond te kijken · scrollen om te zoomen</div>
+          <div id="threeView" aria-label="3D preview"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <section id="libraryScreen" class="library-screen" hidden>
+    <div class="library-shell">
+      <div class="library-head">
+        <div>
+          <h1>Bibliotheek</h1>
+          <p>Geef per asset aan hoeveel fysieke stukken je bezit. De aantallen worden lokaal in deze browser bewaard en verschijnen automatisch in de categorie <strong>Private collection</strong> van de configurator.</p>
+        </div>
+        <div class="library-stats">
+          <div class="library-stat"><span>Verschillende assets</span><strong id="ownedTypeCount">0</strong></div>
+          <div class="library-stat"><span>Totaal aantal stukken</span><strong id="ownedPieceCount">0</strong></div>
+        </div>
+      </div>
+      <div id="libraryPacks" class="library-pack-list"></div>
+    </div>
+  </section>
+
+  <div id="drawerBackdrop" class="drawer-backdrop"></div>
+  <aside id="bomDrawer" class="bom-drawer" aria-hidden="true">
+    <div class="drawer-head"><h2>Stuklijst</h2><button id="closeBomBtn" type="button">Sluiten</button></div>
+    <div class="drawer-body"><div id="bomList" class="bom-list"></div></div>
+    <div class="drawer-foot">De lijst telt fysieke onderdelen, niet de afzonderlijke bezette gridsegmenten.</div>
+  </aside>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+      }
+    }
+  </script>
+  <script type="module">
+    const GRID_COLS = 14;
+    const GRID_ROWS = 11;
+    const CELL_PX = 50;
+    const PAD = 25;
+
+    // footprintEdges uses unit grid edges relative to the piece anchor node.
+    // H:x:y = horizontal edge from (x,y) to (x+1,y)
+    // V:x:y = vertical edge from (x,y) to (x,y+1)
+    const PACKS = {
+      private: { name: 'Private collection' },
+      castle: { name: 'Castle pack' },
+      dungeon: { name: 'Dungeon pack' }
+    };
+
+    const PARTS = {
+      'wall-straight-1': { name: 'Muur recht 1', pack: 'castle', category: 'structure', anchorType: 'edge', footprintEdges: ['H:0:0'], modelUrl: './models/wall-straight-1.glb', placeholder: 'straight' },
+      'wall-straight-2': { name: 'Muur recht 2', pack: 'castle', category: 'structure', anchorType: 'edge', footprintEdges: ['H:0:0','H:1:0'], modelUrl: './models/wall-straight-2.glb', placeholder: 'straight' },
+      'corner-1x1': { name: 'Hoek 1×1', pack: 'castle', category: 'structure', anchorType: 'edge', footprintEdges: ['H:0:0','V:0:0'], modelUrl: './models/corner-1x1.glb', placeholder: 'corner' },
+      'corner-2x2': { name: 'Hoek 2×2', pack: 'castle', category: 'structure', anchorType: 'edge', footprintEdges: ['H:0:0','H:1:0','V:0:0','V:0:1'], modelUrl: './models/corner-2x2.glb', placeholder: 'corner' },
+      't-piece-1': { name: 'T-stuk 1', pack: 'castle', category: 'structure', anchorType: 'edge', footprintEdges: ['H:-1:0','H:0:0','V:0:0'], modelUrl: './models/t-piece-1.glb', placeholder: 't' },
+      't-piece-2': { name: 'T-stuk 2', pack: 'castle', category: 'structure', anchorType: 'edge', footprintEdges: ['H:-2:0','H:-1:0','H:0:0','H:1:0','V:0:0','V:0:1'], modelUrl: './models/t-piece-2.glb', placeholder: 't' },
+      'round-corner-1': { name: 'Hoek afronding 1', pack: 'castle', category: 'structure', anchorType: 'edge', footprintEdges: ['H:0:0','V:0:0'], modelUrl: './models/round-corner-1.glb', placeholder: 'round' },
+      'round-corner-2': { name: 'Hoek afronding 2', pack: 'castle', category: 'structure', anchorType: 'edge', footprintEdges: ['H:0:0','H:1:0','V:0:0','V:0:1'], modelUrl: './models/round-corner-2.glb', placeholder: 'round' },
+      'door-1': { name: 'Deur 1', pack: 'castle', category: 'structure', anchorType: 'edge', footprintEdges: ['H:0:0'], modelUrl: './models/door-1.glb', placeholder: 'door' },
+      'door-2': { name: 'Deur 2', pack: 'castle', category: 'structure', anchorType: 'edge', footprintEdges: ['H:0:0','H:1:0'], modelUrl: './models/door-2.glb', placeholder: 'door' },
+      'chest': { name: 'Kist', pack: 'castle', category: 'prop', anchorType: 'cell', footprintCells: ['0:0'], modelUrl: './models/chest.glb', placeholder: 'chest' },
+      'campfire': { name: 'Kampvuur', pack: 'castle', category: 'prop', anchorType: 'cell', footprintCells: ['0:0'], modelUrl: './models/campfire.glb', placeholder: 'campfire' },
+      'action-figure': { name: 'Referentiefiguur', pack: 'castle', category: 'prop', anchorType: 'cell', footprintCells: ['0:0'], modelUrl: './models/action-figure.glb', placeholder: 'miniature' }
+    };
+
+    const canvas = document.getElementById('gridCanvas');
+    const ctx = canvas.getContext('2d');
+    const statusText = document.getElementById('statusText');
+    const selectionText = document.getElementById('selectionText');
+    const bomList = document.getElementById('bomList');
+    const bomCount = document.getElementById('bomCount');
+    const packAccordion = document.getElementById('packAccordion');
+    const libraryPacks = document.getElementById('libraryPacks');
+    const ownedTypeCount = document.getElementById('ownedTypeCount');
+    const ownedPieceCount = document.getElementById('ownedPieceCount');
+    const configuratorScreen = document.getElementById('configuratorScreen');
+    const libraryScreen = document.getElementById('libraryScreen');
+    const libraryBtn = document.getElementById('libraryBtn');
+
+    canvas.width = PAD * 2 + GRID_COLS * CELL_PX;
+    canvas.height = PAD * 2 + GRID_ROWS * CELL_PX;
+
+    let pieces = [];
+    let selectedId = null;
+    let activePartId = null;
+    let activeRotation = 0;
+    let hoverCandidate = null;
+    let dragState = null;
+    let nextId = 1;
+    let history = [];
+    let future = [];
+    let rebuild3D = () => {};
+    const COLLECTION_STORAGE_KEY = 'skaldis-build-private-collection-v1';
+    let collectionInventory = loadCollectionInventory();
+
+    function loadCollectionInventory() {
+      const empty = Object.fromEntries(Object.keys(PARTS).map(id => [id, 0]));
+      try {
+        const stored = JSON.parse(localStorage.getItem(COLLECTION_STORAGE_KEY) || '{}');
+        Object.keys(empty).forEach(id => {
+          const value = Number(stored[id] ?? 0);
+          empty[id] = Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
+        });
+      } catch (error) {
+        console.warn('De lokale collectie kon niet worden gelezen.', error);
+      }
+      return empty;
+    }
+
+    function saveCollectionInventory() {
+      try {
+        localStorage.setItem(COLLECTION_STORAGE_KEY, JSON.stringify(collectionInventory));
+      } catch (error) {
+        console.warn('De lokale collectie kon niet worden bewaard.', error);
+      }
+    }
+
+    function placedCount(partId) {
+      return pieces.reduce((total, piece) => total + (piece.partId === partId ? 1 : 0), 0);
+    }
+
+    function iconLabel(part) {
+      if (part.placeholder === 'miniature') return 'FIG';
+      if (part.category === 'prop') return part.placeholder === 'chest' ? 'BOX' : 'FIRE';
+      if (part.placeholder === 'corner') return 'L';
+      if (part.placeholder === 'round') return '⌒';
+      if (part.placeholder === 't') return 'T';
+      if (part.placeholder === 'door') return 'DOOR';
+      return part.footprintEdges.length > 1 ? '━━' : '━';
+    }
+
+    function partPlacementLabel(part) {
+      return part.anchorType === 'cell'
+        ? 'op een vak'
+        : `${part.footprintEdges.length} gridrand${part.footprintEdges.length === 1 ? '' : 'en'}`;
+    }
+
+    function createPartCard(id, part, inventoryMode = false) {
+      const card = document.createElement('div');
+      card.className = 'part-card';
+      card.draggable = true;
+      card.dataset.part = id;
+      card.tabIndex = 0;
+      card.setAttribute('role', 'button');
+      const owned = collectionInventory[id] || 0;
+      const used = placedCount(id);
+      const secondary = inventoryMode
+        ? `In bezit: ${owned} · in ontwerp: ${used}`
+        : partPlacementLabel(part);
+      card.innerHTML = `<div class="part-icon">${iconLabel(part)}</div><div><strong>${part.name}</strong><div class="part-meta"><span>${secondary}</span>${inventoryMode ? `<span class="inventory-pill">×${owned}</span>` : ''}</div></div>`;
+      card.addEventListener('click', () => setActivePart(id));
+      card.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setActivePart(id); }
+      });
+      card.addEventListener('dragstart', event => {
+        event.dataTransfer.setData('text/plain', id);
+        event.dataTransfer.effectAllowed = 'copy';
+        activePartId = id;
+        refreshActiveCards();
+      });
+      return card;
+    }
+
+    function appendGroupedAssets(container, entries, inventoryMode = false) {
+      const groups = [
+        ['Structuurelementen', entries.filter(([, part]) => part.category === 'structure')],
+        ['Props', entries.filter(([, part]) => part.category === 'prop')]
+      ];
+      let rendered = false;
+      groups.forEach(([label, items]) => {
+        if (!items.length) return;
+        rendered = true;
+        const title = document.createElement('div');
+        title.className = 'pack-subtitle';
+        title.textContent = label;
+        container.appendChild(title);
+        const list = document.createElement('div');
+        list.className = 'part-list';
+        items.forEach(([id, part]) => list.appendChild(createPartCard(id, part, inventoryMode)));
+        container.appendChild(list);
+      });
+      return rendered;
+    }
+
+    function createPackAccordion(packId, entries, options = {}) {
+      const details = document.createElement('details');
+      details.className = 'pack-accordion';
+      details.dataset.pack = packId;
+      details.open = options.open ?? false;
+      const summary = document.createElement('summary');
+      summary.className = 'pack-summary';
+      const countText = options.inventoryMode
+        ? `${entries.reduce((sum, [id]) => sum + (collectionInventory[id] || 0), 0)} stuks`
+        : `${entries.length} assets`;
+      summary.innerHTML = `<span>${PACKS[packId].name}</span><span class="pack-count">${countText}</span>`;
+      details.appendChild(summary);
+      const content = document.createElement('div');
+      content.className = 'pack-content';
+      const hasAssets = appendGroupedAssets(content, entries, options.inventoryMode);
+      if (!hasAssets) {
+        const empty = document.createElement('div');
+        empty.className = 'pack-empty';
+        empty.textContent = options.emptyText || 'Deze categorie is voorlopig leeg.';
+        content.appendChild(empty);
+      }
+      details.appendChild(content);
+      return details;
+    }
+
+    function renderCatalog() {
+      const openState = Object.fromEntries(
+        [...packAccordion.querySelectorAll('.pack-accordion')].map(details => [details.dataset.pack, details.open])
+      );
+      packAccordion.innerHTML = '';
+      const allEntries = Object.entries(PARTS);
+      const privateEntries = allEntries.filter(([id]) => (collectionInventory[id] || 0) > 0);
+      const castleEntries = allEntries.filter(([, part]) => part.pack === 'castle');
+      const dungeonEntries = allEntries.filter(([, part]) => part.pack === 'dungeon');
+      packAccordion.appendChild(createPackAccordion('private', privateEntries, {
+        open: openState.private ?? true,
+        inventoryMode: true,
+        emptyText: 'Nog geen stukken toegevoegd. Open de bibliotheek om je collectie samen te stellen.'
+      }));
+      packAccordion.appendChild(createPackAccordion('castle', castleEntries, { open: openState.castle ?? true }));
+      packAccordion.appendChild(createPackAccordion('dungeon', dungeonEntries, {
+        open: openState.dungeon ?? false,
+        emptyText: 'Lege placeholder. Hier kun je later assets van het Dungeon pack toevoegen.'
+      }));
+      refreshActiveCards();
+    }
+
+    function updateCollectionQuantity(partId, nextValue) {
+      const value = Math.max(0, Math.floor(Number(nextValue) || 0));
+      collectionInventory[partId] = value;
+      saveCollectionInventory();
+      renderCatalog();
+      renderLibrary();
+    }
+
+    function renderLibrary() {
+      const entries = Object.entries(PARTS);
+      const ownedEntries = entries.filter(([id]) => (collectionInventory[id] || 0) > 0);
+      ownedTypeCount.textContent = String(ownedEntries.length);
+      ownedPieceCount.textContent = String(ownedEntries.reduce((sum, [id]) => sum + collectionInventory[id], 0));
+      libraryPacks.innerHTML = '';
+
+      ['castle', 'dungeon'].forEach(packId => {
+        const packEntries = entries.filter(([, part]) => part.pack === packId);
+        const section = document.createElement('section');
+        section.className = 'library-pack';
+        const head = document.createElement('div');
+        head.className = 'library-pack-head';
+        head.innerHTML = `<h2>${PACKS[packId].name}</h2><span>${packEntries.length} assets</span>`;
+        section.appendChild(head);
+
+        if (!packEntries.length) {
+          const empty = document.createElement('div');
+          empty.className = 'library-empty';
+          empty.textContent = 'Deze pack bevat voorlopig nog geen assets.';
+          section.appendChild(empty);
+        } else {
+          const grid = document.createElement('div');
+          grid.className = 'library-assets';
+          packEntries.forEach(([id, part]) => {
+            const asset = document.createElement('div');
+            asset.className = 'library-asset';
+            asset.innerHTML = `<div class="part-icon">${iconLabel(part)}</div><div><strong>${part.name}</strong><small>${part.category === 'structure' ? 'Structuurelement' : 'Prop'} · ${partPlacementLabel(part)}</small></div>`;
+            const controls = document.createElement('div');
+            controls.className = 'quantity-control';
+            const minus = document.createElement('button');
+            minus.type = 'button';
+            minus.textContent = '−';
+            minus.setAttribute('aria-label', `Verminder ${part.name}`);
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.min = '0';
+            input.step = '1';
+            input.value = String(collectionInventory[id] || 0);
+            input.setAttribute('aria-label', `Aantal ${part.name}`);
+            const plus = document.createElement('button');
+            plus.type = 'button';
+            plus.textContent = '+';
+            plus.setAttribute('aria-label', `Verhoog ${part.name}`);
+            minus.addEventListener('click', () => updateCollectionQuantity(id, (collectionInventory[id] || 0) - 1));
+            plus.addEventListener('click', () => updateCollectionQuantity(id, (collectionInventory[id] || 0) + 1));
+            input.addEventListener('change', () => updateCollectionQuantity(id, input.value));
+            controls.append(minus, input, plus);
+            asset.appendChild(controls);
+            grid.appendChild(asset);
+          });
+          section.appendChild(grid);
+        }
+        libraryPacks.appendChild(section);
+      });
+    }
+
+    function showLibrary(show) {
+      configuratorScreen.hidden = show;
+      libraryScreen.hidden = !show;
+      document.body.classList.toggle('library-mode', show);
+      libraryBtn.textContent = show ? 'Terug naar configurator' : 'Bibliotheek';
+      if (show) renderLibrary();
+      else requestAnimationFrame(() => { draw2D(); rebuild3D(); });
+    }
+
+    function refreshActiveCards() {
+      document.querySelectorAll('.part-card').forEach(card => card.classList.toggle('active', card.dataset.part === activePartId));
+    }
+
+    function clonePieces(source = pieces) { return source.map(piece => ({ ...piece })); }
+    function pushHistory() { history.push(clonePieces()); if (history.length > 80) history.shift(); future = []; updateButtons(); }
+    function undo() { if (!history.length) return; future.push(clonePieces()); pieces = history.pop(); selectedId = null; syncAll('Undo uitgevoerd.'); }
+    function redo() { if (!future.length) return; history.push(clonePieces()); pieces = future.pop(); selectedId = null; syncAll('Redo uitgevoerd.'); }
+    function updateButtons() {
+      document.getElementById('undoBtn').disabled = history.length === 0;
+      document.getElementById('redoBtn').disabled = future.length === 0;
+      document.getElementById('deleteBtn').disabled = !selectedId;
+    }
+
+    function setActivePart(partId) {
+      activePartId = activePartId === partId ? null : partId;
+      selectedId = null;
+      hoverCandidate = null;
+      refreshActiveCards();
+      updateStatus(activePartId ? `${PARTS[activePartId].name} geselecteerd.` : 'Selecteer of sleep een onderdeel.');
+      draw2D();
+      updateButtons();
+    }
+
+    function rotatePoint(x, y, rotation) {
+      const turns = ((rotation % 360) + 360) % 360 / 90;
+      let rx = x, ry = y;
+      for (let i = 0; i < turns; i += 1) [rx, ry] = [-ry, rx];
+      return [rx, ry];
+    }
+
+    function parseEdge(edge) {
+      const [kind, xs, ys] = edge.split(':');
+      return { kind, x: Number(xs), y: Number(ys) };
+    }
+
+    function transformedEdges(piece) {
+      const base = PARTS[piece.partId].footprintEdges || [];
+      return base.map(raw => {
+        const edge = parseEdge(raw);
+        let [x1, y1] = [edge.x, edge.y];
+        let [x2, y2] = edge.kind === 'H' ? [edge.x + 1, edge.y] : [edge.x, edge.y + 1];
+        [x1, y1] = rotatePoint(x1, y1, piece.rotation);
+        [x2, y2] = rotatePoint(x2, y2, piece.rotation);
+        x1 += piece.x; y1 += piece.y; x2 += piece.x; y2 += piece.y;
+        if (y1 === y2) return `H:${Math.min(x1,x2)}:${y1}`;
+        return `V:${x1}:${Math.min(y1,y2)}`;
+      });
+    }
+
+    function transformedCells(piece) {
+      const cells = PARTS[piece.partId].footprintCells || [];
+      return cells.map(raw => {
+        const [xs, ys] = raw.split(':');
+        const [rx, ry] = rotatePoint(Number(xs), Number(ys), piece.rotation);
+        return `${piece.x + rx}:${piece.y + ry}`;
+      });
+    }
+
+    function edgeInBounds(edgeId) {
+      const { kind, x, y } = parseEdge(edgeId);
+      return kind === 'H'
+        ? x >= 0 && x < GRID_COLS && y >= 0 && y <= GRID_ROWS
+        : x >= 0 && x <= GRID_COLS && y >= 0 && y < GRID_ROWS;
+    }
+
+    function cellInBounds(cellId) {
+      const [x, y] = cellId.split(':').map(Number);
+      return x >= 0 && x < GRID_COLS && y >= 0 && y < GRID_ROWS;
+    }
+
+    function isPlacementValid(candidate, ignoredId = null) {
+      const part = PARTS[candidate.partId];
+      if (part.anchorType === 'edge') {
+        const edges = transformedEdges(candidate);
+        if (!edges.every(edgeInBounds)) return false;
+        const occupied = new Set(pieces.filter(piece => piece.id !== ignoredId && PARTS[piece.partId].anchorType === 'edge').flatMap(transformedEdges));
+        return edges.every(edge => !occupied.has(edge));
+      }
+      const cells = transformedCells(candidate);
+      if (!cells.every(cellInBounds)) return false;
+      const occupied = new Set(pieces.filter(piece => piece.id !== ignoredId && PARTS[piece.partId].anchorType === 'cell').flatMap(transformedCells));
+      return cells.every(cell => !occupied.has(cell));
+    }
+
+    function canvasPoint(event) {
+      const rect = canvas.getBoundingClientRect();
+      return { x: (event.clientX - rect.left) * canvas.width / rect.width, y: (event.clientY - rect.top) * canvas.height / rect.height };
+    }
+    function toGrid(point) { return { x: (point.x - PAD) / CELL_PX, y: (point.y - PAD) / CELL_PX }; }
+
+    function snapCandidate(point, partId, rotation = activeRotation, dragOffset = null) {
+      const grid = toGrid(point);
+      const part = PARTS[partId];
+      let x, y;
+      if (dragOffset) {
+        x = Math.round(grid.x - dragOffset.x);
+        y = Math.round(grid.y - dragOffset.y);
+      } else if (part.anchorType === 'cell') {
+        x = Math.floor(grid.x);
+        y = Math.floor(grid.y);
+      } else {
+        x = Math.round(grid.x);
+        y = Math.round(grid.y);
+      }
+      const candidate = { partId, x, y, rotation };
+      candidate.valid = isPlacementValid(candidate, dragState?.pieceId ?? null);
+      return candidate;
+    }
+
+    function placeCandidate(candidate) {
+      if (!candidate?.valid) { updateStatus('Deze positie is niet geldig.', false); return; }
+      pushHistory();
+      const piece = { id: `piece-${nextId++}`, partId: candidate.partId, x: candidate.x, y: candidate.y, rotation: candidate.rotation };
+      pieces.push(piece);
+      selectedId = piece.id;
+      syncAll(`${PARTS[piece.partId].name} geplaatst.`);
+    }
+
+    function updateStatus(message, good = true) { statusText.textContent = message; statusText.className = good ? 'ok' : 'bad'; }
+    function syncAll(message) { hoverCandidate = null; draw2D(); rebuild3D(); updateBom(); renderCatalog(); updateSelectionText(); updateButtons(); if (message) updateStatus(message); }
+    function updateSelectionText() {
+      const selected = pieces.find(piece => piece.id === selectedId);
+      selectionText.textContent = selected ? `${PARTS[selected.partId].name} · ${selected.rotation}° · (${selected.x}, ${selected.y})` : 'Niets geselecteerd';
+    }
+
+    function drawGrid() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#15191d'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.save(); ctx.translate(PAD, PAD);
+      ctx.strokeStyle = '#343b44'; ctx.lineWidth = 1;
+      for (let x = 0; x <= GRID_COLS; x += 1) { ctx.beginPath(); ctx.moveTo(x*CELL_PX,0); ctx.lineTo(x*CELL_PX,GRID_ROWS*CELL_PX); ctx.stroke(); }
+      for (let y = 0; y <= GRID_ROWS; y += 1) { ctx.beginPath(); ctx.moveTo(0,y*CELL_PX); ctx.lineTo(GRID_COLS*CELL_PX,y*CELL_PX); ctx.stroke(); }
+      ctx.fillStyle = '#65707c';
+      for (let x = 0; x <= GRID_COLS; x += 1) for (let y = 0; y <= GRID_ROWS; y += 1) { ctx.beginPath(); ctx.arc(x*CELL_PX,y*CELL_PX,2.1,0,Math.PI*2); ctx.fill(); }
+      ctx.restore();
+    }
+
+    function drawPiece(piece, color, alpha = 1, selected = false) {
+      const part = PARTS[piece.partId];
+      ctx.save(); ctx.translate(PAD, PAD); ctx.globalAlpha = alpha;
+      if (part.anchorType === 'edge') {
+        ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = selected ? 12 : 8; ctx.lineCap = 'square';
+        transformedEdges(piece).forEach(edgeId => {
+          const { kind, x, y } = parseEdge(edgeId);
+          const x1=x*CELL_PX, y1=y*CELL_PX, x2=(x+(kind==='H'?1:0))*CELL_PX, y2=(y+(kind==='V'?1:0))*CELL_PX;
+          ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+        });
+        if (part.placeholder === 'door') {
+          ctx.fillStyle = '#15191d';
+          transformedEdges(piece).forEach(edgeId => {
+            const { kind, x, y } = parseEdge(edgeId);
+            const cx=(x+(kind==='H'?.5:0))*CELL_PX, cy=(y+(kind==='V'?.5:0))*CELL_PX;
+            ctx.beginPath(); ctx.arc(cx,cy,5,0,Math.PI*2); ctx.fill();
+          });
+        }
+      } else {
+        transformedCells(piece).forEach(cellId => {
+          const [x,y]=cellId.split(':').map(Number);
+          ctx.fillStyle=color; ctx.strokeStyle=selected?'#d7ff3f':'#333a43'; ctx.lineWidth=selected?4:2;
+          ctx.beginPath(); ctx.roundRect(x*CELL_PX+8,y*CELL_PX+8,CELL_PX-16,CELL_PX-16,7); ctx.fill(); ctx.stroke();
+          ctx.fillStyle='#15191d'; ctx.font='bold 10px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle';
+          ctx.fillText(part.placeholder==='chest'?'BOX':part.placeholder==='miniature'?'FIG':'FIRE',x*CELL_PX+CELL_PX/2,y*CELL_PX+CELL_PX/2);
+        });
+      }
+      ctx.restore();
+    }
+
+    function draw2D() {
+      drawGrid();
+      pieces.forEach(piece => drawPiece(piece, piece.id === selectedId ? '#d7ff3f' : '#b8a68d', 1, piece.id === selectedId));
+      if (hoverCandidate) drawPiece(hoverCandidate, hoverCandidate.valid ? '#70df93' : '#ff675f', .68, false);
+    }
+
+    function pieceHit(point, piece) {
+      const grid = toGrid(point);
+      const part = PARTS[piece.partId];
+      if (part.anchorType === 'cell') return transformedCells(piece).some(cell => { const [x,y]=cell.split(':').map(Number); return grid.x>=x && grid.x<=x+1 && grid.y>=y && grid.y<=y+1; });
+      const px = point.x-PAD, py=point.y-PAD;
+      return transformedEdges(piece).some(edgeId => {
+        const {kind,x,y}=parseEdge(edgeId); const ax=x*CELL_PX, ay=y*CELL_PX, bx=(x+(kind==='H'?1:0))*CELL_PX, by=(y+(kind==='V'?1:0))*CELL_PX;
+        const abx=bx-ax, aby=by-ay, apx=px-ax, apy=py-ay, t=Math.max(0,Math.min(1,(apx*abx+apy*aby)/(abx*abx+aby*aby)));
+        return Math.hypot(px-(ax+t*abx),py-(ay+t*aby))<=12;
+      });
+    }
+    function hitPiece(point) { return [...pieces].reverse().find(piece => pieceHit(point,piece)) ?? null; }
+
+    canvas.addEventListener('pointerdown', event => {
+      canvas.setPointerCapture(event.pointerId);
+      const point=canvasPoint(event), hit=hitPiece(point);
+      if (hit) {
+        selectedId=hit.id; activePartId=null; refreshActiveCards();
+        const grid=toGrid(point);
+        dragState={ pieceId:hit.id, original:{...hit}, offset:{x:grid.x-hit.x,y:grid.y-hit.y}, moved:false };
+        updateSelectionText(); draw2D(); updateButtons(); return;
+      }
+      if (activePartId) placeCandidate(snapCandidate(point,activePartId)); else { selectedId=null; syncAll('Niets geselecteerd.'); }
+    });
+    canvas.addEventListener('pointermove', event => {
+      const point=canvasPoint(event);
+      if (dragState) {
+        const piece=pieces.find(item=>item.id===dragState.pieceId); if(!piece)return;
+        const candidate=snapCandidate(point,piece.partId,piece.rotation,dragState.offset); hoverCandidate=candidate;
+        dragState.moved ||= candidate.x!==dragState.original.x || candidate.y!==dragState.original.y; draw2D(); return;
+      }
+      if(activePartId){ hoverCandidate=snapCandidate(point,activePartId); draw2D(); }
+    });
+    canvas.addEventListener('pointerup', () => {
+      if(!dragState)return;
+      const candidate=hoverCandidate, piece=pieces.find(item=>item.id===dragState.pieceId);
+      if(piece && dragState.moved && candidate?.valid){ pushHistory(); Object.assign(piece,{x:candidate.x,y:candidate.y,rotation:candidate.rotation}); syncAll('Onderdeel verplaatst.'); }
+      else { hoverCandidate=null; draw2D(); if(dragState.moved&&!candidate?.valid)updateStatus('Verplaatsing geannuleerd: positie ongeldig.',false); }
+      dragState=null;
+    });
+    canvas.addEventListener('pointerleave',()=>{ if(!dragState){hoverCandidate=null;draw2D();} });
+    canvas.addEventListener('dragover',event=>{ event.preventDefault(); const id=activePartId||event.dataTransfer.getData('text/plain'); if(id){hoverCandidate=snapCandidate(canvasPoint(event),id);draw2D();} });
+    canvas.addEventListener('drop',event=>{ event.preventDefault(); const id=event.dataTransfer.getData('text/plain')||activePartId; if(id)placeCandidate(snapCandidate(canvasPoint(event),id)); });
+
+    function rotateCurrent() {
+      const selected=pieces.find(piece=>piece.id===selectedId);
+      if(selected){ const rotated={...selected,rotation:(selected.rotation+90)%360}; if(!isPlacementValid(rotated,selected.id)){updateStatus('Roteren kan hier niet.',false);return;} pushHistory(); selected.rotation=rotated.rotation; syncAll('Onderdeel 90° gedraaid.'); }
+      else { activeRotation=(activeRotation+90)%360; hoverCandidate=null; updateStatus(`Plaatsingsrotatie: ${activeRotation}°.`); draw2D(); }
+    }
+    function deleteSelected(){ if(!selectedId)return; pushHistory(); pieces=pieces.filter(piece=>piece.id!==selectedId); selectedId=null; syncAll('Onderdeel verwijderd.'); }
+
+    document.getElementById('rotateBtn').addEventListener('click',rotateCurrent);
+    document.getElementById('deleteBtn').addEventListener('click',deleteSelected);
+    document.getElementById('undoBtn').addEventListener('click',undo);
+    document.getElementById('redoBtn').addEventListener('click',redo);
+    document.getElementById('clearBtn').addEventListener('click',()=>{ if(!pieces.length)return; pushHistory(); pieces=[]; selectedId=null; syncAll('Ontwerp leeggemaakt.'); });
+    function createProjectData() {
+      return {
+        version: 3,
+        app: 'SKALDIS BUILD Configurator',
+        savedAt: new Date().toISOString(),
+        grid: { columns: GRID_COLS, rows: GRID_ROWS, cellSizeMm: 25.4 },
+        pieces: clonePieces()
+      };
+    }
+
+    function saveProject() {
+      const blob = new Blob([JSON.stringify(createProjectData(), null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const stamp = new Date().toISOString().slice(0, 10);
+      link.href = url;
+      link.download = `skaldis-build-ontwerp-${stamp}.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      updateStatus('Ontwerp lokaal opgeslagen.');
+    }
+
+    function validateLoadedPieces(rawPieces) {
+      if (!Array.isArray(rawPieces)) throw new Error('Het bestand bevat geen geldige onderdelenlijst.');
+      return rawPieces.map((piece, index) => {
+        if (!piece || typeof piece !== 'object') throw new Error(`Onderdeel ${index + 1} is ongeldig.`);
+        if (!PARTS[piece.partId]) throw new Error(`Onbekend onderdeel: ${piece.partId}.`);
+        const loaded = {
+          id: typeof piece.id === 'string' ? piece.id : `piece-${index + 1}`,
+          partId: piece.partId,
+          x: Number(piece.x),
+          y: Number(piece.y),
+          rotation: Number(piece.rotation ?? 0)
+        };
+        if (!Number.isInteger(loaded.x) || !Number.isInteger(loaded.y)) {
+          throw new Error(`Ongeldige rasterpositie bij ${PARTS[loaded.partId].name}.`);
+        }
+        loaded.rotation = ((loaded.rotation % 360) + 360) % 360;
+        if (![0, 90, 180, 270].includes(loaded.rotation)) {
+          throw new Error(`Ongeldige rotatie bij ${PARTS[loaded.partId].name}.`);
+        }
+        return loaded;
+      });
+    }
+
+    async function openProjectFile(file) {
+      if (!file) return;
+      try {
+        const data = JSON.parse(await file.text());
+        const loadedPieces = validateLoadedPieces(data.pieces);
+        const previousPieces = pieces;
+        pieces = [];
+        for (const piece of loadedPieces) {
+          if (!isPlacementValid(piece)) {
+            pieces = previousPieces;
+            throw new Error(`Het onderdeel ${PARTS[piece.partId].name} staat buiten het raster of overlapt een ander onderdeel.`);
+          }
+          pieces.push(piece);
+        }
+        selectedId = null;
+        activePartId = null;
+        activeRotation = 0;
+        history = [];
+        future = [];
+        nextId = Math.max(0, ...pieces.map(piece => {
+          const match = String(piece.id).match(/(\d+)$/);
+          return match ? Number(match[1]) : 0;
+        })) + 1;
+        refreshActiveCards();
+        syncAll(`Ontwerp geopend: ${file.name}`);
+      } catch (error) {
+        updateStatus(`Openen mislukt: ${error.message}`, false);
+      } finally {
+        document.getElementById('openFileInput').value = '';
+      }
+    }
+
+    libraryBtn.addEventListener('click', () => showLibrary(libraryScreen.hidden));
+    document.getElementById('saveBtn').addEventListener('click', saveProject);
+    document.getElementById('openBtn').addEventListener('click', () => document.getElementById('openFileInput').click());
+    document.getElementById('openFileInput').addEventListener('change', event => openProjectFile(event.target.files?.[0]));
+
+    const drawer=document.getElementById('bomDrawer'),backdrop=document.getElementById('drawerBackdrop');
+    function setDrawer(open){drawer.classList.toggle('open',open);backdrop.classList.toggle('open',open);drawer.setAttribute('aria-hidden',String(!open));}
+    document.getElementById('bomBtn').addEventListener('click',()=>setDrawer(true));
+    document.getElementById('closeBomBtn').addEventListener('click',()=>setDrawer(false));
+    backdrop.addEventListener('click',()=>setDrawer(false));
+
+    window.addEventListener('keydown',event=>{
+      if(event.key.toLowerCase()==='r')rotateCurrent();
+      if(event.key==='Delete'||event.key==='Backspace')deleteSelected();
+      if(event.key==='Escape'){ if(!libraryScreen.hidden)showLibrary(false); else if(drawer.classList.contains('open'))setDrawer(false); else {activePartId=null;selectedId=null;hoverCandidate=null;refreshActiveCards();syncAll('Selectie geannuleerd.');} }
+      if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='z'){event.preventDefault();event.shiftKey?redo():undo();}
+    });
+
+    function updateBom(){
+      const counts={};pieces.forEach(piece=>counts[piece.partId]=(counts[piece.partId]||0)+1);
+      bomCount.textContent=String(pieces.length);bomList.innerHTML='';
+      const entries=Object.entries(counts);if(!entries.length){bomList.innerHTML='<div class="empty">Nog geen onderdelen geplaatst.</div>';return;}
+      entries.sort((a,b)=>PARTS[a[0]].name.localeCompare(PARTS[b[0]].name,'nl')).forEach(([id,count])=>{const row=document.createElement('div');row.className='bom-row';row.innerHTML=`<span>${PARTS[id].name}</span><span>× ${count}</span>`;bomList.appendChild(row);});
+    }
+
+    // THREE.JS — dynamisch geladen zodat de catalogus en 2D-editor blijven werken
+    // wanneer de 3D-bibliotheek tijdelijk niet beschikbaar is.
+    async function initialize3D() {
+      const host = document.getElementById('threeView');
+      const label = document.querySelector('.three-label');
+      try {
+        const THREE = await import('three');
+        const { OrbitControls } = await import('three/addons/controls/OrbitControls.js');
+        const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
+
+      const host=document.getElementById('threeView'),scene=new THREE.Scene();scene.background=new THREE.Color(0x101317);
+      const camera=new THREE.PerspectiveCamera(42,1,.1,100);camera.position.set(10,11,14);
+      const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.shadowMap.enabled=true;host.appendChild(renderer.domElement);
+      const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.target.set(GRID_COLS/2,0,GRID_ROWS/2);controls.minDistance=5;controls.maxDistance=38;controls.maxPolarAngle=Math.PI/2.08;
+      scene.add(new THREE.HemisphereLight(0xe9f1ff,0x25231f,1.5));
+      const keyLight=new THREE.DirectionalLight(0xffffff,2.2);keyLight.position.set(8,14,5);keyLight.castShadow=true;scene.add(keyLight);
+      const floor=new THREE.Mesh(new THREE.PlaneGeometry(GRID_COLS,GRID_ROWS),new THREE.MeshStandardMaterial({color:0x252b31,roughness:.95}));floor.rotation.x=-Math.PI/2;floor.position.set(GRID_COLS/2,-.012,GRID_ROWS/2);floor.receiveShadow=true;scene.add(floor);
+      function createRectangularGrid(columns, rows) {
+        const vertices = [];
+
+        // Verticale rasterlijnen: x = 0..columns, z = 0..rows
+        for (let x = 0; x <= columns; x += 1) {
+          vertices.push(x, 0, 0, x, 0, rows);
+        }
+
+        // Horizontale rasterlijnen: z = 0..rows, x = 0..columns
+        for (let z = 0; z <= rows; z += 1) {
+          vertices.push(0, 0, z, columns, 0, z);
+        }
+
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+        const material = new THREE.LineBasicMaterial({
+          color: 0x46515d,
+          transparent: true,
+          opacity: 0.95
+        });
+        const grid = new THREE.LineSegments(geometry, material);
+        grid.position.y = 0.006;
+        return grid;
+      }
+
+      const gridHelper = createRectangularGrid(GRID_COLS, GRID_ROWS);
+      scene.add(gridHelper);
+      const pieceGroup=new THREE.Group();scene.add(pieceGroup);
+      const loader=new GLTFLoader(),modelCache=new Map(),modelFailures=new Set();
+      
+      function applyMaterial(root,color){root.traverse(child=>{if(child.isMesh){child.castShadow=true;child.receiveShadow=true;if(color){child.material=child.material.clone();child.material.color.setHex(color);}}});}
+      function boundsOfEdges(piece){
+        const points=[];transformedEdges(piece).forEach(id=>{const e=parseEdge(id);points.push([e.x,e.y]);points.push([e.x+(e.kind==='H'?1:0),e.y+(e.kind==='V'?1:0)]);});
+        const xs=points.map(p=>p[0]),ys=points.map(p=>p[1]);return{minX:Math.min(...xs),maxX:Math.max(...xs),minY:Math.min(...ys),maxY:Math.max(...ys)};
+      }
+      function createPlacementGroup(piece) {
+        const placement = new THREE.Group();
+        placement.position.set(piece.x, 0, piece.y);
+        placement.rotation.y = -THREE.MathUtils.degToRad(piece.rotation);
+        placement.userData.pieceId = piece.id;
+        return placement;
+      }
+
+      function createLocalPlaceholder(part, selected = false) {
+        const group = new THREE.Group();
+        const color = selected ? 0xd7ff3f : 0x8d959e;
+        const material = new THREE.MeshStandardMaterial({ color, roughness: 0.82 });
+
+        if (part.anchorType === 'cell') {
+          if (part.placeholder === 'chest') {
+            const base = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.42, 0.52), material);
+            base.position.set(0.5, 0.22, 0.5);
+            group.add(base);
+
+            const lid = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.16, 0.54), material);
+            lid.position.set(0.5, 0.5, 0.5);
+            group.add(lid);
+          } else if (part.placeholder === 'miniature') {
+            const base = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.08, 18), material);
+            base.position.set(0.5, 0.04, 0.5);
+            group.add(base);
+
+            const legs = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.11, 0.42, 10), material);
+            legs.position.set(0.5, 0.29, 0.5);
+            group.add(legs);
+
+            const body = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.12, 0.42, 10), material);
+            body.position.set(0.5, 0.67, 0.5);
+            group.add(body);
+
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.14, 12, 10), material);
+            head.position.set(0.5, 0.98, 0.5);
+            group.add(head);
+
+            const armGeometry = new THREE.CylinderGeometry(0.045, 0.055, 0.42, 8);
+            const leftArm = new THREE.Mesh(armGeometry, material);
+            leftArm.rotation.z = Math.PI / 3.4;
+            leftArm.position.set(0.32, 0.66, 0.5);
+            group.add(leftArm);
+            const rightArm = new THREE.Mesh(armGeometry, material);
+            rightArm.rotation.z = -Math.PI / 3.4;
+            rightArm.position.set(0.68, 0.66, 0.5);
+            group.add(rightArm);
+          } else {
+            const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.4, 0.15, 12), material);
+            ring.position.set(0.5, 0.075, 0.5);
+            group.add(ring);
+
+            const flame = new THREE.Mesh(new THREE.ConeGeometry(0.23, 0.7, 8), material);
+            flame.position.set(0.5, 0.48, 0.5);
+            group.add(flame);
+          }
+        } else {
+          part.footprintEdges.forEach(raw => {
+            const edge = parseEdge(raw);
+            const horizontal = edge.kind === 'H';
+            const mesh = new THREE.Mesh(
+              new THREE.BoxGeometry(horizontal ? 1 : 0.14, 1.15, horizontal ? 0.14 : 1),
+              material
+            );
+            mesh.position.set(
+              edge.x + (horizontal ? 0.5 : 0),
+              0.575,
+              edge.y + (horizontal ? 0 : 0.5)
+            );
+            group.add(mesh);
+          });
+
+          if (part.placeholder === 'round') {
+            const base = baseFootprintBounds(part);
+            const marker = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.19, 1.22, 16), material);
+            marker.position.set(
+              (base.minX + base.maxX) / 2,
+              0.61,
+              (base.minY + base.maxY) / 2
+            );
+            group.add(marker);
+          }
+
+          if (part.placeholder === 'door') {
+            group.children.forEach(mesh => {
+              mesh.scale.y = 0.82;
+              mesh.position.y = 0.47;
+            });
+          }
+        }
+
+        group.traverse(child => {
+          if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+          }
+        });
+
+        return group;
+      }
+
+      async function loadModel(url) {
+        if (modelCache.has(url)) return modelCache.get(url).clone(true);
+        if (modelFailures.has(url)) throw new Error('missing');
+
+        try {
+          const gltf = await loader.loadAsync(url);
+          modelCache.set(url, gltf.scene);
+          return gltf.scene.clone(true);
+        } catch (error) {
+          modelFailures.add(url);
+          throw error;
+        }
+      }
+
+      function baseFootprintBounds(part) {
+        if (part.anchorType === 'cell') return { minX: 0, maxX: 1, minY: 0, maxY: 1 };
+
+        const points = [];
+        part.footprintEdges.forEach(raw => {
+          const edge = parseEdge(raw);
+          points.push([edge.x, edge.y]);
+          points.push([
+            edge.x + (edge.kind === 'H' ? 1 : 0),
+            edge.y + (edge.kind === 'V' ? 1 : 0)
+          ]);
+        });
+
+        const xs = points.map(point => point[0]);
+        const ys = points.map(point => point[1]);
+        return {
+          minX: Math.min(...xs),
+          maxX: Math.max(...xs),
+          minY: Math.min(...ys),
+          maxY: Math.max(...ys)
+        };
+      }
+
+      function prepareExternalModel(model, part) {
+        /*
+          Twee groepen houden de verantwoordelijkheden gescheiden:
+          - placementGroup: rasterpositie en rotatie van het onderdeel;
+          - normalizedGroup: schaal en lokale uitlijning van het GLB-model.
+
+          Het model wordt eerst lokaal gecentreerd en op de grond gezet.
+          Daarna wordt de parent geschaald, zodat ook de centreer-offset correct
+          mee schaalt. Hierdoor werken modellen die in mm, cm of m zijn gemaakt.
+        */
+        const normalizedGroup = new THREE.Group();
+        normalizedGroup.add(model);
+        normalizedGroup.updateMatrixWorld(true);
+
+        let box = new THREE.Box3().setFromObject(normalizedGroup);
+        if (box.isEmpty()) throw new Error('Het GLB-model bevat geen zichtbare geometrie.');
+
+        const originalCenter = box.getCenter(new THREE.Vector3());
+        model.position.x -= originalCenter.x;
+        model.position.z -= originalCenter.z;
+        model.position.y -= box.min.y;
+        normalizedGroup.updateMatrixWorld(true);
+
+        box = new THREE.Box3().setFromObject(normalizedGroup);
+        const size = box.getSize(new THREE.Vector3());
+        const base = baseFootprintBounds(part);
+
+        const targetX = part.anchorType === 'cell' ? (part.placeholder === 'miniature' ? 0.65 : 0.8) : Math.max(0.14, base.maxX - base.minX);
+        const targetZ = part.anchorType === 'cell' ? (part.placeholder === 'miniature' ? 0.65 : 0.8) : Math.max(0.14, base.maxY - base.minY);
+        const targetY = part.placeholder === 'miniature' ? 1.25 : part.anchorType === 'cell' ? 0.9 : 1.4;
+
+        const scale = Math.min(
+          targetX / Math.max(size.x, 0.001),
+          targetZ / Math.max(size.z, 0.001),
+          targetY / Math.max(size.y, 0.001)
+        );
+
+        normalizedGroup.scale.setScalar(scale);
+
+        // Plaats het lokaal gecentreerde model op het midden van zijn ongeroteerde footprint.
+        normalizedGroup.position.set(
+          (base.minX + base.maxX) / 2,
+          0,
+          (base.minY + base.maxY) / 2
+        );
+
+        normalizedGroup.updateMatrixWorld(true);
+        return normalizedGroup;
+      }
+
+      let rebuildToken = 0;
+
+      async function rebuild3DScene() {
+        const token = ++rebuildToken;
+        pieceGroup.clear();
+
+        // Eerst alle placement groups en placeholders plaatsen. Daardoor staat elk
+        // onderdeel onmiddellijk op zijn eigen rasterpositie, ook terwijl GLB's laden.
+        const entries = pieces.map(piece => {
+          const part = PARTS[piece.partId];
+          const placement = createPlacementGroup(piece);
+          const fallback = createLocalPlaceholder(part, piece.id === selectedId);
+          placement.add(fallback);
+          pieceGroup.add(placement);
+          return { piece, part, placement, fallback };
+        });
+
+        await Promise.all(entries.map(async entry => {
+          try {
+            const model = await loadModel(entry.part.modelUrl);
+            if (token !== rebuildToken) return;
+
+            const preparedModel = prepareExternalModel(model, entry.part);
+            applyMaterial(preparedModel, entry.piece.id === selectedId ? 0xd7ff3f : null);
+
+            entry.placement.remove(entry.fallback);
+            entry.placement.add(preparedModel);
+          } catch (error) {
+            // De grijze placeholder blijft zichtbaar wanneer het model ontbreekt.
+          }
+        }));
+      }
+      
+      rebuild3D = rebuild3DScene;
+
+      function resize3D(){const w=Math.max(1,host.clientWidth),h=Math.max(1,host.clientHeight);renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
+      new ResizeObserver(resize3D).observe(host);
+      function animate(){controls.update();renderer.render(scene,camera);requestAnimationFrame(animate);}
+      
+
+      rebuild3D();
+      resize3D();
+      animate();
+      } catch (error) {
+        console.error('De 3D-weergave kon niet worden geladen:', error);
+        label.textContent = '3D-weergave kon niet laden. De top-down editor blijft bruikbaar.';
+        host.innerHTML = '<div style="position:absolute;inset:0;display:grid;place-items:center;padding:24px;color:#9aa3ad;text-align:center;line-height:1.5">De 3D-module kon niet worden geladen.<br>Controleer je internetverbinding of CDN-toegang.</div>';
+      }
+    }
+
+    renderCatalog();
+    renderLibrary();
+    updateBom();
+    updateSelectionText();
+    updateButtons();
+    draw2D();
+    initialize3D();
+
+  </script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+Plaats hier de GLB-modellen uit de lijst in ../README.md.
+
+Voor de referentiefiguur gebruikt de configurator:
+action-figure.glb
