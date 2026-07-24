@@ -239,8 +239,10 @@
 
   <!-- SKALDIS MOBILE CSS START -->
   <style id="skaldis-mobile-optimization">
-/* SKALDIS BUILD — smartphone optimization patch */
-.mobile-nav { display: none; }
+/* SKALDIS BUILD — smartphone optimization patch v2 */
+.mobile-nav,
+.mobile-canvas-tools,
+.mobile-three-tools { display: none; }
 
 @media (max-width: 760px) {
   :root {
@@ -349,9 +351,7 @@
   }
 
   .sidebar .help,
-  .sidebar .legend {
-    display: none;
-  }
+  .sidebar .legend { display: none; }
 
   .pack-stack { gap: 8px !important; }
   .pack-accordion { border-radius: 9px !important; }
@@ -380,10 +380,7 @@
     touch-action: manipulation;
   }
 
-  .part-icon {
-    height: 38px !important;
-    min-width: 0;
-  }
+  .part-icon { height: 38px !important; min-width: 0; }
 
   .part-card strong {
     overflow: hidden;
@@ -397,10 +394,12 @@
   .inventory-pill { min-width: 22px !important; padding-inline: 5px !important; }
 
   .editor-panel {
+    position: relative;
     width: 100%;
     height: 100%;
     min-height: 0 !important;
     grid-template-rows: auto minmax(0, 1fr) auto !important;
+    overflow: hidden;
   }
 
   .panel-title {
@@ -411,26 +410,74 @@
   .panel-title span:last-child { display: none; }
 
   .canvas-wrap {
+    position: relative;
+    display: block !important;
     min-width: 0;
     min-height: 0;
-    align-items: flex-start !important;
-    justify-content: flex-start !important;
     padding: 8px !important;
     overflow: auto !important;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
   }
 
   #gridCanvas {
     display: block;
-    width: 100% !important;
+    width: auto !important;
     height: auto !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
     max-width: none !important;
     max-height: none !important;
-    flex: 0 0 auto;
+    margin: 0 auto;
     border-radius: 6px !important;
     touch-action: none;
   }
+
+  .mobile-canvas-tools,
+  .mobile-three-tools {
+    position: absolute;
+    z-index: 8;
+    display: flex;
+    gap: 5px;
+    padding: 5px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: rgba(18, 21, 24, .92);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 18px rgba(0,0,0,.24);
+  }
+
+  .mobile-canvas-tools {
+    top: 48px;
+    right: max(10px, env(safe-area-inset-right));
+  }
+
+  .mobile-three-tools {
+    right: max(10px, env(safe-area-inset-right));
+    bottom: 12px;
+  }
+
+  .mobile-canvas-tools button,
+  .mobile-three-tools button {
+    min-width: 38px;
+    min-height: 38px;
+    padding: 6px 9px;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 750;
+    touch-action: manipulation;
+  }
+
+  .mobile-canvas-tools button.active,
+  .mobile-three-tools button.active {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--accent-dark);
+  }
+
+  .mobile-canvas-tools .wide,
+  .mobile-three-tools .wide { min-width: 62px; }
 
   .statusbar {
     min-height: 54px !important;
@@ -453,17 +500,30 @@
   #selectionText { font-size: 11px; }
 
   .right-panel {
+    position: relative;
     width: 100%;
     height: 100%;
     min-height: 0 !important;
     border: 0 !important;
   }
 
+  .three-wrap,
+  #threeView { touch-action: none; }
+
+  #threeView canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+    touch-action: none !important;
+  }
+
   .three-label {
     left: 9px !important;
     top: 8px !important;
     right: 9px !important;
+    padding-right: 4px;
     font-size: 11px !important;
+    line-height: 1.35;
   }
 
   .mobile-nav {
@@ -502,9 +562,7 @@
     color: var(--accent-dark);
   }
 
-  .drawer-backdrop {
-    inset: var(--mobile-header-height) 0 0 !important;
-  }
+  .drawer-backdrop { inset: var(--mobile-header-height) 0 0 !important; }
 
   .bom-drawer {
     top: var(--mobile-header-height) !important;
@@ -558,9 +616,7 @@
   .quantity-control input { width: 100% !important; min-height: 44px; }
 
   body.library-mode .mobile-nav,
-  body.skaldis-library-open .mobile-nav {
-    display: none !important;
-  }
+  body.skaldis-library-open .mobile-nav { display: none !important; }
 }
 
 @media (max-width: 420px) {
@@ -577,8 +633,8 @@
   }
   .brand { flex: 0 0 auto; }
   .toolbar { min-width: 0; }
+  .mobile-canvas-tools { top: 9px; }
 }
-
   </style>
   <!-- SKALDIS MOBILE CSS END -->
 </head>
@@ -1337,7 +1393,31 @@
       const host=document.getElementById('threeView'),scene=new THREE.Scene();scene.background=new THREE.Color(0x101317);
       const camera=new THREE.PerspectiveCamera(42,1,.1,100);camera.position.set(10,11,14);
       const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.shadowMap.enabled=true;host.appendChild(renderer.domElement);
-      const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.target.set(GRID_COLS/2,0,GRID_ROWS/2);controls.minDistance=5;controls.maxDistance=38;controls.maxPolarAngle=Math.PI/2.08;
+      const controls=new OrbitControls(camera,renderer.domElement);
+      /* SKALDIS MOBILE 3D START */
+      controls.enableRotate = true;
+      controls.enableZoom = true;
+      controls.enablePan = true;
+      controls.enableDamping = true;
+      controls.screenSpacePanning = true;
+      controls.rotateSpeed = 0.55;
+      controls.zoomSpeed = 0.75;
+      controls.panSpeed = 0.8;
+      if (THREE.TOUCH) {
+        controls.touches.ONE = THREE.TOUCH.ROTATE;
+        controls.touches.TWO = THREE.TOUCH.DOLLY_PAN;
+      }
+      renderer.domElement.style.touchAction = 'none';
+      window.__skaldisMobile3D = {
+        THREE: THREE,
+        camera: camera,
+        renderer: renderer,
+        controls: controls,
+        host: renderer.domElement.parentElement,
+        gridCols: typeof GRID_COLS !== 'undefined' ? GRID_COLS : 14,
+        gridRows: typeof GRID_ROWS !== 'undefined' ? GRID_ROWS : 11
+      };
+      /* SKALDIS MOBILE 3D END */controls.enableDamping=true;controls.target.set(GRID_COLS/2,0,GRID_ROWS/2);controls.minDistance=5;controls.maxDistance=38;controls.maxPolarAngle=Math.PI/2.08;
       scene.add(new THREE.HemisphereLight(0xe9f1ff,0x25231f,1.5));
       const keyLight=new THREE.DirectionalLight(0xffffff,2.2);keyLight.position.set(8,14,5);keyLight.castShadow=true;scene.add(keyLight);
       const floor=new THREE.Mesh(new THREE.PlaneGeometry(GRID_COLS,GRID_ROWS),new THREE.MeshStandardMaterial({color:0x252b31,roughness:.95}));floor.rotation.x=-Math.PI/2;floor.position.set(GRID_COLS/2,-.012,GRID_ROWS/2);floor.receiveShadow=true;scene.add(floor);
@@ -1563,17 +1643,21 @@
 
   <!-- SKALDIS MOBILE JS START -->
   <script id="skaldis-mobile-optimization-script">
-/* SKALDIS BUILD — smartphone navigation and responsive behavior */
+/* SKALDIS BUILD — smartphone navigation and touch behavior v2 */
 (function () {
   'use strict';
 
   var MOBILE_QUERY = '(max-width: 760px)';
-  var STORAGE_KEY = 'skaldis-mobile-view-v1';
+  var STORAGE_KEY = 'skaldis-mobile-view-v2';
 
   function initializeMobileUI() {
     var main = document.getElementById('configuratorScreen');
     var header = document.querySelector('header');
     var libraryScreen = document.getElementById('libraryScreen');
+    var canvas = document.getElementById('gridCanvas');
+    var canvasWrap = canvas && canvas.closest('.canvas-wrap');
+    var editorPanel = main && main.querySelector('.editor-panel');
+    var rightPanel = main && main.querySelector('.right-panel');
 
     if (!main || !header || document.querySelector('.mobile-nav')) return;
 
@@ -1589,21 +1673,228 @@
 
     var buttons = Array.prototype.slice.call(nav.querySelectorAll('[data-mobile-view]'));
     var mediaQuery = window.matchMedia(MOBILE_QUERY);
+    var canvasState = null;
+    var threeFitted = false;
 
     function storedView() {
-      try {
-        return localStorage.getItem(STORAGE_KEY) || 'build';
-      } catch (error) {
-        return 'build';
-      }
+      try { return localStorage.getItem(STORAGE_KEY) || 'build'; }
+      catch (error) { return 'build'; }
     }
 
     function saveView(view) {
-      try {
-        localStorage.setItem(STORAGE_KEY, view);
-      } catch (error) {
-        /* Local storage is optional. */
+      try { localStorage.setItem(STORAGE_KEY, view); }
+      catch (error) { /* Local storage is optional. */ }
+    }
+
+    function updateHeaderHeight() {
+      if (!mediaQuery.matches) return;
+      var height = Math.ceil(header.getBoundingClientRect().height);
+      document.documentElement.style.setProperty('--mobile-header-height', Math.max(1, height) + 'px');
+    }
+
+    function syncLibraryState() {
+      var isOpen = libraryScreen && !libraryScreen.hidden;
+      document.body.classList.toggle('skaldis-library-open', Boolean(isOpen));
+      updateHeaderHeight();
+    }
+
+    function createCanvasTools() {
+      if (!canvas || !canvasWrap || !editorPanel || editorPanel.querySelector('.mobile-canvas-tools')) return;
+
+      var tools = document.createElement('div');
+      tools.className = 'mobile-canvas-tools';
+      tools.setAttribute('aria-label', 'Kaartnavigatie');
+      tools.innerHTML = [
+        '<button type="button" data-canvas-action="out" aria-label="Uitzoomen">−</button>',
+        '<button type="button" class="wide" data-canvas-action="fit" aria-label="Volledige kaart tonen">Passend</button>',
+        '<button type="button" data-canvas-action="in" aria-label="Inzoomen">+</button>',
+        '<button type="button" class="wide" data-canvas-action="pan" aria-label="Handmodus voor verschuiven">Hand</button>'
+      ].join('');
+      editorPanel.appendChild(tools);
+
+      canvasState = {
+        tools: tools,
+        zoom: 1,
+        fitZoom: 1,
+        isFit: true,
+        panMode: false,
+        panPointer: null,
+        panStartX: 0,
+        panStartY: 0,
+        startScrollLeft: 0,
+        startScrollTop: 0
+      };
+
+      function calculateFitZoom() {
+        var availableWidth = Math.max(80, canvasWrap.clientWidth - 16);
+        var availableHeight = Math.max(80, canvasWrap.clientHeight - 16);
+        return Math.max(0.2, Math.min(1, availableWidth / canvas.width, availableHeight / canvas.height));
       }
+
+      function applyZoom(nextZoom, preserveCenter) {
+        if (!mediaQuery.matches) return;
+        var oldWidth = Math.max(1, canvas.getBoundingClientRect().width);
+        var oldHeight = Math.max(1, canvas.getBoundingClientRect().height);
+        var centerX = (canvasWrap.scrollLeft + canvasWrap.clientWidth / 2) / oldWidth;
+        var centerY = (canvasWrap.scrollTop + canvasWrap.clientHeight / 2) / oldHeight;
+
+        canvasState.fitZoom = calculateFitZoom();
+        canvasState.zoom = Math.max(canvasState.fitZoom, Math.min(2.5, nextZoom));
+        canvas.style.width = Math.round(canvas.width * canvasState.zoom) + 'px';
+        canvas.style.height = Math.round(canvas.height * canvasState.zoom) + 'px';
+
+        window.requestAnimationFrame(function () {
+          if (canvasState.isFit) {
+            canvasWrap.scrollLeft = 0;
+            canvasWrap.scrollTop = 0;
+          } else if (preserveCenter) {
+            var newWidth = Math.max(1, canvas.getBoundingClientRect().width);
+            var newHeight = Math.max(1, canvas.getBoundingClientRect().height);
+            canvasWrap.scrollLeft = Math.max(0, centerX * newWidth - canvasWrap.clientWidth / 2);
+            canvasWrap.scrollTop = Math.max(0, centerY * newHeight - canvasWrap.clientHeight / 2);
+          }
+        });
+      }
+
+      function fitCanvas() {
+        canvasState.isFit = true;
+        canvasState.fitZoom = calculateFitZoom();
+        applyZoom(canvasState.fitZoom, false);
+      }
+
+      function setPanMode(enabled) {
+        canvasState.panMode = Boolean(enabled);
+        var button = tools.querySelector('[data-canvas-action="pan"]');
+        if (button) button.classList.toggle('active', canvasState.panMode);
+        canvasWrap.style.cursor = canvasState.panMode ? 'grab' : '';
+      }
+
+      tools.addEventListener('click', function (event) {
+        var button = event.target.closest('[data-canvas-action]');
+        if (!button) return;
+        var action = button.dataset.canvasAction;
+        if (action === 'fit') {
+          fitCanvas();
+        } else if (action === 'in') {
+          canvasState.isFit = false;
+          applyZoom(canvasState.zoom * 1.25, true);
+        } else if (action === 'out') {
+          canvasState.isFit = false;
+          applyZoom(canvasState.zoom / 1.25, true);
+          if (canvasState.zoom <= canvasState.fitZoom + 0.01) fitCanvas();
+        } else if (action === 'pan') {
+          setPanMode(!canvasState.panMode);
+        }
+      });
+
+      canvasWrap.addEventListener('pointerdown', function (event) {
+        if (!mediaQuery.matches || !canvasState.panMode || event.button > 0) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        canvasState.panPointer = event.pointerId;
+        canvasState.panStartX = event.clientX;
+        canvasState.panStartY = event.clientY;
+        canvasState.startScrollLeft = canvasWrap.scrollLeft;
+        canvasState.startScrollTop = canvasWrap.scrollTop;
+        canvasWrap.style.cursor = 'grabbing';
+        try { canvasWrap.setPointerCapture(event.pointerId); } catch (error) { /* optional */ }
+      }, true);
+
+      canvasWrap.addEventListener('pointermove', function (event) {
+        if (canvasState.panPointer !== event.pointerId) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        canvasWrap.scrollLeft = canvasState.startScrollLeft - (event.clientX - canvasState.panStartX);
+        canvasWrap.scrollTop = canvasState.startScrollTop - (event.clientY - canvasState.panStartY);
+      }, true);
+
+      function endPan(event) {
+        if (canvasState.panPointer !== event.pointerId) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        canvasState.panPointer = null;
+        canvasWrap.style.cursor = canvasState.panMode ? 'grab' : '';
+      }
+
+      canvasWrap.addEventListener('pointerup', endPan, true);
+      canvasWrap.addEventListener('pointercancel', endPan, true);
+
+      canvasState.fit = fitCanvas;
+      canvasState.applyZoom = applyZoom;
+      canvasState.setPanMode = setPanMode;
+      fitCanvas();
+    }
+
+    function refreshCanvasViewport() {
+      if (!canvasState || !mediaQuery.matches) return;
+      if (canvasState.isFit) canvasState.fit();
+      else canvasState.applyZoom(canvasState.zoom, false);
+    }
+
+    function getThreeState(callback, attempts) {
+      attempts = attempts || 0;
+      var state = window.__skaldisMobile3D;
+      if (state && state.camera && state.controls && state.THREE) {
+        callback(state);
+        return;
+      }
+      if (attempts < 30) {
+        window.setTimeout(function () { getThreeState(callback, attempts + 1); }, 100);
+      }
+    }
+
+    function fitThreeView(mode) {
+      getThreeState(function (state) {
+        var THREE = state.THREE;
+        var camera = state.camera;
+        var controls = state.controls;
+        var host = state.host || (state.renderer && state.renderer.domElement.parentElement);
+        var cols = Number(state.gridCols) || 14;
+        var rows = Number(state.gridRows) || 11;
+        var aspect = host && host.clientHeight ? host.clientWidth / host.clientHeight : 0.6;
+        var span = Math.max(cols, rows);
+        var target = new THREE.Vector3(cols / 2, 0.55, rows / 2);
+        var distance = span * (aspect < 0.72 ? 2.25 : 1.65);
+
+        camera.up.set(0, 1, 0);
+        controls.target.copy(target);
+        controls.minDistance = Math.max(4, span * 0.42);
+        controls.maxDistance = Math.max(40, span * 5);
+
+        if (mode === 'top') {
+          camera.position.set(target.x, target.y + distance, target.z + 0.01);
+        } else {
+          var direction = new THREE.Vector3(0.82, 0.82, 1).normalize();
+          camera.position.copy(target).addScaledVector(direction, distance);
+        }
+
+        camera.near = 0.1;
+        camera.far = Math.max(100, distance * 8);
+        camera.updateProjectionMatrix();
+        controls.update();
+        threeFitted = true;
+      });
+    }
+
+    function createThreeTools() {
+      if (!rightPanel || rightPanel.querySelector('.mobile-three-tools')) return;
+      var tools = document.createElement('div');
+      tools.className = 'mobile-three-tools';
+      tools.setAttribute('aria-label', '3D-navigatie');
+      tools.innerHTML = [
+        '<button type="button" class="wide" data-three-action="reset">Reset</button>',
+        '<button type="button" class="wide" data-three-action="top">Bovenaanzicht</button>'
+      ].join('');
+      rightPanel.appendChild(tools);
+
+      tools.addEventListener('click', function (event) {
+        var button = event.target.closest('[data-three-action]');
+        if (!button) return;
+        fitThreeView(button.dataset.threeAction === 'top' ? 'top' : 'iso');
+      });
+
+      var label = rightPanel.querySelector('.three-label');
+      if (label) label.textContent = '1 vinger: draaien · 2 vingers: zoomen en verschuiven';
     }
 
     function setView(view, options) {
@@ -1621,24 +1912,16 @@
 
       window.requestAnimationFrame(function () {
         window.dispatchEvent(new Event('resize'));
+        if (view === 'build') refreshCanvasViewport();
+        if (view === 'preview' && !threeFitted) fitThreeView('iso');
       });
-    }
-
-    function updateHeaderHeight() {
-      if (!mediaQuery.matches) return;
-      var height = Math.ceil(header.getBoundingClientRect().height);
-      document.documentElement.style.setProperty('--mobile-header-height', Math.max(1, height) + 'px');
-    }
-
-    function syncLibraryState() {
-      var isOpen = libraryScreen && !libraryScreen.hidden;
-      document.body.classList.toggle('skaldis-library-open', Boolean(isOpen));
-      updateHeaderHeight();
     }
 
     function syncResponsiveState(event) {
       var matches = event && typeof event.matches === 'boolean' ? event.matches : mediaQuery.matches;
       if (matches) {
+        createCanvasTools();
+        createThreeTools();
         setView(main.dataset.mobileView || storedView(), { skipSave: true });
         updateHeaderHeight();
         syncLibraryState();
@@ -1646,13 +1929,16 @@
         main.removeAttribute('data-mobile-view');
         document.body.classList.remove('skaldis-library-open');
         document.documentElement.style.removeProperty('--mobile-header-height');
+        if (canvas) {
+          canvas.style.removeProperty('width');
+          canvas.style.removeProperty('height');
+        }
+        if (canvasState) canvasState.setPanMode(false);
       }
     }
 
     buttons.forEach(function (button) {
-      button.addEventListener('click', function () {
-        setView(button.dataset.mobileView);
-      });
+      button.addEventListener('click', function () { setView(button.dataset.mobileView); });
     });
 
     document.addEventListener('click', function (event) {
@@ -1660,6 +1946,7 @@
 
       var card = event.target.closest('.part-card');
       if (card && main.contains(card) && main.dataset.mobileView === 'assets') {
+        if (canvasState) canvasState.setPanMode(false);
         window.setTimeout(function () { setView('build'); }, 0);
       }
 
@@ -1676,22 +1963,27 @@
     }
 
     if (window.ResizeObserver) {
-      new ResizeObserver(updateHeaderHeight).observe(header);
+      new ResizeObserver(function () {
+        updateHeaderHeight();
+        refreshCanvasViewport();
+      }).observe(header);
+      if (canvasWrap) new ResizeObserver(refreshCanvasViewport).observe(canvasWrap);
     } else {
-      window.addEventListener('resize', updateHeaderHeight, { passive: true });
+      window.addEventListener('resize', function () {
+        updateHeaderHeight();
+        refreshCanvasViewport();
+      }, { passive: true });
     }
 
-    if (mediaQuery.addEventListener) {
-      mediaQuery.addEventListener('change', syncResponsiveState);
-    } else {
-      mediaQuery.addListener(syncResponsiveState);
-    }
+    if (mediaQuery.addEventListener) mediaQuery.addEventListener('change', syncResponsiveState);
+    else mediaQuery.addListener(syncResponsiveState);
 
     window.addEventListener('orientationchange', function () {
       window.setTimeout(function () {
         updateHeaderHeight();
+        refreshCanvasViewport();
         window.dispatchEvent(new Event('resize'));
-      }, 80);
+      }, 120);
     });
 
     syncResponsiveState();
@@ -1703,7 +1995,6 @@
     initializeMobileUI();
   }
 })();
-
   </script>
   <!-- SKALDIS MOBILE JS END -->
 </body>
