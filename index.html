@@ -804,8 +804,15 @@
     const PART_VARIANTS = {
       'wall-straight-2': [
         { id: 'window', name: 'Muur 2 met raam', fileName: 'wall-straight-2-window.glb' },
-        { id: 'low', name: 'Lage muur 2', fileName: 'wall-straight-2-low.glb' },
-        { id: 'door', name: 'Muur 2 met deur', fileName: 'door-2.glb.glb' }
+        { id: 'door', name: 'Muur 2 met deur', fileName: 'door-2.glb' },
+        { id: 'low', name: 'Lage muur 2', fileName: 'wall-straight-2-low.glb' }
+ 
+      ],
+      'wall-straight-1': [
+        { id: 'window', name: 'Muur 1 met raam', fileName: 'wall-straight-1-window.glb' },
+        { id: 'door', name: 'Muur 1 met deur', fileName: 'door-1.glb' },
+        { id: 'low', name: 'Lage muur 1', fileName: 'wall-straight-1-low.glb' }
+ 
       ]
     };
 
@@ -1061,6 +1068,7 @@
       packAccordion.innerHTML = '';
       const allEntries = enabledPartEntries();
       const privateEntries = allEntries.filter(([id]) => (collectionInventory[id] || 0) > 0);
+      const genericEntries = allEntries.filter(([, part]) => part.pack === 'generic');
       const castleEntries = allEntries.filter(([, part]) => part.pack === 'castle');
       const dungeonEntries = allEntries.filter(([, part]) => part.pack === 'dungeon');
       packAccordion.appendChild(createPackAccordion('private', privateEntries, {
@@ -1068,9 +1076,11 @@
         inventoryMode: true,
         emptyText: 'Nog geen stukken toegevoegd. Open de bibliotheek om je collectie samen te stellen.'
       }));
-      packAccordion.appendChild(createPackAccordion('castle', castleEntries, { open: openState.castle ?? true }));
+      
+      packAccordion.appendChild(createPackAccordion('generic', genericEntries, { open: openState.generic ?? false }));
+      packAccordion.appendChild(createPackAccordion('castle', castleEntries, { open: openState.castle ?? false }));
       packAccordion.appendChild(createPackAccordion('dungeon', dungeonEntries, {
-        open: openState.dungeon ?? false,
+        open: openState.dungeon ?? true,
         emptyText: 'Lege placeholder. Hier kun je later assets van het Dungeon pack toevoegen.'
       }));
       refreshActiveCards();
@@ -1091,7 +1101,7 @@
       ownedPieceCount.textContent = String(ownedEntries.reduce((sum, [id]) => sum + collectionInventory[id], 0));
       libraryPacks.innerHTML = '';
 
-      ['castle', 'dungeon'].forEach(packId => {
+      ['generic','castle', 'dungeon'].forEach(packId => {
         const packEntries = entries.filter(([, part]) => part.pack === packId);
         const section = document.createElement('section');
         section.className = 'library-pack';
