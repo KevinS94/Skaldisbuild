@@ -782,11 +782,11 @@
       'corner-2x2': { status: 'enabled', name: 'Hoek 2×2', pack: 'dungeon', category: 'structure', anchorType: 'cell', footprintCells: ['0:0','1:0','0:1'], paths: [[[2,0.5],[0.5,0.5],[0.5,2]]], modelUrl: './models/corner-2x2_v2.glb', placeholder: 'corner' },
       't-piece-1': { status: 'enabled', name: 'T-stuk 1', pack: 'dungeon', category: 'structure', anchorType: 'cell', footprintCells: ['0:0'], paths: [[[0,0.5],[1,0.5]],[[0.5,0.5],[0.5,1]]], modelUrl: './models/t-piece-1_v2.glb', placeholder: 't' },
       't-piece-2': { status: 'disenabled', name: 'T-stuk 2', pack: 'dungeon', category: 'structure', anchorType: 'cell', footprintCells: ['0:0','1:0','2:0','1:1'], paths: [[[0,0.5],[3,0.5]],[[1.5,0.5],[1.5,2]]], modelUrl: './models/t-piece-2.glb', placeholder: 't' },
-      'round-corner-1': { status: 'disenabled', name: 'Hoek afronding 1', pack: 'dungeon', category: 'structure', anchorType: 'cell', footprintCells: ['0:0'], paths: [[[1,0.5],[0.5,0.5],[0.5,1]]], modelUrl: './models/round-corner-1.glb', placeholder: 'round' },
-      'round-corner-2': { status: 'disenabled', name: 'Hoek afronding 2', pack: 'dungeon', category: 'structure', anchorType: 'cell', footprintCells: ['0:0','1:0','0:1'], paths: [[[2,0.5],[0.5,0.5],[0.5,2]]], modelUrl: './models/round-corner-2.glb', placeholder: 'round' },
-      'door-1': { status: 'enabled', name: 'Deur 1', pack: 'dungeon', category: 'structure', anchorType: 'cell', footprintCells: ['0:0'], paths: [[[0,0.5],[1,0.5]]], modelUrl: './models/door-1.glb', placeholder: 'door' },
-      'door-2': { status: 'enabled', name: 'Deur 2', pack: 'dungeon', category: 'structure', anchorType: 'cell', footprintCells: ['0:0','1:0'], paths: [[[0,0.5],[2,0.5]]], modelUrl: './models/door-2.glb', placeholder: 'door' },
-      'chest': { status: 'disenabled', name: 'Kist', pack: 'dungeon', category: 'prop', anchorType: 'cell', footprintCells: ['0:0'], modelUrl: './models/chest.glb', placeholder: 'chest' },
+      'round-corner-1': { status: 'disabled', name: 'Hoek afronding 1', pack: 'dungeon', category: 'structure', anchorType: 'cell', footprintCells: ['0:0'], paths: [[[1,0.5],[0.5,0.5],[0.5,1]]], modelUrl: './models/round-corner-1.glb', placeholder: 'round' },
+      'round-corner-2': { status: 'disabled', name: 'Hoek afronding 2', pack: 'dungeon', category: 'structure', anchorType: 'cell', footprintCells: ['0:0','1:0','0:1'], paths: [[[2,0.5],[0.5,0.5],[0.5,2]]], modelUrl: './models/round-corner-2.glb', placeholder: 'round' },
+      'door-1': { status: 'disabled', name: 'Deur 1', pack: 'dungeon', category: 'structure', anchorType: 'cell', footprintCells: ['0:0'], paths: [[[0,0.5],[1,0.5]]], modelUrl: './models/door-1.glb', placeholder: 'door' },
+      'door-2': { status: 'disabled', name: 'Deur 2', pack: 'dungeon', category: 'structure', anchorType: 'cell', footprintCells: ['0:0','1:0'], paths: [[[0,0.5],[2,0.5]]], modelUrl: './models/door-2.glb', placeholder: 'door' },
+      'chest': { status: 'disabled', name: 'Kist', pack: 'dungeon', category: 'prop', anchorType: 'cell', footprintCells: ['0:0'], modelUrl: './models/chest.glb', placeholder: 'chest' },
       'campfire': { status: 'enabled', name: 'Kampvuur', pack: 'generic', category: 'prop', anchorType: 'cell', footprintCells: ['0:0'], modelUrl: './models/campfire.glb', placeholder: 'campfire' },
       'action-figure': { status: 'enabled', name: 'Referentiefiguur', pack: 'generic', category: 'prop', anchorType: 'cell', footprintCells: ['0:0'], modelUrl: './models/action-figure.glb', placeholder: 'miniature' },
       'wall-double-2': { status: 'enabled', name: 'Muur 2×2 recht', pack: 'castle', category: 'structure', anchorType: 'cell', footprintCells: ['0:0','1:0','0:1','1:1'], paths: [[[0,1],[2,1]]], modelUrl: './models/wall-double-2.glb', placeholder: 'straight' },
@@ -805,7 +805,7 @@
       'wall-straight-2': [
         { id: 'window', name: 'Muur 2 met raam', fileName: 'wall-straight-2-window.glb' },
         { id: 'low', name: 'Lage muur 2', fileName: 'wall-straight-2-low.glb' },
-        { id: 'door', name: 'Muur 2 met deur', fileName: 'wall-straight-2-door.glb' }
+        { id: 'door', name: 'Muur 2 met deur', fileName: 'door-2.glb.glb' }
       ]
     };
 
