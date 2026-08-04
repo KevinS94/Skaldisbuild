@@ -268,6 +268,74 @@
     .library-empty { padding: 24px; color: var(--muted); font-size: 13px; text-align: center; }
 
 
+
+    /* SKALDIS OPTIONS — appearance + language */
+    .options-wrap { position: relative; display: inline-flex; }
+    .options-panel {
+      position: fixed;
+      z-index: 95;
+      width: min(320px, calc(100vw - 20px));
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel);
+      color: var(--text);
+      box-shadow: 0 16px 44px rgba(0,0,0,.32);
+    }
+    .options-panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 2px 2px 10px; border-bottom: 1px solid var(--line); }
+    .options-panel-head strong { font-size: 13px; }
+    .options-panel-head button { padding: 5px 8px; }
+    .option-row { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 14px; padding: 12px 2px 2px; }
+    .option-copy strong { display: block; font-size: 12px; }
+    .option-copy small { display: block; margin-top: 2px; color: var(--muted); font-size: 10px; line-height: 1.35; }
+    .slider-toggle {
+      position: relative;
+      width: 126px;
+      height: 36px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      padding: 3px;
+      border-radius: 999px;
+      overflow: hidden;
+      isolation: isolate;
+    }
+    .slider-toggle span:not(.slider-thumb) { position: relative; z-index: 2; text-align: center; font-size: 11px; font-weight: 750; color: var(--muted); pointer-events: none; transition: color .16s ease; }
+    .slider-toggle .slider-thumb { position: absolute; z-index: 1; left: 3px; top: 3px; width: calc(50% - 3px); height: 28px; border-radius: 999px; background: var(--accent); transform: translateX(0); transition: transform .18s ease; pointer-events: none; }
+    .slider-toggle.is-right .slider-thumb { transform: translateX(100%); }
+    .slider-toggle:not(.is-right) span:nth-child(1),
+    .slider-toggle.is-right span:nth-child(2) { color: var(--accent-dark); }
+
+    body[data-theme="light"] {
+      color-scheme: light;
+      --bg: #f2f4f6;
+      --panel: #ffffff;
+      --panel-2: #eef1f4;
+      --line: #cbd2d9;
+      --text: #171a1f;
+      --muted: #68727d;
+      --accent: #b8dd19;
+      --accent-dark: #11170a;
+      --danger: #c83f38;
+      --valid: #278a4d;
+      --placeholder: #7d8791;
+      --selected: #9fca00;
+    }
+    body[data-theme="light"] header { background: #ffffff; }
+    body[data-theme="light"] .pack-accordion { background: #f8f9fa; }
+    body[data-theme="light"] .part-icon,
+    body[data-theme="light"] .quantity-control input { background: #ffffff; }
+    body[data-theme="light"] .editor-panel { background: #eef1f4; }
+    body[data-theme="light"] .right-panel,
+    body[data-theme="light"] .three-wrap { background: #e7ebef; }
+    body[data-theme="light"] .bom-drawer { background: #ffffff; }
+    body[data-theme="light"] .wip-tooltip::after { background: #ffffff; }
+    body[data-theme="light"] .variant-menu { background: #ffffff; box-shadow: 0 14px 40px rgba(20,30,40,.16); }
+    body[data-theme="light"] .options-panel { box-shadow: 0 16px 44px rgba(20,30,40,.16); }
+    body[data-theme="light"] .mobile-nav,
+    body[data-theme="light"] .mobile-canvas-tools,
+    body[data-theme="light"] .mobile-three-tools { background: rgba(255,255,255,.96); }
+
     @media (max-width: 1050px) {
       main { grid-template-columns: 220px minmax(370px, 1fr); }
       .right-panel { grid-column: 1 / -1; min-height: 390px; border-left: 0; border-top: 1px solid var(--line); }
@@ -706,46 +774,47 @@
 <body>
   <div class="app">
     <header>
-      <div class="brand"><strong>SKALDIS BUILD</strong><span>Configurator</span></div>
+      <div class="brand"><strong>SKALDIS BUILD</strong><span data-i18n="configurator">Configurator</span></div>
       <div class="toolbar">
-        <span class="wip-tooltip" data-tooltip="Work in progress" tabindex="0"><button id="libraryBtn" type="button" disabled aria-disabled="true">Bibliotheek</button></span>
-        <button id="rotateBtn" class="config-action" type="button">Roteren <span class="kbd">R</span></button>
-        <button id="duplicateBtn" class="config-action" type="button">Dupliceren <span class="kbd">D</span></button>
+        <button id="optionsBtn" type="button"><span data-i18n="options">Opties</span></button>
+        <span class="wip-tooltip" data-tooltip="Work in progress" tabindex="0"><button id="libraryBtn" type="button" disabled aria-disabled="true"><span data-i18n="library">Bibliotheek</span></button></span>
+        <button id="rotateBtn" class="config-action" type="button"><span data-i18n="rotate">Roteren</span> <span class="kbd">R</span></button>
+        <button id="duplicateBtn" class="config-action" type="button"><span data-i18n="duplicate">Dupliceren</span> <span class="kbd">D</span></button>
         <button id="undoBtn" class="config-action" type="button">Undo</button>
         <button id="redoBtn" class="config-action" type="button">Redo</button>
-        <button id="deleteBtn" class="config-action danger" type="button">Verwijder <span class="kbd">Del</span></button>
-        <button id="clearBtn" class="config-action" type="button">Leegmaken</button>
-        <button id="bomBtn" class="config-action" type="button">Stuklijst <span id="bomCount" class="badge">0</span></button>
-        <button id="openBtn" class="config-action" type="button">Ontwerp openen</button>
-        <button id="saveBtn" class="config-action primary" type="button">Ontwerp opslaan</button>
+        <button id="deleteBtn" class="config-action danger" type="button"><span data-i18n="delete">Verwijder</span> <span class="kbd">Del</span></button>
+        <button id="clearBtn" class="config-action" type="button"><span data-i18n="clear">Leegmaken</span></button>
+        <button id="bomBtn" class="config-action" type="button"><span data-i18n="bom">Stuklijst</span> <span id="bomCount" class="badge">0</span></button>
+        <button id="openBtn" class="config-action" type="button"><span data-i18n="openDesign">Ontwerp openen</span></button>
+        <button id="saveBtn" class="config-action primary" type="button"><span data-i18n="saveDesign">Ontwerp opslaan</span></button>
         <input id="openFileInput" type="file" accept="application/json,.json" hidden />
       </div>
     </header>
 
     <main id="configuratorScreen">
       <aside class="sidebar">
-        <p class="help">Alle onderdelen klikken op volledige gridvakken. Sleep een onderdeel naar het raster, of selecteer het en klik op een geldig vak.</p>
+        <p class="help" data-i18n="helpIntro">Alle onderdelen klikken op volledige gridvakken. Sleep een onderdeel naar het raster, of selecteer het en klik op een geldig vak.</p>
         <div id="packAccordion" class="pack-stack"></div>
         <div class="legend">
-          <strong>Besturing</strong><br />
-          Randstukken klikken op rasterlijnen.<br />Props klikken in het midden van een vak.<br />
-          Klik een geplaatst onderdeel om het te selecteren.<br />
-          Sleep om te verplaatsen.<br />
-          <span class="kbd">R</span> roteert 90°.<br />
-          <span class="kbd">D</span> dupliceert het geselecteerde onderdeel.<br />
-          <span class="kbd">Esc</span> annuleert.
+          <strong data-i18n="controls">Besturing</strong><br />
+          <span data-i18n="controlLine1">Randstukken klikken op rasterlijnen.</span><br /><span data-i18n="controlLine2">Props klikken in het midden van een vak.</span><br />
+          <span data-i18n="controlLine3">Klik een geplaatst onderdeel om het te selecteren.</span><br />
+          <span data-i18n="controlLine4">Sleep om te verplaatsen.</span><br />
+          <span class="kbd">R</span> <span data-i18n="controlRotate">roteert 90°.</span><br />
+          <span class="kbd">D</span> <span data-i18n="controlDuplicate">dupliceert het geselecteerde onderdeel.</span><br />
+          <span class="kbd">Esc</span> <span data-i18n="controlCancel">annuleert.</span>
         </div>
       </aside>
 
       <section class="editor-panel">
         <div class="panel-title">
-          <div class="panel-heading"><span>Top-down editor</span><span id="gridMeta">14 × 11 vakken · 1 vak = 25,4 mm</span></div>
+          <div class="panel-heading"><span data-i18n="topdownEditor">Top-down editor</span><span id="gridMeta">14 × 11 vakken · 1 vak = 25,4 mm</span></div>
           <div class="grid-size-controls" aria-label="Rastergrootte">
-            <label>Breedte <input id="gridColsInput" type="number" min="10" max="30" step="1" value="14" /></label>
-            <label>Hoogte <input id="gridRowsInput" type="number" min="10" max="30" step="1" value="11" /></label>
-            <button id="applyGridBtn" type="button">Toepassen</button>
-            <button id="desktopPanBtn" type="button" title="Sleep met de muis om over een groot raster te bewegen">Hand</button>
-            <span class="grid-range-note">10–30 vakken</span>
+            <label><span data-i18n="width">Breedte</span> <input id="gridColsInput" type="number" min="10" max="30" step="1" value="14" /></label>
+            <label><span data-i18n="height">Hoogte</span> <input id="gridRowsInput" type="number" min="10" max="30" step="1" value="11" /></label>
+            <button id="applyGridBtn" type="button" data-i18n="apply">Toepassen</button>
+            <button id="desktopPanBtn" type="button" data-i18n="hand" data-i18n-title="handTitle" title="Sleep met de muis om over een groot raster te bewegen">Hand</button>
+            <span class="grid-range-note" data-i18n="gridRange">10–30 vakken</span>
           </div>
         </div>
         <div class="canvas-wrap"><canvas id="gridCanvas" width="750" height="600" aria-label="Top-down grid editor"></canvas></div>
@@ -754,11 +823,27 @@
 
       <section class="right-panel">
         <div class="three-wrap">
-          <div class="three-label">Live 3D-weergave · slepen om rond te kijken · scrollen om te zoomen</div>
+          <div class="three-label" data-i18n="threeLabel">Live 3D-weergave · slepen om rond te kijken · scrollen om te zoomen · rechtermuisknop voor varianten</div>
           <div id="threeView" aria-label="3D preview"></div>
         </div>
       </section>
     </main>
+  </div>
+
+  <div id="optionsPanel" class="options-panel" hidden>
+    <div class="options-panel-head"><strong data-i18n="options">Opties</strong><button id="closeOptionsBtn" type="button" aria-label="Close">×</button></div>
+    <div class="option-row">
+      <div class="option-copy"><strong data-i18n="appearance">Weergave</strong><small data-i18n="appearanceHelp">Wissel tussen lichte en donkere modus.</small></div>
+      <button id="themeToggle" class="slider-toggle is-right" type="button" aria-label="Light / Dark">
+        <span>Light</span><span>Dark</span><span class="slider-thumb"></span>
+      </button>
+    </div>
+    <div class="option-row">
+      <div class="option-copy"><strong data-i18n="language">Taal</strong><small data-i18n="languageHelp">Taal van de BUILD-interface.</small></div>
+      <button id="languageToggle" class="slider-toggle" type="button" aria-label="NL / ENG">
+        <span>NL</span><span>ENG</span><span class="slider-thumb"></span>
+      </button>
+    </div>
   </div>
 
   <section id="libraryScreen" class="library-screen" hidden>
@@ -781,9 +866,9 @@
 
   <div id="drawerBackdrop" class="drawer-backdrop"></div>
   <aside id="bomDrawer" class="bom-drawer" aria-hidden="true">
-    <div class="drawer-head"><h2>Stuklijst</h2><button id="closeBomBtn" type="button">Sluiten</button></div>
+    <div class="drawer-head"><h2 data-i18n="bom">Stuklijst</h2><button id="closeBomBtn" type="button" data-i18n="close">Sluiten</button></div>
     <div class="drawer-body"><div id="bomList" class="bom-list"></div></div>
-    <div class="drawer-foot">De lijst telt fysieke onderdelen, niet de afzonderlijke bezette gridsegmenten.</div>
+    <div class="drawer-foot" data-i18n="bomFoot">De lijst telt fysieke onderdelen, niet de afzonderlijke bezette gridsegmenten.</div>
   </aside>
 
   <script type="importmap">
@@ -817,6 +902,74 @@
     const SKALDIS_API_BASE = 'https://zrhryfiwxpgivojunsip.supabase.co/functions/v1';
     const CATALOG_ENDPOINT = `${SKALDIS_API_BASE}/build-catalog`;
     const MODEL_URL_ENDPOINT = `${SKALDIS_API_BASE}/build-model-url`;
+
+
+    // ============================================================
+    // SKALDIS BUILD — user options
+    // Stored locally; no account or Supabase write is required.
+    // ============================================================
+    const UI_STORAGE_KEY = 'skaldis-build-ui-options-v1';
+    const I18N = {
+      nl: {
+        configurator:'Configurator', options:'Opties', library:'Bibliotheek', rotate:'Roteren', duplicate:'Dupliceren', delete:'Verwijder', clear:'Leegmaken', bom:'Stuklijst', openDesign:'Ontwerp openen', saveDesign:'Ontwerp opslaan', close:'Sluiten',
+        appearance:'Weergave', appearanceHelp:'Wissel tussen lichte en donkere modus.', language:'Taal', languageHelp:'Taal van de BUILD-interface.',
+        helpIntro:'Alle onderdelen klikken op volledige gridvakken. Sleep een onderdeel naar het raster, of selecteer het en klik op een geldig vak.', controls:'Besturing', controlLine1:'Randstukken klikken op rasterlijnen.', controlLine2:'Props klikken in het midden van een vak.', controlLine3:'Klik een geplaatst onderdeel om het te selecteren.', controlLine4:'Sleep om te verplaatsen.', controlRotate:'roteert 90°.', controlDuplicate:'dupliceert het geselecteerde onderdeel.', controlCancel:'annuleert.',
+        topdownEditor:'Top-down editor', width:'Breedte', height:'Hoogte', apply:'Toepassen', hand:'Hand', handTitle:'Sleep met de muis om over een groot raster te bewegen', gridRange:'10–30 vakken', threeLabel:'Live 3D-weergave · slepen om rond te kijken · scrollen om te zoomen · rechtermuisknop voor varianten', bomFoot:'De lijst telt fysieke onderdelen, niet de afzonderlijke bezette gridsegmenten.',
+        structures:'Structuurelementen', props:'Props', emptyCategory:'Deze categorie is voorlopig leeg.', emptyPack:'Deze pack bevat voorlopig geen actieve assets.', noAssets:'Geen actieve BUILD-assets gevonden.', assets:'assets', pieces:'stuks',
+        cell:'vak', cells:'vakken', nothingSelected:'Niets geselecteerd', selectOrDrag:'Selecteer of sleep een onderdeel.', chooseVariant:'Kies een modelvariant', noVariants:'Geen extra variaties beschikbaar', standard:'Standaard',
+        gridMeta:(c,r)=>`${c} × ${r} vakken · 1 vak = 25,4 mm`, gridChanged:(c,r)=>`Raster aangepast naar ${c} × ${r}.`, opened:f=>`Ontwerp geopend: ${f}`, openFailed:e=>`Openen mislukt: ${e}`, threeFailed:'3D-weergave kon niet laden. De top-down editor blijft bruikbaar.', threeFailedBody:'De 3D-module kon niet worden geladen. Controleer je internetverbinding of CDN-toegang.', gridInvalid:(a,b)=>`Rastergrootte moet tussen ${a} en ${b} vakken liggen.`, gridTooSmall:'Raster kan niet kleiner worden: één of meer onderdelen zouden buiten het raster vallen.', disabledPart:'Dit onderdeel is uitgeschakeld.', selectedToPlace:n=>`${n} geselecteerd om te plaatsen.`, invalidPosition:'Deze positie is niet geldig.', moved:'Onderdeel verplaatst.', moveCancelled:'Verplaatsing geannuleerd: positie ongeldig.',
+        readyToPlace:(n,r)=>`${n} klaar om te plaatsen op ${r}°.`, selectFirst:'Selecteer eerst een onderdeel of kies een onderdeel om te plaatsen.', cannotRotate:'Roteren kan hier niet.', duplicateFirst:'Selecteer eerst een geplaatst onderdeel om te dupliceren.', unavailable:'Dit onderdeel is niet meer beschikbaar.', duplicateReady:(n,r)=>`Duplicaat klaar: ${n} · ${r}°. Klik op het raster om te plaatsen.`, saved:'Ontwerp lokaal opgeslagen.', undoDone:'Undo uitgevoerd.', redoDone:'Redo uitgevoerd.', noneSelectedStatus:'Niets geselecteerd.', rotated:'Onderdeel 90° gedraaid.', removed:'Onderdeel verwijderd.', cleared:'Ontwerp leeggemaakt.', cancelled:'Selectie geannuleerd.', placed:n=>`${n} geplaatst.`, variantChosen:n=>`Variant gekozen: ${n}.`, loadingCatalog:'Assetcatalogus laden…', catalogLoaded:(a,p)=>`${a} assets geladen uit ${p} packs.`, catalogFailed:e=>`Assetcatalogus kon niet worden geladen: ${e}`, retry:'Opnieuw proberen', emptyBom:'Nog geen onderdelen geplaatst.',
+        mobileAssets:'Onderdelen', mobileBuild:'Bouwen', mobilePreview:'3D', fit:'Passend', topView:'Bovenaanzicht', reset:'Reset', touch3d:'1 vinger: draaien · 2 vingers: zoomen en verschuiven'
+      },
+      en: {
+        configurator:'Configurator', options:'Options', library:'Library', rotate:'Rotate', duplicate:'Duplicate', delete:'Delete', clear:'Clear', bom:'Parts list', openDesign:'Open design', saveDesign:'Save design', close:'Close',
+        appearance:'Appearance', appearanceHelp:'Switch between light and dark mode.', language:'Language', languageHelp:'Language of the BUILD interface.',
+        helpIntro:'All parts snap to full grid cells. Drag a part onto the grid, or select it and click a valid cell.', controls:'Controls', controlLine1:'Edge elements snap to grid lines.', controlLine2:'Props snap to the center of a cell.', controlLine3:'Click a placed part to select it.', controlLine4:'Drag to move.', controlRotate:'rotates 90°.', controlDuplicate:'duplicates the selected part.', controlCancel:'cancels.',
+        topdownEditor:'Top-down editor', width:'Width', height:'Height', apply:'Apply', hand:'Hand', handTitle:'Drag with the mouse to navigate a large grid', gridRange:'10–30 cells', threeLabel:'Live 3D view · drag to orbit · scroll to zoom · right-click for variants', bomFoot:'The list counts physical parts, not individual occupied grid cells.',
+        structures:'Structural elements', props:'Props', emptyCategory:'This category is currently empty.', emptyPack:'This pack currently has no active assets.', noAssets:'No active BUILD assets found.', assets:'assets', pieces:'pieces',
+        cell:'cell', cells:'cells', nothingSelected:'Nothing selected', selectOrDrag:'Select or drag a part.', chooseVariant:'Choose a model variant', noVariants:'No additional variants available', standard:'Standard',
+        gridMeta:(c,r)=>`${c} × ${r} cells · 1 cell = 25.4 mm`, gridChanged:(c,r)=>`Grid resized to ${c} × ${r}.`, opened:f=>`Design opened: ${f}`, openFailed:e=>`Open failed: ${e}`, threeFailed:'3D view could not load. The top-down editor remains available.', threeFailedBody:'The 3D module could not be loaded. Check your internet connection or CDN access.', gridInvalid:(a,b)=>`Grid size must be between ${a} and ${b} cells.`, gridTooSmall:'The grid cannot be reduced: one or more parts would fall outside it.', disabledPart:'This part is disabled.', selectedToPlace:n=>`${n} selected for placement.`, invalidPosition:'This position is not valid.', moved:'Part moved.', moveCancelled:'Move cancelled: invalid position.',
+        readyToPlace:(n,r)=>`${n} ready to place at ${r}°.`, selectFirst:'First select a part or choose a part to place.', cannotRotate:'Cannot rotate here.', duplicateFirst:'First select a placed part to duplicate.', unavailable:'This part is no longer available.', duplicateReady:(n,r)=>`Duplicate ready: ${n} · ${r}°. Click the grid to place it.`, saved:'Design saved locally.', undoDone:'Undo complete.', redoDone:'Redo complete.', noneSelectedStatus:'Nothing selected.', rotated:'Part rotated 90°.', removed:'Part deleted.', cleared:'Design cleared.', cancelled:'Selection cancelled.', placed:n=>`${n} placed.`, variantChosen:n=>`Variant selected: ${n}.`, loadingCatalog:'Loading asset catalog…', catalogLoaded:(a,p)=>`${a} assets loaded from ${p} packs.`, catalogFailed:e=>`Asset catalog could not be loaded: ${e}`, retry:'Try again', emptyBom:'No parts placed yet.',
+        mobileAssets:'Parts', mobileBuild:'Build', mobilePreview:'3D', fit:'Fit', topView:'Top view', reset:'Reset', touch3d:'1 finger: rotate · 2 fingers: zoom and pan'
+      }
+    };
+    const TYPE_LABELS_EN = { WALL:'Straight Wall', CORNER:'Corner', TEE:'T-junction', CROSS:'Cross', PILLAR:'Pillar', WALLEND:'Wall End', TWRSTR:'Straight Tower', TWRCNR:'Corner Tower', GATE:'Gate', CHEST:'Chest', FIRE:'Campfire', FIGURE:'Reference Figure' };
+    const VARIANT_LABELS = {
+      nl: { BASIC:'Standaard', DOOR:'Deur', WINDOW:'Raam', RUINED:'Ruïne', PILLAR:'Met pilaar', ROUND:'Afgerond', LOW:'Laag' },
+      en: { BASIC:'Standard', DOOR:'Door', WINDOW:'Window', RUINED:'Ruined', PILLAR:'With pillar', ROUND:'Rounded', LOW:'Low' }
+    };
+    const THEME_PALETTES = {
+      dark: { canvasBg:'#15191d', grid:'#343b44', dots:'#65707c', wall:'#b8a68d', cellFill:'rgba(184,166,141,.08)', selectedFill:'rgba(215,255,63,.13)', selected:'#d7ff3f', valid:'#70df93', invalid:'#ff675f', propBorder:'#333a43', inner:'#15191d', threeBg:0x101317, threeFloor:0x252b31, threeGrid:0x46515d, placeholder:0x8d959e },
+      light:{ canvasBg:'#f7f8fa', grid:'#cbd2d9', dots:'#8a949e', wall:'#766a59', cellFill:'rgba(118,106,89,.08)', selectedFill:'rgba(159,202,0,.13)', selected:'#9fca00', valid:'#278a4d', invalid:'#c83f38', propBorder:'#9aa3ad', inner:'#f7f8fa', threeBg:0xe7ebef, threeFloor:0xd9dfe5, threeGrid:0xaeb7c0, placeholder:0x7d8791 }
+    };
+    function readUiOptions() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(UI_STORAGE_KEY) || '{}');
+        return { theme: saved.theme === 'light' ? 'light' : 'dark', language: saved.language === 'en' ? 'en' : 'nl' };
+      } catch (_) { return { theme:'dark', language:'nl' }; }
+    }
+    let uiOptions = readUiOptions();
+    function t(key, ...args) {
+      const value = I18N[uiOptions.language]?.[key] ?? I18N.nl[key] ?? key;
+      return typeof value === 'function' ? value(...args) : value;
+    }
+    window.__skaldisT = t;
+    function getThemePalette() { return THEME_PALETTES[uiOptions.theme] || THEME_PALETTES.dark; }
+    function saveUiOptions() { try { localStorage.setItem(UI_STORAGE_KEY, JSON.stringify(uiOptions)); } catch (_) {} }
+    function localizedPartName(part) {
+      if (!part) return '';
+      if (uiOptions.language !== 'en') return part.name;
+      const base = TYPE_LABELS_EN[part.typeCode] || part.name;
+      const width = Number(part.width) || (baseFootprintBounds(part).maxX - baseFootprintBounds(part).minX);
+      const depth = Number(part.depth) || (baseFootprintBounds(part).maxY - baseFootprintBounds(part).minY);
+      return `${base} ${width} × ${depth}`;
+    }
+    function localizedVariantName(part, variant) {
+      const base = localizedPartName(part);
+      if (!variant || variant.id === (part?.defaultVariant || 'BASIC')) return base;
+      const variantLabel = VARIANT_LABELS[uiOptions.language]?.[variant.id] || variant.name || variant.id;
+      return `${base} — ${variantLabel}`;
+    }
 
     // Optional BUILD features live behind explicit flags so they can never
     // interfere with the core remote asset catalog.
@@ -852,8 +1005,7 @@
       const part = PARTS[piece.partId];
       const variant = variantForPiece(piece);
       if (!part) return piece.partId;
-      if (!variant || variant.id === part.defaultVariant) return part.name;
-      return variant.displayName || variant.name || part.name;
+      return localizedVariantName(part, variant);
     }
 
     function pieceStoreId(piece) {
@@ -929,6 +1081,8 @@
           name: asset.displayName,
           pack: packKey,
           packCode: asset.packCode,
+          classCode: asset.classCode,
+          typeCode: asset.typeCode,
           category: asset.category || (asset.classCode === 'PRP' ? 'prop' : 'structure'),
           anchorType: asset.anchorType || 'cell',
           footprintCells: Array.isArray(asset.footprintCells) && asset.footprintCells.length ? asset.footprintCells : ['0:0'],
@@ -982,6 +1136,11 @@
     const canvasWrap = canvas.closest('.canvas-wrap');
     const desktopPanBtn = document.getElementById('desktopPanBtn');
     const variantMenu = document.getElementById('variantMenu');
+    const optionsBtn = document.getElementById('optionsBtn');
+    const optionsPanel = document.getElementById('optionsPanel');
+    const closeOptionsBtn = document.getElementById('closeOptionsBtn');
+    const themeToggle = document.getElementById('themeToggle');
+    const languageToggle = document.getElementById('languageToggle');
 
     let pieces = [];
     let selectedId = null;
@@ -1018,7 +1177,7 @@
       canvas.height = PAD * 2 + GRID_ROWS * CELL_PX;
       gridColsInput.value = String(GRID_COLS);
       gridRowsInput.value = String(GRID_ROWS);
-      gridMeta.textContent = `${GRID_COLS} × ${GRID_ROWS} vakken · 1 vak = 25,4 mm`;
+      gridMeta.textContent = t('gridMeta', GRID_COLS, GRID_ROWS);
       canvasWrap.classList.toggle('expanded-grid', GRID_COLS > DEFAULT_GRID_COLS || GRID_ROWS > DEFAULT_GRID_ROWS);
       window.dispatchEvent(new CustomEvent('skaldis-grid-resized', { detail: { columns: GRID_COLS, rows: GRID_ROWS } }));
     }
@@ -1029,20 +1188,20 @@
       if (!gridDimensionsAreValid(columns, rows)) {
         gridColsInput.value = String(GRID_COLS);
         gridRowsInput.value = String(GRID_ROWS);
-        updateStatus(`Rastergrootte moet tussen ${GRID_MIN} en ${GRID_MAX} vakken liggen.`, false);
+        updateStatus(t('gridInvalid', GRID_MIN, GRID_MAX), false);
         return false;
       }
       if (!options.skipPieceCheck && pieces.some(piece => !pieceFitsDimensions(piece, columns, rows))) {
         gridColsInput.value = String(GRID_COLS);
         gridRowsInput.value = String(GRID_ROWS);
-        updateStatus('Raster kan niet kleiner worden: één of meer onderdelen zouden buiten het raster vallen.', false);
+        updateStatus(t('gridTooSmall'), false);
         return false;
       }
       GRID_COLS = columns;
       GRID_ROWS = rows;
       updateGridUi();
       resize3DGrid();
-      if (options.sync !== false) syncAll(options.message || `Raster aangepast naar ${GRID_COLS} × ${GRID_ROWS}.`);
+      if (options.sync !== false) syncAll(options.message || t('gridChanged', GRID_COLS, GRID_ROWS));
       return true;
     }
 
@@ -1110,7 +1269,7 @@
       const bounds = baseFootprintBounds(part);
       const width = bounds.maxX - bounds.minX;
       const height = bounds.maxY - bounds.minY;
-      return `${width} × ${height} vak${width === 1 && height === 1 ? '' : 'ken'}`;
+      return `${width} × ${height} ${width === 1 && height === 1 ? t('cell') : t('cells')}`;
     }
 
     function createPartCard(id, part, inventoryMode = false) {
@@ -1123,9 +1282,9 @@
       const owned = collectionInventory[id] || 0;
       const used = placedCount(id);
       const secondary = inventoryMode
-        ? `In bezit: ${owned} · in ontwerp: ${used}`
+        ? `${uiOptions.language === 'en' ? 'Owned' : 'In bezit'}: ${owned} · ${uiOptions.language === 'en' ? 'in design' : 'in ontwerp'}: ${used}`
         : partPlacementLabel(part);
-      card.innerHTML = `<div class="part-icon">${iconLabel(part)}</div><div><strong>${part.name}</strong><div class="part-meta"><span>${secondary}</span>${inventoryMode ? `<span class="inventory-pill">×${owned}</span>` : ''}</div></div>`;
+      card.innerHTML = `<div class="part-icon">${iconLabel(part)}</div><div><strong>${localizedPartName(part)}</strong><div class="part-meta"><span>${secondary}</span>${inventoryMode ? `<span class="inventory-pill">×${owned}</span>` : ''}</div></div>`;
       card.addEventListener('click', () => setActivePart(id));
       card.addEventListener('keydown', event => {
         if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setActivePart(id); }
@@ -1146,8 +1305,8 @@
 
     function appendGroupedAssets(container, entries, inventoryMode = false) {
       const groups = [
-        ['Structuurelementen', entries.filter(([, part]) => part.category === 'structure')],
-        ['Props', entries.filter(([, part]) => part.category === 'prop')]
+        [t('structures'), entries.filter(([, part]) => part.category === 'structure')],
+        [t('props'), entries.filter(([, part]) => part.category === 'prop')]
       ];
       let rendered = false;
       groups.forEach(([label, items]) => {
@@ -1173,8 +1332,8 @@
       const summary = document.createElement('summary');
       summary.className = 'pack-summary';
       const countText = options.inventoryMode
-        ? `${entries.reduce((sum, [id]) => sum + (collectionInventory[id] || 0), 0)} stuks`
-        : `${entries.length} assets`;
+        ? `${entries.reduce((sum, [id]) => sum + (collectionInventory[id] || 0), 0)} ${t('pieces')}`
+        : `${entries.length} ${t('assets')}`;
       summary.innerHTML = `<span>${PACKS[packId].name}</span><span class="pack-count">${countText}</span>`;
       details.appendChild(summary);
       const content = document.createElement('div');
@@ -1183,7 +1342,7 @@
       if (!hasAssets) {
         const empty = document.createElement('div');
         empty.className = 'pack-empty';
-        empty.textContent = options.emptyText || 'Deze categorie is voorlopig leeg.';
+        empty.textContent = options.emptyText || t('emptyCategory');
         content.appendChild(empty);
       }
       details.appendChild(content);
@@ -1217,13 +1376,13 @@
         if (!entries.length) return;
         packAccordion.appendChild(createPackAccordion(packId, entries, {
           open: openState[packId] ?? renderedPackCount === 0,
-          emptyText: 'Deze pack bevat voorlopig geen actieve assets.'
+          emptyText: t('emptyPack')
         }));
         renderedPackCount += 1;
       });
 
       if (!renderedPackCount) {
-        packAccordion.innerHTML = '<div class="pack-empty">Geen actieve BUILD-assets gevonden.</div>';
+        packAccordion.innerHTML = `<div class="pack-empty">${t('noAssets')}</div>`;
       }
       refreshActiveCards();
     }
@@ -1309,8 +1468,8 @@
 
     function clonePieces(source = pieces) { return source.map(piece => ({ ...piece })); }
     function pushHistory() { history.push(clonePieces()); if (history.length > 80) history.shift(); future = []; updateButtons(); }
-    function undo() { if (!history.length) return; future.push(clonePieces()); pieces = history.pop(); selectedId = null; syncAll('Undo uitgevoerd.'); }
-    function redo() { if (!future.length) return; history.push(clonePieces()); pieces = future.pop(); selectedId = null; syncAll('Redo uitgevoerd.'); }
+    function undo() { if (!history.length) return; future.push(clonePieces()); pieces = history.pop(); selectedId = null; syncAll(t('undoDone')); }
+    function redo() { if (!future.length) return; history.push(clonePieces()); pieces = future.pop(); selectedId = null; syncAll(t('redoDone')); }
     function updateButtons() {
       document.getElementById('undoBtn').disabled = history.length === 0;
       document.getElementById('redoBtn').disabled = future.length === 0;
@@ -1323,7 +1482,7 @@
         activePartId = null;
         activeVariantId = null;
         refreshActiveCards();
-        updateStatus('Dit onderdeel is uitgeschakeld.', false);
+        updateStatus(t('disabledPart'), false);
         return;
       }
 
@@ -1335,7 +1494,7 @@
       selectedId = null;
       hoverCandidate = null;
       refreshActiveCards();
-      updateStatus(activePartId ? `${PARTS[activePartId].name} geselecteerd om te plaatsen.` : 'Selecteer of sleep een onderdeel.');
+      updateStatus(activePartId ? t('selectedToPlace', localizedPartName(PARTS[activePartId])) : t('selectOrDrag'));
       draw2D();
       rebuild3D();
       updateButtons();
@@ -1430,10 +1589,10 @@
     function placeCandidate(candidate) {
       const part = candidate ? PARTS[candidate.partId] : null;
       if (!isPartEnabled(part)) {
-        updateStatus('Dit onderdeel is uitgeschakeld.', false);
+        updateStatus(t('disabledPart'), false);
         return;
       }
-      if (!candidate?.valid) { updateStatus('Deze positie is niet geldig.', false); return; }
+      if (!candidate?.valid) { updateStatus(t('invalidPosition'), false); return; }
       pushHistory();
       const fallbackVariantId = defaultVariantForPart(candidate.partId)?.id || PARTS[candidate.partId]?.defaultVariant || null;
       const requestedVariantId = candidate.variantId || (activePartId === candidate.partId ? activeVariantId : null) || fallbackVariantId;
@@ -1450,30 +1609,96 @@
       };
       pieces.push(piece);
       selectedId = piece.id;
-      syncAll(`${PARTS[piece.partId].name} geplaatst.`);
+      syncAll(t('placed', pieceDisplayName(piece)));
     }
 
     function updateStatus(message, good = true) { statusText.textContent = message; statusText.className = good ? 'ok' : 'bad'; }
     function syncAll(message) { hoverCandidate = null; draw2D(); rebuild3D(); updateBom(); renderCatalog(); updateSelectionText(); updateButtons(); if (message) updateStatus(message); }
     function updateSelectionText() {
       const selected = pieces.find(piece => piece.id === selectedId);
-      selectionText.textContent = selected ? `${pieceDisplayName(selected)} · ${selected.rotation}° · (${selected.x}, ${selected.y})` : 'Niets geselecteerd';
+      selectionText.textContent = selected ? `${pieceDisplayName(selected)} · ${selected.rotation}° · (${selected.x}, ${selected.y})` : t('nothingSelected');
     }
+
+
+    function applyStaticLanguage() {
+      document.documentElement.lang = uiOptions.language === 'en' ? 'en' : 'nl';
+      document.querySelectorAll('[data-i18n]').forEach(element => {
+        const key = element.dataset.i18n;
+        element.textContent = t(key);
+      });
+      document.querySelectorAll('[data-i18n-title]').forEach(element => {
+        element.setAttribute('title', t(element.dataset.i18nTitle));
+      });
+      themeToggle?.classList.toggle('is-right', uiOptions.theme === 'dark');
+      languageToggle?.classList.toggle('is-right', uiOptions.language === 'en');
+      updateGridUi();
+      if (Object.keys(PARTS).length) renderCatalog();
+      updateSelectionText();
+      updateBom();
+      draw2D();
+      window.dispatchEvent(new CustomEvent('skaldis-language-changed'));
+    }
+
+    function applyTheme() {
+      document.body.dataset.theme = uiOptions.theme;
+      themeToggle?.classList.toggle('is-right', uiOptions.theme === 'dark');
+      draw2D();
+      window.__skaldisApply3DTheme?.();
+    }
+
+    function setUiTheme(theme) {
+      uiOptions.theme = theme === 'light' ? 'light' : 'dark';
+      saveUiOptions();
+      applyTheme();
+    }
+
+    function setUiLanguage(language) {
+      uiOptions.language = language === 'en' ? 'en' : 'nl';
+      saveUiOptions();
+      applyStaticLanguage();
+      if (selectedId) rebuild3D();
+    }
+
+    function setOptionsPanel(open) {
+      optionsPanel.hidden = !open;
+      if (!open) return;
+      const anchor = optionsBtn.getBoundingClientRect();
+      const margin = 10;
+      optionsPanel.style.left = '0px';
+      optionsPanel.style.top = '0px';
+      requestAnimationFrame(() => {
+        const rect = optionsPanel.getBoundingClientRect();
+        const left = Math.max(margin, Math.min(anchor.right - rect.width, window.innerWidth - rect.width - margin));
+        const top = Math.max(margin, Math.min(anchor.bottom + 8, window.innerHeight - rect.height - margin));
+        optionsPanel.style.left = `${left}px`;
+        optionsPanel.style.top = `${top}px`;
+      });
+    }
+
+    optionsBtn.addEventListener('click', event => { event.stopPropagation(); setOptionsPanel(optionsPanel.hidden); });
+    closeOptionsBtn.addEventListener('click', () => setOptionsPanel(false));
+    themeToggle.addEventListener('click', () => setUiTheme(uiOptions.theme === 'dark' ? 'light' : 'dark'));
+    languageToggle.addEventListener('click', () => setUiLanguage(uiOptions.language === 'nl' ? 'en' : 'nl'));
+    document.addEventListener('pointerdown', event => {
+      if (!optionsPanel.hidden && !optionsPanel.contains(event.target) && event.target !== optionsBtn) setOptionsPanel(false);
+    });
 
     function drawGrid() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = '#15191d'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+      const palette = getThemePalette();
+      ctx.fillStyle = palette.canvasBg; ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.save(); ctx.translate(PAD, PAD);
-      ctx.strokeStyle = '#343b44'; ctx.lineWidth = 1;
+      ctx.strokeStyle = palette.grid; ctx.lineWidth = 1;
       for (let x = 0; x <= GRID_COLS; x += 1) { ctx.beginPath(); ctx.moveTo(x*CELL_PX,0); ctx.lineTo(x*CELL_PX,GRID_ROWS*CELL_PX); ctx.stroke(); }
       for (let y = 0; y <= GRID_ROWS; y += 1) { ctx.beginPath(); ctx.moveTo(0,y*CELL_PX); ctx.lineTo(GRID_COLS*CELL_PX,y*CELL_PX); ctx.stroke(); }
-      ctx.fillStyle = '#65707c';
+      ctx.fillStyle = palette.dots;
       for (let x = 0; x <= GRID_COLS; x += 1) for (let y = 0; y <= GRID_ROWS; y += 1) { ctx.beginPath(); ctx.arc(x*CELL_PX,y*CELL_PX,2.1,0,Math.PI*2); ctx.fill(); }
       ctx.restore();
     }
 
     function drawPiece(piece, color, alpha = 1, selected = false) {
       const part = PARTS[piece.partId];
+      const palette = getThemePalette();
       ctx.save(); ctx.translate(PAD, PAD); ctx.globalAlpha = alpha;
 
       if (part.category === 'structure') {
@@ -1481,7 +1706,7 @@
         // het midden van de bezette vakken getekend.
         transformedCells(piece).forEach(cellId => {
           const [x,y] = cellId.split(':').map(Number);
-          ctx.fillStyle = selected ? 'rgba(215,255,63,.13)' : 'rgba(184,166,141,.08)';
+          ctx.fillStyle = selected ? palette.selectedFill : palette.cellFill;
           ctx.fillRect(x*CELL_PX+2, y*CELL_PX+2, CELL_PX-4, CELL_PX-4);
         });
 
@@ -1498,7 +1723,7 @@
         });
 
         if (part.placeholder === 'door' || variantForPiece(piece)?.id === 'DOOR') {
-          ctx.fillStyle = '#15191d';
+          ctx.fillStyle = palette.inner;
           transformedCells(piece).forEach(cellId => {
             const [x,y] = cellId.split(':').map(Number);
             ctx.beginPath();
@@ -1509,9 +1734,9 @@
       } else {
         transformedCells(piece).forEach(cellId => {
           const [x,y]=cellId.split(':').map(Number);
-          ctx.fillStyle=color; ctx.strokeStyle=selected?'#d7ff3f':'#333a43'; ctx.lineWidth=selected?4:2;
+          ctx.fillStyle=color; ctx.strokeStyle=selected?palette.selected:palette.propBorder; ctx.lineWidth=selected?4:2;
           ctx.beginPath(); ctx.roundRect(x*CELL_PX+8,y*CELL_PX+8,CELL_PX-16,CELL_PX-16,7); ctx.fill(); ctx.stroke();
-          ctx.fillStyle='#15191d'; ctx.font='bold 10px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle';
+          ctx.fillStyle=palette.inner; ctx.font='bold 10px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle';
           ctx.fillText(part.placeholder==='chest'?'BOX':part.placeholder==='miniature'?'FIG':'FIRE',x*CELL_PX+CELL_PX/2,y*CELL_PX+CELL_PX/2);
         });
       }
@@ -1520,8 +1745,9 @@
 
     function draw2D() {
       drawGrid();
-      pieces.forEach(piece => drawPiece(piece, piece.id === selectedId ? '#d7ff3f' : '#b8a68d', 1, piece.id === selectedId));
-      if (hoverCandidate) drawPiece(hoverCandidate, hoverCandidate.valid ? '#70df93' : '#ff675f', .68, false);
+      const palette = getThemePalette();
+      pieces.forEach(piece => drawPiece(piece, piece.id === selectedId ? palette.selected : palette.wall, 1, piece.id === selectedId));
+      if (hoverCandidate) drawPiece(hoverCandidate, hoverCandidate.valid ? palette.valid : palette.invalid, .68, false);
     }
 
     function distanceToSegment(px, py, ax, ay, bx, by) {
@@ -1555,7 +1781,7 @@
         dragState={ pieceId:hit.id, original:{...hit}, offset:{x:grid.x-hit.x,y:grid.y-hit.y}, moved:false };
         updateSelectionText(); draw2D(); rebuild3D(); updateButtons(); return;
       }
-      if (activePartId) placeCandidate(snapCandidate(point,activePartId)); else { selectedId=null; syncAll('Niets geselecteerd.'); }
+      if (activePartId) placeCandidate(snapCandidate(point,activePartId)); else { selectedId=null; syncAll(t('noneSelectedStatus')); }
     });
     canvas.addEventListener('pointermove', event => {
       const point=canvasPoint(event);
@@ -1569,8 +1795,8 @@
     canvas.addEventListener('pointerup', () => {
       if(!dragState)return;
       const candidate=hoverCandidate, piece=pieces.find(item=>item.id===dragState.pieceId);
-      if(piece && dragState.moved && candidate?.valid){ pushHistory(); Object.assign(piece,{x:candidate.x,y:candidate.y,rotation:candidate.rotation}); syncAll('Onderdeel verplaatst.'); }
-      else { hoverCandidate=null; draw2D(); if(dragState.moved&&!candidate?.valid)updateStatus('Verplaatsing geannuleerd: positie ongeldig.',false); }
+      if(piece && dragState.moved && candidate?.valid){ pushHistory(); Object.assign(piece,{x:candidate.x,y:candidate.y,rotation:candidate.rotation}); syncAll(t('moved')); }
+      else { hoverCandidate=null; draw2D(); if(dragState.moved&&!candidate?.valid)updateStatus(t('moveCancelled'),false); }
       dragState=null;
     });
     canvas.addEventListener('pointerleave',()=>{ if(!dragState){hoverCandidate=null;draw2D();} });
@@ -1596,7 +1822,7 @@
       piece.variantId = storedVariantId;
       selectedId = piece.id;
       closeVariantMenu();
-      syncAll(`Variant gekozen: ${pieceDisplayName(piece)}.`);
+      syncAll(t('variantChosen', pieceDisplayName(piece)));
     }
 
     function openVariantMenu(piece, clientX, clientY) {
@@ -1615,7 +1841,7 @@
       variantMenu.innerHTML = '';
       const head = document.createElement('div');
       head.className = 'variant-menu-head';
-      head.innerHTML = `<strong>${part.name}</strong><span>${variants.length > 1 ? 'Kies een modelvariant' : 'Geen extra variaties beschikbaar'}</span>`;
+      head.innerHTML = `<strong>${localizedPartName(part)}</strong><span>${variants.length > 1 ? t('chooseVariant') : t('noVariants')}</span>`;
       variantMenu.appendChild(head);
 
       if (variants.length <= 1) {
@@ -1631,7 +1857,7 @@
           const storedId = option.id;
           const active = (piece.variantId || defaultCode) === storedId;
           button.classList.toggle('active', active);
-          const label = option.id === defaultCode ? `Standaard · ${part.name}` : option.displayName;
+          const label = option.id === defaultCode ? `${t('standard')} · ${localizedPartName(part)}` : localizedVariantName(part, option);
           button.innerHTML = `<span>${label}</span><span class="variant-check">${active ? '✓' : ''}</span>`;
           button.addEventListener('click', event => {
             event.stopPropagation();
@@ -1710,37 +1936,37 @@
       if (activePartId) {
         activeRotation = (activeRotation + 90) % 360;
         hoverCandidate = null;
-        updateStatus(`${PARTS[activePartId]?.name || 'Onderdeel'} klaar om te plaatsen op ${activeRotation}°.`);
+        updateStatus(t('readyToPlace', localizedPartName(PARTS[activePartId]) || (uiOptions.language === 'en' ? 'Part' : 'Onderdeel'), activeRotation));
         draw2D();
         return;
       }
 
       const selected = pieces.find(piece => piece.id === selectedId);
       if (!selected) {
-        updateStatus('Selecteer eerst een onderdeel of kies een onderdeel om te plaatsen.', false);
+        updateStatus(t('selectFirst'), false);
         return;
       }
 
       const rotated = { ...selected, rotation: (selected.rotation + 90) % 360 };
       if (!isPlacementValid(rotated, selected.id)) {
-        updateStatus('Roteren kan hier niet.', false);
+        updateStatus(t('cannotRotate'), false);
         return;
       }
       pushHistory();
       selected.rotation = rotated.rotation;
-      syncAll('Onderdeel 90° gedraaid.');
+      syncAll(t('rotated'));
     }
 
     function duplicateSelected() {
       const selected = pieces.find(piece => piece.id === selectedId);
       if (!selected) {
-        updateStatus('Selecteer eerst een geplaatst onderdeel om te dupliceren.', false);
+        updateStatus(t('duplicateFirst'), false);
         return;
       }
 
       const part = PARTS[selected.partId];
       if (!isPartEnabled(part)) {
-        updateStatus('Dit onderdeel is niet meer beschikbaar.', false);
+        updateStatus(t('unavailable'), false);
         return;
       }
 
@@ -1756,17 +1982,17 @@
       updateButtons();
       draw2D();
       rebuild3D();
-      updateStatus(`Duplicaat klaar: ${pieceDisplayName(selected)} · ${activeRotation}°. Klik op het raster om te plaatsen.`);
+      updateStatus(t('duplicateReady', pieceDisplayName(selected), activeRotation));
     }
 
-    function deleteSelected(){ if(!selectedId)return; pushHistory(); pieces=pieces.filter(piece=>piece.id!==selectedId); selectedId=null; syncAll('Onderdeel verwijderd.'); }
+    function deleteSelected(){ if(!selectedId)return; pushHistory(); pieces=pieces.filter(piece=>piece.id!==selectedId); selectedId=null; syncAll(t('removed')); }
 
     document.getElementById('rotateBtn').addEventListener('click',rotateCurrent);
     document.getElementById('duplicateBtn').addEventListener('click',duplicateSelected);
     document.getElementById('deleteBtn').addEventListener('click',deleteSelected);
     document.getElementById('undoBtn').addEventListener('click',undo);
     document.getElementById('redoBtn').addEventListener('click',redo);
-    document.getElementById('clearBtn').addEventListener('click',()=>{ if(!pieces.length)return; pushHistory(); pieces=[]; selectedId=null; syncAll('Ontwerp leeggemaakt.'); });
+    document.getElementById('clearBtn').addEventListener('click',()=>{ if(!pieces.length)return; pushHistory(); pieces=[]; selectedId=null; syncAll(t('cleared')); });
     function createProjectData() {
       return {
         version: 5,
@@ -1788,7 +2014,7 @@
       link.click();
       link.remove();
       URL.revokeObjectURL(url);
-      updateStatus('Ontwerp lokaal opgeslagen.');
+      updateStatus(t('saved'));
     }
 
     function validateLoadedPieces(rawPieces) {
@@ -1860,9 +2086,9 @@
           return match ? Number(match[1]) : 0;
         })) + 1;
         refreshActiveCards();
-        syncAll(`Ontwerp geopend: ${file.name}`);
+        syncAll(t('opened', file.name));
       } catch (error) {
-        updateStatus(`Openen mislukt: ${error.message}`, false);
+        updateStatus(t('openFailed', error.message), false);
       } finally {
         document.getElementById('openFileInput').value = '';
       }
@@ -1890,7 +2116,7 @@
       if(event.key.toLowerCase()==='r')rotateCurrent();
       if(event.key.toLowerCase()==='d' && !event.ctrlKey && !event.metaKey && !event.altKey){ event.preventDefault(); duplicateSelected(); }
       if(event.key==='Delete'||event.key==='Backspace')deleteSelected();
-      if(event.key==='Escape'){ if(!variantMenu.hidden)closeVariantMenu(); else if(!libraryScreen.hidden)showLibrary(false); else if(drawer.classList.contains('open'))setDrawer(false); else {activePartId=null;activeVariantId=null;selectedId=null;hoverCandidate=null;refreshActiveCards();syncAll('Selectie geannuleerd.');} }
+      if(event.key==='Escape'){ if(!optionsPanel.hidden)setOptionsPanel(false); else if(!variantMenu.hidden)closeVariantMenu(); else if(!libraryScreen.hidden)showLibrary(false); else if(drawer.classList.contains('open'))setDrawer(false); else {activePartId=null;activeVariantId=null;selectedId=null;hoverCandidate=null;refreshActiveCards();syncAll(t('cancelled'));} }
       if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='z'){event.preventDefault();event.shiftKey?redo():undo();}
     });
 
@@ -1904,8 +2130,8 @@
       });
       bomCount.textContent=String(pieces.length);bomList.innerHTML='';
       const entries=Object.values(counts);
-      if(!entries.length){bomList.innerHTML='<div class="empty">Nog geen onderdelen geplaatst.</div>';return;}
-      entries.sort((a,b)=>a.name.localeCompare(b.name,'nl')).forEach(entry=>{
+      if(!entries.length){bomList.innerHTML=`<div class="empty">${t('emptyBom')}</div>`;return;}
+      entries.sort((a,b)=>a.name.localeCompare(b.name, uiOptions.language === 'en' ? 'en' : 'nl')).forEach(entry=>{
         const row=document.createElement('div');
         row.className='bom-row';
         const main=document.createElement('div');
@@ -1935,7 +2161,7 @@
         const { OrbitControls } = await import('three/addons/controls/OrbitControls.js');
         const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
 
-      const host=document.getElementById('threeView'),scene=new THREE.Scene();scene.background=new THREE.Color(0x101317);
+      const host=document.getElementById('threeView'),scene=new THREE.Scene();scene.background=new THREE.Color(getThemePalette().threeBg);
       const camera=new THREE.PerspectiveCamera(42,1,.1,100);camera.position.set(10,11,14);
       const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.shadowMap.enabled=true;host.appendChild(renderer.domElement);
       const controls=new OrbitControls(camera,renderer.domElement);
@@ -1963,6 +2189,10 @@
         gridRows: typeof GRID_ROWS !== 'undefined' ? GRID_ROWS : 11
       };
       /* SKALDIS MOBILE 3D END */controls.enableDamping=true;controls.target.set(GRID_COLS/2,0,GRID_ROWS/2);controls.minDistance=5;controls.maxDistance=38;controls.maxPolarAngle=Math.PI/2.08;
+      // Rechtermuisknop is in BUILD gereserveerd voor het variantenmenu.
+      // OrbitControls gebruikt rechts standaard om te pannen; dat zou anders
+      // interfereren met een gewone rechtermuisklik op een geplaatst model.
+      if (controls.mouseButtons) controls.mouseButtons.RIGHT = null;
       scene.add(new THREE.HemisphereLight(0xe9f1ff,0x25231f,1.5));
       const keyLight=new THREE.DirectionalLight(0xffffff,2.2);keyLight.position.set(8,14,5);keyLight.castShadow=true;scene.add(keyLight);
       const gridSurfaceGroup = new THREE.Group();
@@ -1983,7 +2213,7 @@
         const geometry = new THREE.BufferGeometry();
         geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
         const material = new THREE.LineBasicMaterial({
-          color: 0x46515d,
+          color: getThemePalette().threeGrid,
           transparent: true,
           opacity: 0.95
         });
@@ -2007,7 +2237,7 @@
         disposeGridSurface();
         const floor = new THREE.Mesh(
           new THREE.PlaneGeometry(GRID_COLS, GRID_ROWS),
-          new THREE.MeshStandardMaterial({color:0x252b31,roughness:.95})
+          new THREE.MeshStandardMaterial({color:getThemePalette().threeFloor,roughness:.95})
         );
         floor.rotation.x = -Math.PI / 2;
         floor.position.set(GRID_COLS / 2, -.012, GRID_ROWS / 2);
@@ -2032,9 +2262,52 @@
 
       rebuildGridSurface(false);
       resize3DGrid = () => { rebuildGridSurface(true); resize3D(); };
+      window.__skaldisApply3DTheme = () => { scene.background.setHex(getThemePalette().threeBg); rebuildGridSurface(false); rebuild3DScene(); };
 
       const pieceGroup=new THREE.Group();scene.add(pieceGroup);
       const loader=new GLTFLoader(),modelCache=new Map(),modelFailures=new Set();
+
+      // 3D picking: dezelfde pieceId die de 2D/3D-selectiesync gebruikt,
+      // wordt ook gebruikt om met rechtermuisklik het bestaande variantenmenu te openen.
+      const threeRaycaster = new THREE.Raycaster();
+      const threePointer = new THREE.Vector2();
+
+      function pieceIdFrom3DObject(object) {
+        let current = object;
+        while (current) {
+          if (current.userData?.pieceId) return current.userData.pieceId;
+          if (current === pieceGroup) break;
+          current = current.parent;
+        }
+        return null;
+      }
+
+      function hitPiece3D(event) {
+        const rect = renderer.domElement.getBoundingClientRect();
+        if (!rect.width || !rect.height) return null;
+        threePointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        threePointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+        threeRaycaster.setFromCamera(threePointer, camera);
+        const hits = threeRaycaster.intersectObjects(pieceGroup.children, true);
+        for (const hit of hits) {
+          const pieceId = pieceIdFrom3DObject(hit.object);
+          if (!pieceId) continue;
+          const piece = pieces.find(item => item.id === pieceId);
+          if (piece) return piece;
+        }
+        return null;
+      }
+
+      renderer.domElement.addEventListener('contextmenu', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        const hit = hitPiece3D(event);
+        if (!hit) {
+          closeVariantMenu();
+          return;
+        }
+        openVariantMenu(hit, event.clientX, event.clientY);
+      });
       
       function applyMaterial(root,color){root.traverse(child=>{if(child.isMesh){child.castShadow=true;child.receiveShadow=true;if(color){child.material=child.material.clone();child.material.color.setHex(color);}}});}
       function boundsOfCells(piece) {
@@ -2061,7 +2334,7 @@
 
       function createLocalPlaceholder(part, selected = false) {
         const group = new THREE.Group();
-        const color = selected ? 0xd7ff3f : 0x8d959e;
+        const color = selected ? 0xd7ff3f : getThemePalette().placeholder;
         const material = new THREE.MeshStandardMaterial({ color, roughness: 0.82 });
 
         if (part.category === 'prop') {
@@ -2253,13 +2526,13 @@
       animate();
       } catch (error) {
         console.error('De 3D-weergave kon niet worden geladen:', error);
-        label.textContent = '3D-weergave kon niet laden. De top-down editor blijft bruikbaar.';
-        host.innerHTML = '<div style="position:absolute;inset:0;display:grid;place-items:center;padding:24px;color:#9aa3ad;text-align:center;line-height:1.5">De 3D-module kon niet worden geladen.<br>Controleer je internetverbinding of CDN-toegang.</div>';
+        label.textContent = t('threeFailed');
+        host.innerHTML = `<div style="position:absolute;inset:0;display:grid;place-items:center;padding:24px;color:var(--muted);text-align:center;line-height:1.5">${t('threeFailedBody')}</div>`;
       }
     }
 
     async function initializeBuild() {
-      updateStatus('Assetcatalogus laden…');
+      updateStatus(t('loadingCatalog'));
       try {
         const catalog = await loadRemoteCatalog();
         if (FEATURES.privateCollection) {
@@ -2272,16 +2545,20 @@
         updateButtons();
         draw2D();
         initialize3D();
-        updateStatus(`${Object.keys(PARTS).length} assets geladen uit ${PACK_ORDER.length} packs.`);
+        updateStatus(t('catalogLoaded', Object.keys(PARTS).length, PACK_ORDER.length));
       } catch (error) {
         console.error('SKALDIS assetcatalogus kon niet worden geladen:', error);
-        packAccordion.innerHTML = `<div class="pack-empty">Assetcatalogus kon niet worden geladen.<br>${String(error.message || error)}<br><br><button id="retryCatalogBtn" type="button">Opnieuw proberen</button></div>`;
+        packAccordion.innerHTML = `<div class="pack-empty">Assetcatalogus kon niet worden geladen.<br>${String(error.message || error)}<br><br><button id="retryCatalogBtn" type="button">${t('retry')}</button></div>`;
         document.getElementById('retryCatalogBtn')?.addEventListener('click', initializeBuild, { once: true });
-        updateStatus(`Assetcatalogus kon niet worden geladen: ${error.message}`, false);
+        updateStatus(t('catalogFailed', error.message), false);
         updateButtons();
         draw2D();
       }
     }
+
+    document.body.dataset.theme = uiOptions.theme;
+    applyStaticLanguage();
+    applyTheme();
 
     initializeBuild();
 
@@ -2297,6 +2574,7 @@
   var STORAGE_KEY = 'skaldis-mobile-view-v2';
 
   function initializeMobileUI() {
+    var tr = function (key, fallback) { return window.__skaldisT ? window.__skaldisT(key) : fallback; };
     var main = document.getElementById('configuratorScreen');
     var header = document.querySelector('header');
     var libraryScreen = document.getElementById('libraryScreen');
@@ -2311,9 +2589,9 @@
     nav.className = 'mobile-nav';
     nav.setAttribute('aria-label', 'Mobiele configuratornavigatie');
     nav.innerHTML = [
-      '<button type="button" data-mobile-view="assets" aria-label="Onderdelen bekijken">Onderdelen</button>',
-      '<button type="button" data-mobile-view="build" aria-label="Top-down bouwen">Bouwen</button>',
-      '<button type="button" data-mobile-view="preview" aria-label="3D-weergave bekijken">3D</button>'
+      '<button type="button" data-mobile-view="assets">' + tr('mobileAssets','Onderdelen') + '</button>',
+      '<button type="button" data-mobile-view="build">' + tr('mobileBuild','Bouwen') + '</button>',
+      '<button type="button" data-mobile-view="preview">' + tr('mobilePreview','3D') + '</button>'
     ].join('');
     document.body.appendChild(nav);
 
@@ -2352,9 +2630,9 @@
       tools.setAttribute('aria-label', 'Kaartnavigatie');
       tools.innerHTML = [
         '<button type="button" data-canvas-action="out" aria-label="Uitzoomen">−</button>',
-        '<button type="button" class="wide" data-canvas-action="fit" aria-label="Volledige kaart tonen">Passend</button>',
+        '<button type="button" class="wide" data-canvas-action="fit">' + tr('fit','Passend') + '</button>',
         '<button type="button" data-canvas-action="in" aria-label="Inzoomen">+</button>',
-        '<button type="button" class="wide" data-canvas-action="pan" aria-label="Handmodus voor verschuiven">Hand</button>'
+        '<button type="button" class="wide" data-canvas-action="pan">' + tr('hand','Hand') + '</button>'
       ].join('');
       editorPanel.appendChild(tools);
 
@@ -2528,8 +2806,8 @@
       tools.className = 'mobile-three-tools';
       tools.setAttribute('aria-label', '3D-navigatie');
       tools.innerHTML = [
-        '<button type="button" class="wide" data-three-action="reset">Reset</button>',
-        '<button type="button" class="wide" data-three-action="top">Bovenaanzicht</button>'
+        '<button type="button" class="wide" data-three-action="reset">' + tr('reset','Reset') + '</button>',
+        '<button type="button" class="wide" data-three-action="top">' + tr('topView','Bovenaanzicht') + '</button>'
       ].join('');
       rightPanel.appendChild(tools);
 
@@ -2540,8 +2818,31 @@
       });
 
       var label = rightPanel.querySelector('.three-label');
-      if (label) label.textContent = '1 vinger: draaien · 2 vingers: zoomen en verschuiven';
+      if (label) label.textContent = tr('touch3d','1 vinger: draaien · 2 vingers: zoomen en verschuiven');
     }
+
+    function refreshMobileTranslations() {
+      buttons.forEach(function (button) {
+        var view = button.dataset.mobileView;
+        if (view === 'assets') button.textContent = tr('mobileAssets', 'Onderdelen');
+        if (view === 'build') button.textContent = tr('mobileBuild', 'Bouwen');
+        if (view === 'preview') button.textContent = tr('mobilePreview', '3D');
+      });
+      var fitButton = document.querySelector('[data-canvas-action="fit"]');
+      var panButton = document.querySelector('[data-canvas-action="pan"]');
+      var resetButton = document.querySelector('[data-three-action="reset"]');
+      var topButton = document.querySelector('[data-three-action="top"]');
+      if (fitButton) fitButton.textContent = tr('fit', 'Passend');
+      if (panButton) panButton.textContent = tr('hand', 'Hand');
+      if (resetButton) resetButton.textContent = tr('reset', 'Reset');
+      if (topButton) topButton.textContent = tr('topView', 'Bovenaanzicht');
+      if (main.dataset.mobileView === 'preview') {
+        var label = rightPanel && rightPanel.querySelector('.three-label');
+        if (label) label.textContent = tr('touch3d', '1 vinger: draaien · 2 vingers: zoomen en verschuiven');
+      }
+    }
+
+    window.addEventListener('skaldis-language-changed', refreshMobileTranslations);
 
     function setView(view, options) {
       options = options || {};
@@ -2638,6 +2939,7 @@
     });
 
     syncResponsiveState();
+    refreshMobileTranslations();
   }
 
   if (document.readyState === 'loading') {
