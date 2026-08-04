@@ -816,9 +816,13 @@
     const CATALOG_ENDPOINT = `${SKALDIS_API_BASE}/build-catalog`;
     const MODEL_URL_ENDPOINT = `${SKALDIS_API_BASE}/build-model-url`;
 
-    const PACKS = {
-      private: { name: 'Private collection', code: 'PRIVATE', sortOrder: -1 }
-    };
+    // Optional BUILD features live behind explicit flags so they can never
+    // interfere with the core remote asset catalog.
+    const FEATURES = Object.freeze({
+      privateCollection: false
+    });
+
+    const PACKS = {};
     const PACK_ORDER = [];
     const PARTS = {};
     const PART_VARIANTS = {};
@@ -887,7 +891,7 @@
     }
 
     function resetRemoteCatalog() {
-      Object.keys(PACKS).filter(key => key !== 'private').forEach(key => delete PACKS[key]);
+      Object.keys(PACKS).forEach(key => delete PACKS[key]);
       PACK_ORDER.splice(0);
       Object.keys(PARTS).forEach(key => delete PARTS[key]);
       Object.keys(PART_VARIANTS).forEach(key => delete PART_VARIANTS[key]);
@@ -1184,20 +1188,35 @@
       );
       packAccordion.innerHTML = '';
       const allEntries = enabledPartEntries();
-      const privateEntries = allEntries.filter(([id]) => (collectionInventory[id] || 0) > 0);
-      packAccordion.appendChild(createPackAccordion('private', privateEntries, {
-        open: openState.private ?? true,
-        inventoryMode: true,
-        emptyText: 'Nog geen stukken toegevoegd. Open de bibliotheek om je collectie samen te stellen.'
-      }));
 
+      // Private Collection is currently frozen. Keeping it behind a feature
+      // flag prevents this optional feature from affecting the core catalog.
+      if (FEATURES.privateCollection) {
+        const privateEntries = allEntries.filter(([id]) => (collectionInventory[id] || 0) > 0);
+        if (!PACKS.private) PACKS.private = { name: 'Private collection', code: 'PRIVATE', sortOrder: -1 };
+        packAccordion.appendChild(createPackAccordion('private', privateEntries, {
+          open: openState.private ?? true,
+          inventoryMode: true,
+          emptyText: 'Nog geen stukken toegevoegd. Open de bibliotheek om je collectie samen te stellen.'
+        }));
+      }
+
+      let renderedPackCount = 0;
       PACK_ORDER.forEach((packId, index) => {
+        const pack = PACKS[packId];
+        if (!pack) return;
         const entries = allEntries.filter(([, part]) => part.pack === packId);
+        if (!entries.length) return;
         packAccordion.appendChild(createPackAccordion(packId, entries, {
-          open: openState[packId] ?? index === 0,
+          open: openState[packId] ?? renderedPackCount === 0,
           emptyText: 'Deze pack bevat voorlopig geen actieve assets.'
         }));
+        renderedPackCount += 1;
       });
+
+      if (!renderedPackCount) {
+        packAccordion.innerHTML = '<div class="pack-empty">Geen actieve BUILD-assets gevonden.</div>';
+      }
       refreshActiveCards();
     }
 
@@ -1267,6 +1286,7 @@
     }
 
     function showLibrary(show) {
+      if (!FEATURES.privateCollection) return;
       configuratorScreen.hidden = show;
       libraryScreen.hidden = !show;
       document.body.classList.toggle('library-mode', show);
@@ -1768,7 +1788,9 @@
       if (event.key === 'Enter') applyGridDimensions(Number(gridColsInput.value), Number(gridRowsInput.value));
     }));
 
-    libraryBtn.addEventListener('click', () => showLibrary(libraryScreen.hidden));
+    if (FEATURES.privateCollection) {
+      libraryBtn.addEventListener('click', () => showLibrary(libraryScreen.hidden));
+    }
     document.getElementById('saveBtn').addEventListener('click', saveProject);
     document.getElementById('openBtn').addEventListener('click', () => document.getElementById('openFileInput').click());
     document.getElementById('openFileInput').addEventListener('change', event => openProjectFile(event.target.files?.[0]));
@@ -2153,19 +2175,22 @@
     async function initializeBuild() {
       updateStatus('Assetcatalogus laden…');
       try {
-        await loadRemoteCatalog();
-        ensureCollectionInventoryEntries();
+        const catalog = await loadRemoteCatalog();
+        if (FEATURES.privateCollection) {
+          ensureCollectionInventoryEntries();
+          renderLibrary();
+        }
         renderCatalog();
-        renderLibrary();
         updateBom();
         updateSelectionText();
         updateButtons();
         draw2D();
         initialize3D();
-        updateStatus(`${Object.keys(PARTS).length} assets geladen vanuit SKALDIS.`);
+        updateStatus(`${Object.keys(PARTS).length} assets geladen uit ${PACK_ORDER.length} packs.`);
       } catch (error) {
         console.error('SKALDIS assetcatalogus kon niet worden geladen:', error);
-        packAccordion.innerHTML = `<div class="pack-empty">Assetcatalogus kon niet worden geladen.<br>${String(error.message || error)}</div>`;
+        packAccordion.innerHTML = `<div class="pack-empty">Assetcatalogus kon niet worden geladen.<br>${String(error.message || error)}<br><br><button id="retryCatalogBtn" type="button">Opnieuw proberen</button></div>`;
+        document.getElementById('retryCatalogBtn')?.addEventListener('click', initializeBuild, { once: true });
         updateStatus(`Assetcatalogus kon niet worden geladen: ${error.message}`, false);
         updateButtons();
         draw2D();
@@ -2485,7 +2510,7 @@
         window.setTimeout(function () { setView('build'); }, 0);
       }
 
-      if (event.target.closest('#libraryBtn')) {
+      if (event.target.closest('#libraryBtn') && !event.target.closest('#libraryBtn').disabled) {
         window.setTimeout(syncLibraryState, 0);
       }
     });
