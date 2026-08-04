@@ -1,0 +1,984 @@
+{
+  "schemaVersion": 1,
+  "app": "SKALDIS BUILD Asset Database",
+  "updatedAt": "2026-08-04T00:00:00.000Z",
+  "settings": {
+    "cellSizeMm": 25.4,
+    "modelDirectory": "./models/",
+    "naming": {
+      "sizeDigitsPerDimension": 2,
+      "separator": "_"
+    }
+  },
+  "packs": [
+    {
+      "id": "dungeon",
+      "code": "DG",
+      "name": "Dungeon Core",
+      "status": "enabled"
+    },
+    {
+      "id": "castle",
+      "code": "CS",
+      "name": "Castle Core",
+      "status": "enabled"
+    },
+    {
+      "id": "village",
+      "code": "VL",
+      "name": "Village Core",
+      "status": "enabled"
+    },
+    {
+      "id": "generic",
+      "code": "GN",
+      "name": "Generic",
+      "status": "enabled"
+    }
+  ],
+  "classes": [
+    {
+      "id": "structure",
+      "code": "STR",
+      "name": "Structure"
+    },
+    {
+      "id": "prop",
+      "code": "PRP",
+      "name": "Prop"
+    }
+  ],
+  "types": [
+    {
+      "id": "wall",
+      "code": "WALL",
+      "name": "Muur Recht",
+      "classId": "structure",
+      "placeholder": "straight"
+    },
+    {
+      "id": "corner",
+      "code": "CORNER",
+      "name": "Hoek",
+      "classId": "structure",
+      "placeholder": "corner"
+    },
+    {
+      "id": "tee",
+      "code": "TEE",
+      "name": "T-stuk",
+      "classId": "structure",
+      "placeholder": "t"
+    },
+    {
+      "id": "cross",
+      "code": "CROSS",
+      "name": "Kruis",
+      "classId": "structure",
+      "placeholder": "cross"
+    },
+    {
+      "id": "pillar",
+      "code": "PILLAR",
+      "name": "Pilaar",
+      "classId": "structure",
+      "placeholder": "pillar"
+    },
+    {
+      "id": "wallend",
+      "code": "WALLEND",
+      "name": "Muureinde",
+      "classId": "structure",
+      "placeholder": "straight"
+    },
+    {
+      "id": "tower_straight",
+      "code": "TWRSTR",
+      "name": "Toren Recht",
+      "classId": "structure",
+      "placeholder": "tower"
+    },
+    {
+      "id": "tower_corner",
+      "code": "TWRCNR",
+      "name": "Toren Hoek",
+      "classId": "structure",
+      "placeholder": "tower"
+    },
+    {
+      "id": "gate",
+      "code": "GATE",
+      "name": "Poort",
+      "classId": "structure",
+      "placeholder": "door"
+    },
+    {
+      "id": "chest",
+      "code": "CHEST",
+      "name": "Kist",
+      "classId": "prop",
+      "placeholder": "chest"
+    },
+    {
+      "id": "campfire",
+      "code": "FIRE",
+      "name": "Kampvuur",
+      "classId": "prop",
+      "placeholder": "campfire"
+    },
+    {
+      "id": "figure",
+      "code": "FIGURE",
+      "name": "Referentiefiguur",
+      "classId": "prop",
+      "placeholder": "miniature"
+    }
+  ],
+  "assets": [
+    {
+      "id": "DG_STR_WALL_0101",
+      "displayName": "Muur Recht 1 × 1",
+      "packId": "dungeon",
+      "classId": "structure",
+      "typeId": "wall",
+      "width": 1,
+      "depth": 1,
+      "status": "enabled",
+      "anchorType": "cell",
+      "footprintCells": [
+        "0:0"
+      ],
+      "paths": [
+        [
+          [
+            0,
+            0.5
+          ],
+          [
+            1,
+            0.5
+          ]
+        ]
+      ],
+      "defaultVariant": "BASIC",
+      "variants": [
+        {
+          "code": "BASIC",
+          "name": "Standaard",
+          "status": "enabled",
+          "modelFile": "dg_str_wall_0101_basic.glb",
+          "legacyModelFile": "wall-straight-1_v2.glb",
+          "id": "DG_STR_WALL_0101_BASIC",
+          "displayName": "Muur Recht 1 × 1"
+        },
+        {
+          "code": "DOOR",
+          "name": "Deur",
+          "status": "enabled",
+          "modelFile": "dg_str_wall_0101_door.glb",
+          "legacyModelFile": "door-1.glb",
+          "id": "DG_STR_WALL_0101_DOOR",
+          "displayName": "Muur Recht 1 × 1 — Deur"
+        },
+        {
+          "code": "WINDOW",
+          "name": "Raam",
+          "status": "planned",
+          "modelFile": "dg_str_wall_0101_window.glb",
+          "legacyModelFile": "",
+          "id": "DG_STR_WALL_0101_WINDOW",
+          "displayName": "Muur Recht 1 × 1 — Raam"
+        },
+        {
+          "code": "RUINED",
+          "name": "Ruined",
+          "status": "planned",
+          "modelFile": "dg_str_wall_0101_ruined.glb",
+          "legacyModelFile": "",
+          "id": "DG_STR_WALL_0101_RUINED",
+          "displayName": "Muur Recht 1 × 1 — Ruined"
+        }
+      ],
+      "legacyPartIds": [
+        "wall-straight-1",
+        "door-1"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "DG_STR_WALL_0201",
+      "displayName": "Muur Recht 2 × 1",
+      "packId": "dungeon",
+      "classId": "structure",
+      "typeId": "wall",
+      "width": 2,
+      "depth": 1,
+      "status": "enabled",
+      "anchorType": "cell",
+      "footprintCells": [
+        "0:0",
+        "1:0"
+      ],
+      "paths": [
+        [
+          [
+            0,
+            0.5
+          ],
+          [
+            2,
+            0.5
+          ]
+        ]
+      ],
+      "defaultVariant": "BASIC",
+      "variants": [
+        {
+          "code": "BASIC",
+          "name": "Standaard",
+          "status": "enabled",
+          "modelFile": "dg_str_wall_0201_basic.glb",
+          "legacyModelFile": "wall-straigth-2_v2.glb",
+          "id": "DG_STR_WALL_0201_BASIC",
+          "displayName": "Muur Recht 2 × 1"
+        },
+        {
+          "code": "DOOR",
+          "name": "Deur",
+          "status": "enabled",
+          "modelFile": "dg_str_wall_0201_door.glb",
+          "legacyModelFile": "door-2.glb",
+          "id": "DG_STR_WALL_0201_DOOR",
+          "displayName": "Muur Recht 2 × 1 — Deur"
+        },
+        {
+          "code": "WINDOW",
+          "name": "Raam",
+          "status": "planned",
+          "modelFile": "dg_str_wall_0201_window.glb",
+          "legacyModelFile": "",
+          "id": "DG_STR_WALL_0201_WINDOW",
+          "displayName": "Muur Recht 2 × 1 — Raam"
+        },
+        {
+          "code": "RUINED",
+          "name": "Ruined",
+          "status": "planned",
+          "modelFile": "dg_str_wall_0201_ruined.glb",
+          "legacyModelFile": "",
+          "id": "DG_STR_WALL_0201_RUINED",
+          "displayName": "Muur Recht 2 × 1 — Ruined"
+        }
+      ],
+      "legacyPartIds": [
+        "wall-straight-2",
+        "door-2"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "DG_STR_CORNER_0101",
+      "displayName": "Hoek 1 × 1",
+      "packId": "dungeon",
+      "classId": "structure",
+      "typeId": "corner",
+      "width": 1,
+      "depth": 1,
+      "status": "enabled",
+      "anchorType": "cell",
+      "footprintCells": [
+        "0:0"
+      ],
+      "paths": [
+        [
+          [
+            1,
+            0.5
+          ],
+          [
+            0.5,
+            0.5
+          ],
+          [
+            0.5,
+            1
+          ]
+        ]
+      ],
+      "defaultVariant": "BASIC",
+      "variants": [
+        {
+          "code": "BASIC",
+          "name": "Standaard",
+          "status": "enabled",
+          "modelFile": "dg_str_corner_0101_basic.glb",
+          "legacyModelFile": "corner-1x1_v2.glb",
+          "id": "DG_STR_CORNER_0101_BASIC",
+          "displayName": "Hoek 1 × 1"
+        },
+        {
+          "code": "PILLAR",
+          "name": "Met pilaar",
+          "status": "planned",
+          "modelFile": "dg_str_corner_0101_pillar.glb",
+          "legacyModelFile": "",
+          "id": "DG_STR_CORNER_0101_PILLAR",
+          "displayName": "Hoek 1 × 1 — Met pilaar"
+        },
+        {
+          "code": "ROUND",
+          "name": "Afronding",
+          "status": "disabled",
+          "modelFile": "dg_str_corner_0101_round.glb",
+          "legacyModelFile": "round-corner-1.glb",
+          "id": "DG_STR_CORNER_0101_ROUND",
+          "displayName": "Hoek 1 × 1 — Afronding"
+        }
+      ],
+      "legacyPartIds": [
+        "corner-1x1",
+        "round-corner-1"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "DG_STR_CORNER_0202",
+      "displayName": "Hoek 2 × 2",
+      "packId": "dungeon",
+      "classId": "structure",
+      "typeId": "corner",
+      "width": 2,
+      "depth": 2,
+      "status": "enabled",
+      "anchorType": "cell",
+      "footprintCells": [
+        "0:0",
+        "1:0",
+        "0:1"
+      ],
+      "paths": [
+        [
+          [
+            2,
+            0.5
+          ],
+          [
+            0.5,
+            0.5
+          ],
+          [
+            0.5,
+            2
+          ]
+        ]
+      ],
+      "defaultVariant": "BASIC",
+      "variants": [
+        {
+          "code": "BASIC",
+          "name": "Standaard",
+          "status": "enabled",
+          "modelFile": "dg_str_corner_0202_basic.glb",
+          "legacyModelFile": "corner-2x2_v2.glb",
+          "id": "DG_STR_CORNER_0202_BASIC",
+          "displayName": "Hoek 2 × 2"
+        },
+        {
+          "code": "PILLAR",
+          "name": "Met pilaar",
+          "status": "planned",
+          "modelFile": "dg_str_corner_0202_pillar.glb",
+          "legacyModelFile": "",
+          "id": "DG_STR_CORNER_0202_PILLAR",
+          "displayName": "Hoek 2 × 2 — Met pilaar"
+        },
+        {
+          "code": "ROUND",
+          "name": "Afronding",
+          "status": "disabled",
+          "modelFile": "dg_str_corner_0202_round.glb",
+          "legacyModelFile": "round-corner-2.glb",
+          "id": "DG_STR_CORNER_0202_ROUND",
+          "displayName": "Hoek 2 × 2 — Afronding"
+        }
+      ],
+      "legacyPartIds": [
+        "corner-2x2",
+        "round-corner-2"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "DG_STR_TEE_0101",
+      "displayName": "T-stuk 1 × 1",
+      "packId": "dungeon",
+      "classId": "structure",
+      "typeId": "tee",
+      "width": 1,
+      "depth": 1,
+      "status": "enabled",
+      "anchorType": "cell",
+      "footprintCells": [
+        "0:0"
+      ],
+      "paths": [
+        [
+          [
+            0,
+            0.5
+          ],
+          [
+            1,
+            0.5
+          ]
+        ],
+        [
+          [
+            0.5,
+            0.5
+          ],
+          [
+            0.5,
+            1
+          ]
+        ]
+      ],
+      "defaultVariant": "BASIC",
+      "variants": [
+        {
+          "code": "BASIC",
+          "name": "Standaard",
+          "status": "enabled",
+          "modelFile": "dg_str_tee_0101_basic.glb",
+          "legacyModelFile": "t-piece-1_v2.glb",
+          "id": "DG_STR_TEE_0101_BASIC",
+          "displayName": "T-stuk 1 × 1"
+        },
+        {
+          "code": "PILLAR",
+          "name": "Met pilaar",
+          "status": "planned",
+          "modelFile": "dg_str_tee_0101_pillar.glb",
+          "legacyModelFile": "",
+          "id": "DG_STR_TEE_0101_PILLAR",
+          "displayName": "T-stuk 1 × 1 — Met pilaar"
+        }
+      ],
+      "legacyPartIds": [
+        "t-piece-1"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "DG_STR_TEE_0302",
+      "displayName": "T-stuk 3 × 2",
+      "packId": "dungeon",
+      "classId": "structure",
+      "typeId": "tee",
+      "width": 3,
+      "depth": 2,
+      "status": "disabled",
+      "anchorType": "cell",
+      "footprintCells": [
+        "0:0",
+        "1:0",
+        "2:0",
+        "1:1"
+      ],
+      "paths": [
+        [
+          [
+            0,
+            0.5
+          ],
+          [
+            3,
+            0.5
+          ]
+        ],
+        [
+          [
+            1.5,
+            0.5
+          ],
+          [
+            1.5,
+            2
+          ]
+        ]
+      ],
+      "defaultVariant": "BASIC",
+      "variants": [
+        {
+          "code": "BASIC",
+          "name": "Standaard",
+          "status": "disabled",
+          "modelFile": "dg_str_tee_0302_basic.glb",
+          "legacyModelFile": "t-piece-2.glb",
+          "id": "DG_STR_TEE_0302_BASIC",
+          "displayName": "T-stuk 3 × 2"
+        },
+        {
+          "code": "PILLAR",
+          "name": "Met pilaar",
+          "status": "planned",
+          "modelFile": "dg_str_tee_0302_pillar.glb",
+          "legacyModelFile": "",
+          "id": "DG_STR_TEE_0302_PILLAR",
+          "displayName": "T-stuk 3 × 2 — Met pilaar"
+        }
+      ],
+      "legacyPartIds": [
+        "t-piece-2"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "DG_STR_CROSS_0101",
+      "displayName": "Kruis 1 × 1",
+      "packId": "dungeon",
+      "classId": "structure",
+      "typeId": "cross",
+      "width": 1,
+      "depth": 1,
+      "status": "enabled",
+      "anchorType": "cell",
+      "footprintCells": [
+        "0:0"
+      ],
+      "paths": [
+        [
+          [
+            0,
+            0.5
+          ],
+          [
+            1,
+            0.5
+          ]
+        ],
+        [
+          [
+            0.5,
+            0
+          ],
+          [
+            0.5,
+            1
+          ]
+        ]
+      ],
+      "defaultVariant": "BASIC",
+      "variants": [
+        {
+          "code": "BASIC",
+          "name": "Standaard",
+          "status": "enabled",
+          "modelFile": "dg_str_cross_0101_basic.glb",
+          "legacyModelFile": "cross-piece-1_v2.glb",
+          "id": "DG_STR_CROSS_0101_BASIC",
+          "displayName": "Kruis 1 × 1"
+        },
+        {
+          "code": "PILLAR",
+          "name": "Met pilaar",
+          "status": "planned",
+          "modelFile": "dg_str_cross_0101_pillar.glb",
+          "legacyModelFile": "",
+          "id": "DG_STR_CROSS_0101_PILLAR",
+          "displayName": "Kruis 1 × 1 — Met pilaar"
+        }
+      ],
+      "legacyPartIds": [
+        "cross-piece-1"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "DG_STR_PILLAR_0101",
+      "displayName": "Pilaar 1 × 1",
+      "packId": "dungeon",
+      "classId": "structure",
+      "typeId": "pillar",
+      "width": 1,
+      "depth": 1,
+      "status": "enabled",
+      "anchorType": "cell",
+      "footprintCells": [
+        "0:0"
+      ],
+      "paths": [],
+      "defaultVariant": "BASIC",
+      "variants": [
+        {
+          "code": "BASIC",
+          "name": "Standaard",
+          "status": "enabled",
+          "modelFile": "dg_str_pillar_0101_basic.glb",
+          "legacyModelFile": "Pillar_Single.glb",
+          "id": "DG_STR_PILLAR_0101_BASIC",
+          "displayName": "Pilaar 1 × 1"
+        }
+      ],
+      "legacyPartIds": [
+        "pillar-single"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "DG_STR_WALLEND_0101",
+      "displayName": "Muureinde 1 × 1",
+      "packId": "dungeon",
+      "classId": "structure",
+      "typeId": "wallend",
+      "width": 1,
+      "depth": 1,
+      "status": "enabled",
+      "anchorType": "cell",
+      "footprintCells": [
+        "0:0"
+      ],
+      "paths": [
+        [
+          [
+            0,
+            0.5
+          ],
+          [
+            0.5,
+            0.5
+          ]
+        ]
+      ],
+      "defaultVariant": "BASIC",
+      "variants": [
+        {
+          "code": "BASIC",
+          "name": "Standaard",
+          "status": "enabled",
+          "modelFile": "dg_str_wallend_0101_basic.glb",
+          "legacyModelFile": "wall-end-1.glb",
+          "id": "DG_STR_WALLEND_0101_BASIC",
+          "displayName": "Muureinde 1 × 1"
+        },
+        {
+          "code": "RUINED",
+          "name": "Ruined",
+          "status": "planned",
+          "modelFile": "dg_str_wallend_0101_ruined.glb",
+          "legacyModelFile": "",
+          "id": "DG_STR_WALLEND_0101_RUINED",
+          "displayName": "Muureinde 1 × 1 — Ruined"
+        }
+      ],
+      "legacyPartIds": [
+        "wall-end-1"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "DG_PRP_CHEST_0101",
+      "displayName": "Kist 1 × 1",
+      "packId": "dungeon",
+      "classId": "prop",
+      "typeId": "chest",
+      "width": 1,
+      "depth": 1,
+      "status": "disabled",
+      "anchorType": "cell",
+      "footprintCells": [
+        "0:0"
+      ],
+      "paths": [],
+      "defaultVariant": "BASIC",
+      "variants": [
+        {
+          "code": "BASIC",
+          "name": "Standaard",
+          "status": "disabled",
+          "modelFile": "dg_prp_chest_0101_basic.glb",
+          "legacyModelFile": "chest.glb",
+          "id": "DG_PRP_CHEST_0101_BASIC",
+          "displayName": "Kist 1 × 1"
+        }
+      ],
+      "legacyPartIds": [
+        "chest"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "GN_PRP_FIRE_0101",
+      "displayName": "Kampvuur 1 × 1",
+      "packId": "generic",
+      "classId": "prop",
+      "typeId": "campfire",
+      "width": 1,
+      "depth": 1,
+      "status": "enabled",
+      "anchorType": "cell",
+      "footprintCells": [
+        "0:0"
+      ],
+      "paths": [],
+      "defaultVariant": "BASIC",
+      "variants": [
+        {
+          "code": "BASIC",
+          "name": "Standaard",
+          "status": "enabled",
+          "modelFile": "gn_prp_fire_0101_basic.glb",
+          "legacyModelFile": "campfire.glb",
+          "id": "GN_PRP_FIRE_0101_BASIC",
+          "displayName": "Kampvuur 1 × 1"
+        }
+      ],
+      "legacyPartIds": [
+        "campfire"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "GN_PRP_FIGURE_0101",
+      "displayName": "Referentiefiguur 1 × 1",
+      "packId": "generic",
+      "classId": "prop",
+      "typeId": "figure",
+      "width": 1,
+      "depth": 1,
+      "status": "enabled",
+      "anchorType": "cell",
+      "footprintCells": [
+        "0:0"
+      ],
+      "paths": [],
+      "defaultVariant": "BASIC",
+      "variants": [
+        {
+          "code": "BASIC",
+          "name": "Standaard",
+          "status": "enabled",
+          "modelFile": "gn_prp_figure_0101_basic.glb",
+          "legacyModelFile": "action-figure.glb",
+          "id": "GN_PRP_FIGURE_0101_BASIC",
+          "displayName": "Referentiefiguur 1 × 1"
+        }
+      ],
+      "legacyPartIds": [
+        "action-figure"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "CS_STR_WALL_0202",
+      "displayName": "Muur Recht 2 × 2",
+      "packId": "castle",
+      "classId": "structure",
+      "typeId": "wall",
+      "width": 2,
+      "depth": 2,
+      "status": "enabled",
+      "anchorType": "cell",
+      "footprintCells": [
+        "0:0",
+        "1:0",
+        "0:1",
+        "1:1"
+      ],
+      "paths": [
+        [
+          [
+            0,
+            1
+          ],
+          [
+            2,
+            1
+          ]
+        ]
+      ],
+      "defaultVariant": "BASIC",
+      "variants": [
+        {
+          "code": "BASIC",
+          "name": "Standaard",
+          "status": "enabled",
+          "modelFile": "cs_str_wall_0202_basic.glb",
+          "legacyModelFile": "wall-double-2.glb",
+          "id": "CS_STR_WALL_0202_BASIC",
+          "displayName": "Muur Recht 2 × 2"
+        },
+        {
+          "code": "DOOR",
+          "name": "Deur",
+          "status": "planned",
+          "modelFile": "cs_str_wall_0202_door.glb",
+          "legacyModelFile": "",
+          "id": "CS_STR_WALL_0202_DOOR",
+          "displayName": "Muur Recht 2 × 2 — Deur"
+        },
+        {
+          "code": "WINDOW",
+          "name": "Raam",
+          "status": "planned",
+          "modelFile": "cs_str_wall_0202_window.glb",
+          "legacyModelFile": "",
+          "id": "CS_STR_WALL_0202_WINDOW",
+          "displayName": "Muur Recht 2 × 2 — Raam"
+        },
+        {
+          "code": "RUINED",
+          "name": "Ruined",
+          "status": "planned",
+          "modelFile": "cs_str_wall_0202_ruined.glb",
+          "legacyModelFile": "",
+          "id": "CS_STR_WALL_0202_RUINED",
+          "displayName": "Muur Recht 2 × 2 — Ruined"
+        }
+      ],
+      "legacyPartIds": [
+        "wall-double-2"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "CS_STR_TWRSTR_0202",
+      "displayName": "Toren Recht 2 × 2",
+      "packId": "castle",
+      "classId": "structure",
+      "typeId": "tower_straight",
+      "width": 2,
+      "depth": 2,
+      "status": "enabled",
+      "anchorType": "cell",
+      "footprintCells": [
+        "0:0",
+        "1:0",
+        "0:1",
+        "1:1"
+      ],
+      "paths": [
+        [
+          [
+            0,
+            1
+          ],
+          [
+            2,
+            1
+          ]
+        ]
+      ],
+      "defaultVariant": "BASIC",
+      "variants": [
+        {
+          "code": "BASIC",
+          "name": "Standaard",
+          "status": "enabled",
+          "modelFile": "cs_str_twrstr_0202_basic.glb",
+          "legacyModelFile": "tower-straight-2x2.glb",
+          "id": "CS_STR_TWRSTR_0202_BASIC",
+          "displayName": "Toren Recht 2 × 2"
+        }
+      ],
+      "legacyPartIds": [
+        "tower-straight-2x2"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "CS_STR_TWRCNR_0202",
+      "displayName": "Toren Hoek 2 × 2",
+      "packId": "castle",
+      "classId": "structure",
+      "typeId": "tower_corner",
+      "width": 2,
+      "depth": 2,
+      "status": "enabled",
+      "anchorType": "cell",
+      "footprintCells": [
+        "0:0",
+        "1:0",
+        "0:1",
+        "1:1"
+      ],
+      "paths": [
+        [
+          [
+            1,
+            0
+          ],
+          [
+            1,
+            1
+          ],
+          [
+            2,
+            1
+          ]
+        ]
+      ],
+      "defaultVariant": "BASIC",
+      "variants": [
+        {
+          "code": "BASIC",
+          "name": "Standaard",
+          "status": "enabled",
+          "modelFile": "cs_str_twrcnr_0202_basic.glb",
+          "legacyModelFile": "tower-corner-2x2.glb",
+          "id": "CS_STR_TWRCNR_0202_BASIC",
+          "displayName": "Toren Hoek 2 × 2"
+        }
+      ],
+      "legacyPartIds": [
+        "tower-corner-2x2"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "CS_STR_GATE_0202",
+      "displayName": "Poort 2 × 2",
+      "packId": "castle",
+      "classId": "structure",
+      "typeId": "gate",
+      "width": 2,
+      "depth": 2,
+      "status": "enabled",
+      "anchorType": "cell",
+      "footprintCells": [
+        "0:0",
+        "1:0",
+        "0:1",
+        "1:1"
+      ],
+      "paths": [
+        [
+          [
+            0,
+            1
+          ],
+          [
+            2,
+            1
+          ]
+        ]
+      ],
+      "defaultVariant": "BASIC",
+      "variants": [
+        {
+          "code": "BASIC",
+          "name": "Standaard",
+          "status": "enabled",
+          "modelFile": "cs_str_gate_0202_basic.glb",
+          "legacyModelFile": "gate-2x2.glb",
+          "id": "CS_STR_GATE_0202_BASIC",
+          "displayName": "Poort 2 × 2"
+        }
+      ],
+      "legacyPartIds": [
+        "gate-2x2"
+      ],
+      "notes": ""
+    }
+  ]
+}

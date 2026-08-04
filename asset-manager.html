@@ -1,0 +1,1751 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="SKALDIS BUILD Asset Manager" />
+  <title>SKALDIS BUILD — Asset Manager</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0e1013;
+      --panel: #171a1f;
+      --panel2: #20242a;
+      --panel3: #111418;
+      --line: #343a43;
+      --line2: #48515c;
+      --text: #f2f4f6;
+      --muted: #9aa3ad;
+      --accent: #d7ff3f;
+      --accentDark: #11170a;
+      --danger: #ff675f;
+      --good: #70df93;
+      --warn: #ffd166;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    body { min-height: 100vh; }
+    button, input, select, textarea { font: inherit; }
+    button { border: 1px solid var(--line); border-radius: 8px; background: var(--panel2); color: var(--text); padding: 8px 10px; cursor: pointer; }
+    button:hover { border-color: var(--line2); }
+    button:disabled { opacity: .4; cursor: not-allowed; }
+    button.primary { background: var(--accent); color: var(--accentDark); border-color: var(--accent); font-weight: 800; }
+    button.danger { color: #ffb5b1; }
+    button.ghost { background: transparent; }
+    input, select, textarea { width: 100%; border: 1px solid var(--line); border-radius: 8px; background: #101317; color: var(--text); padding: 8px 9px; outline: none; }
+    input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+    input[readonly] { color: #c6ccd2; background: #15191d; }
+    textarea { resize: vertical; min-height: 72px; }
+    code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .app { min-height: 100vh; display: grid; grid-template-rows: auto 1fr; }
+    header { position: sticky; top: 0; z-index: 20; min-height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--line); background: #121518; }
+    .brand { display: flex; align-items: baseline; gap: 9px; white-space: nowrap; }
+    .brand strong { letter-spacing: .12em; font-size: 14px; }
+    .brand span { color: var(--muted); font-size: 13px; }
+    .toolbar { display: flex; gap: 7px; flex-wrap: wrap; justify-content: flex-end; align-items: center; }
+    .project-status { display: flex; align-items: center; gap: 7px; padding: 6px 9px; border: 1px solid var(--line); border-radius: 8px; color: var(--muted); font-size: 12px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #5a626b; }
+    .project-status.connected .dot { background: var(--good); }
+    main { min-height: 0; display: grid; grid-template-columns: 330px minmax(590px, 1fr); }
+    .sidebar { min-height: calc(100vh - 64px); border-right: 1px solid var(--line); background: var(--panel); display: grid; grid-template-rows: auto auto auto 1fr auto; }
+    .side-head { padding: 14px; border-bottom: 1px solid var(--line); }
+    .side-head h1 { font-size: 16px; margin: 0 0 5px; }
+    .side-head p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+    .stat { border: 1px solid var(--line); border-radius: 8px; padding: 8px; background: #14181d; }
+    .stat span { display: block; color: var(--muted); font-size: 10px; margin-bottom: 2px; }
+    .stat strong { font-size: 17px; }
+    .filters { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+    .filters input { grid-column: 1 / -1; }
+    .asset-list { min-height: 0; overflow: auto; padding: 8px; display: grid; align-content: start; gap: 6px; }
+    .asset-card { width: 100%; border: 1px solid var(--line); border-radius: 9px; background: var(--panel2); padding: 9px 10px; text-align: left; color: var(--text); cursor: pointer; }
+    .asset-card:hover, .asset-card.active { border-color: var(--accent); }
+    .asset-card.active { box-shadow: inset 0 0 0 1px var(--accent); }
+    .asset-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+    .asset-card strong { font-size: 12px; line-height: 1.3; }
+    .asset-card small { display: block; margin-top: 3px; color: var(--muted); font-size: 10px; }
+    .chip { display: inline-flex; align-items: center; gap: 5px; min-height: 20px; padding: 2px 6px; border-radius: 999px; border: 1px solid var(--line2); color: var(--muted); font-size: 9px; font-weight: 700; text-transform: uppercase; white-space: nowrap; }
+    .chip.enabled { color: var(--good); border-color: rgba(112,223,147,.45); }
+    .chip.disabled { color: #aeb4bb; }
+    .chip.planned { color: var(--warn); border-color: rgba(255,209,102,.42); }
+    .side-foot { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; padding: 10px 12px; border-top: 1px solid var(--line); }
+    .editor { min-width: 0; padding: 16px; }
+    .empty-editor { min-height: 65vh; display: grid; place-items: center; text-align: center; color: var(--muted); }
+    .empty-editor strong { display: block; color: var(--text); margin-bottom: 6px; }
+    .editor-shell { display: grid; gap: 14px; max-width: 1260px; margin: 0 auto; }
+    .editor-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+    .editor-head h2 { margin: 0 0 4px; font-size: 21px; }
+    .editor-head p { margin: 0; color: var(--muted); font-size: 12px; }
+    .head-actions { display: flex; flex-wrap: wrap; gap: 7px; justify-content: flex-end; }
+    .panel { border: 1px solid var(--line); border-radius: 11px; background: var(--panel); overflow: hidden; }
+    .panel-head { padding: 11px 13px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .panel-head h3 { margin: 0; font-size: 13px; letter-spacing: .04em; text-transform: uppercase; }
+    .panel-head span { color: var(--muted); font-size: 11px; }
+    .panel-body { padding: 13px; }
+    .grid-form { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 10px; }
+    .field { min-width: 0; }
+    .field label { display: block; margin-bottom: 5px; color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .045em; text-transform: uppercase; }
+    .span-2 { grid-column: span 2; } .span-3 { grid-column: span 3; } .span-4 { grid-column: span 4; } .span-6 { grid-column: span 6; } .span-8 { grid-column: span 8; } .span-12 { grid-column: 1 / -1; }
+    .id-preview { padding: 9px 10px; border: 1px dashed var(--line2); border-radius: 8px; background: #101317; color: var(--accent); font-size: 12px; overflow-wrap: anywhere; }
+    .two-col { display: grid; grid-template-columns: minmax(360px, .9fr) minmax(430px, 1.1fr); gap: 14px; }
+    .footprint-wrap { display: grid; grid-template-columns: minmax(250px, 1fr) minmax(240px, .85fr); gap: 12px; align-items: start; }
+    #footprintCanvas { display: block; width: 100%; max-width: 520px; aspect-ratio: 1.35 / 1; border: 1px solid var(--line); border-radius: 8px; background: #101317; cursor: pointer; touch-action: none; }
+    .mini-tools { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .help { color: var(--muted); font-size: 11px; line-height: 1.5; margin: 8px 0 0; }
+    .variants { display: grid; gap: 8px; }
+    .variant-card { border: 1px solid var(--line); border-radius: 9px; background: var(--panel2); padding: 10px; }
+    .variant-grid { display: grid; grid-template-columns: 90px 150px 120px minmax(220px,1fr) minmax(190px,1fr) auto; gap: 8px; align-items: end; }
+    .variant-id { margin-top: 7px; display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 7px; }
+    .variant-id div { border: 1px dashed #46505b; border-radius: 7px; padding: 7px 8px; font-size: 10px; color: var(--muted); overflow-wrap: anywhere; }
+    .variant-id strong { color: var(--text); font-weight: 600; }
+    .file-button { position: relative; overflow: hidden; min-width: 96px; }
+    .file-button input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .queued { color: var(--good) !important; }
+    .validation { display: grid; gap: 6px; }
+    .validation-row { display: flex; align-items: flex-start; gap: 8px; font-size: 11px; color: var(--muted); }
+    .validation-row.good { color: var(--good); }
+    .validation-row.bad { color: var(--danger); }
+    .validation-row.warn { color: var(--warn); }
+    .taxonomy-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; }
+    .taxonomy-list { display: grid; gap: 6px; margin-top: 9px; }
+    .taxonomy-row { display: grid; grid-template-columns: 1fr 88px auto; gap: 6px; align-items: center; padding: 7px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel2); }
+    .taxonomy-row.types { grid-template-columns: 1fr 86px 110px auto; }
+    .taxonomy-row input, .taxonomy-row select { padding: 6px 7px; font-size: 11px; }
+    .tabs { display: flex; gap: 6px; margin-bottom: 13px; border-bottom: 1px solid var(--line); padding-bottom: 8px; }
+    .tabs button.active { background: var(--accent); color: var(--accentDark); border-color: var(--accent); font-weight: 800; }
+    .tab-view[hidden] { display: none !important; }
+    .preview3d { min-height: 330px; position: relative; border: 1px solid var(--line); border-radius: 8px; background: #101317; overflow: hidden; }
+    #threePreview { position: absolute; inset: 0; }
+    .preview-msg { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; color: var(--muted); padding: 20px; font-size: 11px; pointer-events: none; }
+    .toast { position: fixed; right: 16px; bottom: 16px; z-index: 100; max-width: min(430px, calc(100vw - 32px)); border: 1px solid var(--line2); border-radius: 9px; background: #191d22; color: var(--text); padding: 10px 12px; box-shadow: 0 10px 35px rgba(0,0,0,.35); font-size: 12px; opacity: 0; transform: translateY(8px); pointer-events: none; transition: .18s ease; }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.good { border-color: rgba(112,223,147,.55); }
+    .toast.bad { border-color: rgba(255,103,95,.55); }
+    .modal-backdrop { position: fixed; inset: 0; z-index: 80; background: rgba(0,0,0,.62); display: grid; place-items: center; padding: 18px; }
+    .modal-backdrop[hidden] { display: none; }
+    .modal { width: min(760px, 100%); max-height: 88vh; overflow: auto; border: 1px solid var(--line2); border-radius: 12px; background: var(--panel); }
+    .modal h3 { margin: 0; font-size: 16px; }
+    .modal-head, .modal-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 13px 15px; border-bottom: 1px solid var(--line); }
+    .modal-foot { border-bottom: 0; border-top: 1px solid var(--line); justify-content: flex-end; }
+    .modal-body { padding: 15px; }
+    .raw-json { min-height: 420px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11px; line-height: 1.45; }
+    @media (max-width: 1050px) {
+      main { grid-template-columns: 280px minmax(520px,1fr); }
+      .two-col, .footprint-wrap { grid-template-columns: 1fr; }
+      .variant-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .variant-grid .variant-remove { grid-column: 2; justify-self: end; }
+      .taxonomy-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 760px) {
+      header { position: static; flex-direction: column; align-items: stretch; }
+      .toolbar { justify-content: flex-start; overflow-x: auto; flex-wrap: nowrap; }
+      main { display: block; }
+      .sidebar { min-height: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+      .asset-list { max-height: 330px; }
+      .grid-form { grid-template-columns: repeat(2,minmax(0,1fr)); }
+      .span-2,.span-3,.span-4,.span-6,.span-8,.span-12 { grid-column: span 2; }
+      .variant-grid, .variant-id { grid-template-columns: 1fr; }
+      .variant-grid .variant-remove { grid-column: auto; justify-self: stretch; }
+      .editor-head { display: grid; }
+      .head-actions { justify-content: flex-start; }
+    }
+  </style>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand"><strong>SKALDIS BUILD</strong><span>Asset Manager</span></div>
+    <div class="toolbar">
+      <div id="projectStatus" class="project-status"><span class="dot"></span><span>Geen projectmap gekoppeld</span></div>
+      <button id="connectFolderBtn" type="button">Projectmap koppelen</button>
+      <button id="loadProjectBtn" type="button" disabled>JSON laden</button>
+      <button id="saveProjectBtn" class="primary" type="button" disabled>Opslaan naar project</button>
+      <button id="importBtn" type="button">Import JSON</button>
+      <button id="exportBtn" type="button">Export JSON</button>
+      <input id="importInput" type="file" accept="application/json,.json" hidden />
+    </div>
+  </header>
+
+  <main>
+    <aside class="sidebar">
+      <div class="side-head">
+        <h1>Assetfamilies</h1>
+        <p>Een familie bepaalt footprint en top-down-logica. Varianten wisselen alleen het model binnen dezelfde familie.</p>
+      </div>
+      <div class="stats">
+        <div class="stat"><span>Families</span><strong id="familyCount">0</strong></div>
+        <div class="stat"><span>Varianten</span><strong id="variantCount">0</strong></div>
+        <div class="stat"><span>Gepland</span><strong id="plannedCount">0</strong></div>
+      </div>
+      <div class="filters">
+        <input id="searchInput" type="search" placeholder="Zoek ID, naam, type…" />
+        <select id="packFilter"><option value="">Alle packs</option></select>
+        <select id="statusFilter"><option value="">Alle statussen</option><option value="enabled">Enabled</option><option value="planned">Planned</option><option value="disabled">Disabled</option></select>
+      </div>
+      <div id="assetList" class="asset-list"></div>
+      <div class="side-foot">
+        <button id="newAssetBtn" class="primary" type="button">+ Nieuwe familie</button>
+        <button id="duplicateAssetBtn" type="button" disabled>Dupliceren</button>
+      </div>
+    </aside>
+
+    <section class="editor">
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="asset" type="button">Asset</button>
+        <button class="tab-btn" data-tab="taxonomy" type="button">Packs & types</button>
+        <button class="tab-btn" data-tab="database" type="button">Database</button>
+      </div>
+
+      <div id="assetTab" class="tab-view">
+        <div id="emptyEditor" class="empty-editor"><div><strong>Selecteer een assetfamilie</strong>of maak links een nieuwe familie aan.</div></div>
+        <div id="editorShell" class="editor-shell" hidden>
+          <div class="editor-head">
+            <div><h2 id="editorTitle">Asset</h2><p id="editorSub">—</p></div>
+            <div class="head-actions">
+              <button id="validateBtn" type="button">Valideren</button>
+              <button id="deleteAssetBtn" class="danger" type="button">Familie verwijderen</button>
+            </div>
+          </div>
+
+          <section class="panel">
+            <div class="panel-head"><h3>Identiteit</h3><span>ID en displaynaam worden automatisch opgebouwd</span></div>
+            <div class="panel-body">
+              <div class="grid-form">
+                <div class="field span-3"><label>Pack</label><select id="assetPack"></select></div>
+                <div class="field span-3"><label>Class</label><select id="assetClass"></select></div>
+                <div class="field span-3"><label>Type</label><select id="assetType"></select></div>
+                <div class="field span-3"><label>Status</label><select id="assetStatus"><option value="enabled">Enabled</option><option value="planned">Planned</option><option value="disabled">Disabled</option></select></div>
+                <div class="field span-2"><label>Breedte</label><input id="assetWidth" type="number" min="1" max="99" step="1" /></div>
+                <div class="field span-2"><label>Diepte</label><input id="assetDepth" type="number" min="1" max="99" step="1" /></div>
+                <div class="field span-4"><label>Anchor type</label><select id="assetAnchor"><option value="cell">Cell</option></select></div>
+                <div class="field span-4"><label>Default variant</label><select id="defaultVariant"></select></div>
+                <div class="field span-6"><label>Familie-ID</label><div id="familyIdPreview" class="id-preview mono"></div></div>
+                <div class="field span-6"><label>Display name</label><input id="displayName" readonly /></div>
+                <div class="field span-12"><label>Legacy part IDs</label><input id="legacyIds" placeholder="wall-straight-1, door-1" /></div>
+                <div class="field span-12"><label>Notities</label><textarea id="assetNotes" placeholder="Interne notities, modelstatus, productie-info…"></textarea></div>
+              </div>
+            </div>
+          </section>
+
+          <div class="two-col">
+            <section class="panel">
+              <div class="panel-head"><h3>Footprint & top-down</h3><span>Klik vakken om footprint te wijzigen</span></div>
+              <div class="panel-body">
+                <div class="footprint-wrap">
+                  <div>
+                    <canvas id="footprintCanvas" width="520" height="390"></canvas>
+                    <div class="mini-tools">
+                      <button id="rectFootprintBtn" type="button">Volledige rechthoek</button>
+                      <button id="clearFootprintBtn" type="button">Footprint leeg</button>
+                      <button id="defaultPathBtn" type="button">Standaard pad</button>
+                    </div>
+                    <p class="help">De familieafmetingen bepalen de bounding box. Footprint kan daarbinnen L-vormig of onregelmatig zijn.</p>
+                  </div>
+                  <div>
+                    <div class="field"><label>Footprint cells</label><textarea id="footprintText" class="mono"></textarea></div>
+                    <div class="field" style="margin-top:9px"><label>Paths JSON</label><textarea id="pathsText" class="mono"></textarea></div>
+                    <p class="help">Paths zijn alleen de 2D-muurvorm. Props en pilaren mogen een lege array <code>[]</code> gebruiken.</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head"><h3>Model preview</h3><span>Optioneel · Three.js via CDN</span></div>
+              <div class="panel-body">
+                <div class="field"><label>Variant om te bekijken</label><select id="previewVariant"></select></div>
+                <div class="mini-tools"><button id="previewBtn" type="button">3D preview laden</button><button id="resetPreviewBtn" type="button">Reset camera</button></div>
+                <div class="preview3d" style="margin-top:9px"><div id="threePreview"></div><div id="previewMsg" class="preview-msg">Selecteer een variant en laad de preview.</div></div>
+              </div>
+            </section>
+          </div>
+
+          <section class="panel">
+            <div class="panel-head"><h3>Varianten</h3><button id="addVariantBtn" type="button">+ Variant toevoegen</button></div>
+            <div class="panel-body"><div id="variantList" class="variants"></div></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head"><h3>Validatie</h3><span>Controle voor export / configurator</span></div>
+            <div class="panel-body"><div id="validationList" class="validation"></div></div>
+          </section>
+        </div>
+      </div>
+
+      <div id="taxonomyTab" class="tab-view" hidden>
+        <div class="editor-shell">
+          <div class="editor-head"><div><h2>Packs & types</h2><p>Deze codes worden gebruikt om alle IDs automatisch te genereren.</p></div></div>
+          <div class="taxonomy-grid">
+            <section class="panel"><div class="panel-head"><h3>Packs</h3><button data-tax-add="packs" type="button">+ Pack</button></div><div class="panel-body"><div id="packTaxList" class="taxonomy-list"></div></div></section>
+            <section class="panel"><div class="panel-head"><h3>Classes</h3><button data-tax-add="classes" type="button">+ Class</button></div><div class="panel-body"><div id="classTaxList" class="taxonomy-list"></div></div></section>
+            <section class="panel"><div class="panel-head"><h3>Types</h3><button data-tax-add="types" type="button">+ Type</button></div><div class="panel-body"><div id="typeTaxList" class="taxonomy-list"></div></div></section>
+          </div>
+        </div>
+      </div>
+
+      <div id="databaseTab" class="tab-view" hidden>
+        <div class="editor-shell">
+          <div class="editor-head"><div><h2>Database</h2><p>De configurator zal later rechtstreeks dezelfde <code>data/assets.json</code> lezen.</p></div><div class="head-actions"><button id="formatJsonBtn" type="button">JSON formatteren</button><button id="applyRawJsonBtn" type="button">JSON toepassen</button></div></div>
+          <section class="panel"><div class="panel-head"><h3>assets.json</h3><span id="rawJsonStatus">Live kopie</span></div><div class="panel-body"><textarea id="rawJson" class="raw-json"></textarea></div></section>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="toast" class="toast"></div>
+<div id="confirmModal" class="modal-backdrop" hidden>
+  <div class="modal"><div class="modal-head"><h3 id="confirmTitle">Bevestigen</h3></div><div class="modal-body"><p id="confirmText" style="color:var(--muted);line-height:1.55;margin:0"></p></div><div class="modal-foot"><button id="confirmCancel" type="button">Annuleren</button><button id="confirmOk" class="danger" type="button">Verwijderen</button></div></div>
+</div>
+
+<script id="seedData" type="application/json">
+{
+  "schemaVersion": 1,
+  "app": "SKALDIS BUILD Asset Database",
+  "updatedAt": "2026-08-04T00:00:00.000Z",
+  "settings": {
+    "cellSizeMm": 25.4,
+    "modelDirectory": "./models/",
+    "naming": {
+      "sizeDigitsPerDimension": 2,
+      "separator": "_"
+    }
+  },
+  "packs": [
+    {
+      "id": "dungeon",
+      "code": "DG",
+      "name": "Dungeon Core",
+      "status": "enabled"
+    },
+    {
+      "id": "castle",
+      "code": "CS",
+      "name": "Castle Core",
+      "status": "enabled"
+    },
+    {
+      "id": "village",
+      "code": "VL",
+      "name": "Village Core",
+      "status": "enabled"
+    },
+    {
+      "id": "generic",
+      "code": "GN",
+      "name": "Generic",
+      "status": "enabled"
+    }
+  ],
+  "classes": [
+    {
+      "id": "structure",
+      "code": "STR",
+      "name": "Structure"
+    },
+    {
+      "id": "prop",
+      "code": "PRP",
+      "name": "Prop"
+    }
+  ],
+  "types": [
+    {
+      "id": "wall",
+      "code": "WALL",
+      "name": "Muur Recht",
+      "classId": "structure",
+      "placeholder": "straight"
+    },
+    {
+      "id": "corner",
+      "code": "CORNER",
+      "name": "Hoek",
+      "classId": "structure",
+      "placeholder": "corner"
+    },
+    {
+      "id": "tee",
+      "code": "TEE",
+      "name": "T-stuk",
+      "classId": "structure",
+      "placeholder": "t"
+    },
+    {
+      "id": "cross",
+      "code": "CROSS",
+      "name": "Kruis",
+      "classId": "structure",
+      "placeholder": "cross"
+    },
+    {
+      "id": "pillar",
+      "code": "PILLAR",
+      "name": "Pilaar",
+      "classId": "structure",
+      "placeholder": "pillar"
+    },
+    {
+      "id": "wallend",
+      "code": "WALLEND",
+      "name": "Muureinde",
+      "classId": "structure",
+      "placeholder": "straight"
+    },
+    {
+      "id": "tower_straight",
+      "code": "TWRSTR",
+      "name": "Toren Recht",
+      "classId": "structure",
+      "placeholder": "tower"
+    },
+    {
+      "id": "tower_corner",
+      "code": "TWRCNR",
+      "name": "Toren Hoek",
+      "classId": "structure",
+      "placeholder": "tower"
+    },
+    {
+      "id": "gate",
+      "code": "GATE",
+      "name": "Poort",
+      "classId": "structure",
+      "placeholder": "door"
+    },
+    {
+      "id": "chest",
+      "code": "CHEST",
+      "name": "Kist",
+      "classId": "prop",
+      "placeholder": "chest"
+    },
+    {
+      "id": "campfire",
+      "code": "FIRE",
+      "name": "Kampvuur",
+      "classId": "prop",
+      "placeholder": "campfire"
+    },
+    {
+      "id": "figure",
+      "code": "FIGURE",
+      "name": "Referentiefiguur",
+      "classId": "prop",
+      "placeholder": "miniature"
+    }
+  ],
+  "assets": [
+    {
+      "id": "DG_STR_WALL_0101",
+      "displayName": "Muur Recht 1 × 1",
+      "packId": "dungeon",
+      "classId": "structure",
+      "typeId": "wall",
+      "width": 1,
+      "depth": 1,
+      "status": "enabled",
+      "anchorType": "cell",
+      "footprintCells": [
+        "0:0"
+      ],
+      "paths": [
+        [
+          [
+            0,
+            0.5
+          ],
+          [
+            1,
+            0.5
+          ]
+        ]
+      ],
+      "defaultVariant": "BASIC",
+      "variants": [
+        {
+          "code": "BASIC",
+          "name": "Standaard",
+          "status": "enabled",
+          "modelFile": "dg_str_wall_0101_basic.glb",
+          "legacyModelFile": "wall-straight-1_v2.glb",
+          "id": "DG_STR_WALL_0101_BASIC",
+          "displayName": "Muur Recht 1 × 1"
+        },
+        {
+          "code": "DOOR",
+          "name": "Deur",
+          "status": "enabled",
+          "modelFile": "dg_str_wall_0101_door.glb",
+          "legacyModelFile": "door-1.glb",
+          "id": "DG_STR_WALL_0101_DOOR",
+          "displayName": "Muur Recht 1 × 1 — Deur"
+        },
+        {
+          "code": "WINDOW",
+          "name": "Raam",
+          "status": "planned",
+          "modelFile": "dg_str_wall_0101_window.glb",
+          "legacyModelFile": "",
+          "id": "DG_STR_WALL_0101_WINDOW",
+          "displayName": "Muur Recht 1 × 1 — Raam"
+        },
+        {
+          "code": "RUINED",
+          "name": "Ruined",
+          "status": "planned",
+          "modelFile": "dg_str_wall_0101_ruined.glb",
+          "legacyModelFile": "",
+          "id": "DG_STR_WALL_0101_RUINED",
+          "displayName": "Muur Recht 1 × 1 — Ruined"
+        }
+      ],
+      "legacyPartIds": [
+        "wall-straight-1",
+        "door-1"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "DG_STR_WALL_0201",
+      "displayName": "Muur Recht 2 × 1",
+      "packId": "dungeon",
+      "classId": "structure",
+      "typeId": "wall",
+      "width": 2,
+      "depth": 1,
+      "status": "enabled",
+      "anchorType": "cell",
+      "footprintCells": [
+        "0:0",
+        "1:0"
+      ],
+      "paths": [
+        [
+          [
+            0,
+            0.5
+          ],
+          [
+            2,
+            0.5
+          ]
+        ]
+      ],
+      "defaultVariant": "BASIC",
+      "variants": [
+        {
+          "code": "BASIC",
+          "name": "Standaard",
+          "status": "enabled",
+          "modelFile": "dg_str_wall_0201_basic.glb",
+          "legacyModelFile": "wall-straigth-2_v2.glb",
+          "id": "DG_STR_WALL_0201_BASIC",
+          "displayName": "Muur Recht 2 × 1"
+        },
+        {
+          "code": "DOOR",
+          "name": "Deur",
+          "status": "enabled",
+          "modelFile": "dg_str_wall_0201_door.glb",
+          "legacyModelFile": "door-2.glb",
+          "id": "DG_STR_WALL_0201_DOOR",
+          "displayName": "Muur Recht 2 × 1 — Deur"
+        },
+        {
+          "code": "WINDOW",
+          "name": "Raam",
+          "status": "planned",
+          "modelFile": "dg_str_wall_0201_window.glb",
+          "legacyModelFile": "",
+          "id": "DG_STR_WALL_0201_WINDOW",
+          "displayName": "Muur Recht 2 × 1 — Raam"
+        },
+        {
+          "code": "RUINED",
+          "name": "Ruined",
+          "status": "planned",
+          "modelFile": "dg_str_wall_0201_ruined.glb",
+          "legacyModelFile": "",
+          "id": "DG_STR_WALL_0201_RUINED",
+          "displayName": "Muur Recht 2 × 1 — Ruined"
+        }
+      ],
+      "legacyPartIds": [
+        "wall-straight-2",
+        "door-2"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "DG_STR_CORNER_0101",
+      "displayName": "Hoek 1 × 1",
+      "packId": "dungeon",
+      "classId": "structure",
+      "typeId": "corner",
+      "width": 1,
+      "depth": 1,
+      "status": "enabled",
+      "anchorType": "cell",
+      "footprintCells": [
+        "0:0"
+      ],
+      "paths": [
+        [
+          [
+            1,
+            0.5
+          ],
+          [
+            0.5,
+            0.5
+          ],
+          [
+            0.5,
+            1
+          ]
+        ]
+      ],
+      "defaultVariant": "BASIC",
+      "variants": [
+        {
+          "code": "BASIC",
+          "name": "Standaard",
+          "status": "enabled",
+          "modelFile": "dg_str_corner_0101_basic.glb",
+          "legacyModelFile": "corner-1x1_v2.glb",
+          "id": "DG_STR_CORNER_0101_BASIC",
+          "displayName": "Hoek 1 × 1"
+        },
+        {
+          "code": "PILLAR",
+          "name": "Met pilaar",
+          "status": "planned",
+          "modelFile": "dg_str_corner_0101_pillar.glb",
+          "legacyModelFile": "",
+          "id": "DG_STR_CORNER_0101_PILLAR",
+          "displayName": "Hoek 1 × 1 — Met pilaar"
+        },
+        {
+          "code": "ROUND",
+          "name": "Afronding",
+          "status": "disabled",
+          "modelFile": "dg_str_corner_0101_round.glb",
+          "legacyModelFile": "round-corner-1.glb",
+          "id": "DG_STR_CORNER_0101_ROUND",
+          "displayName": "Hoek 1 × 1 — Afronding"
+        }
+      ],
+      "legacyPartIds": [
+        "corner-1x1",
+        "round-corner-1"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "DG_STR_CORNER_0202",
+      "displayName": "Hoek 2 × 2",
+      "packId": "dungeon",
+      "classId": "structure",
+      "typeId": "corner",
+      "width": 2,
+      "depth": 2,
+      "status": "enabled",
+      "anchorType": "cell",
+      "footprintCells": [
+        "0:0",
+        "1:0",
+        "0:1"
+      ],
+      "paths": [
+        [
+          [
+            2,
+            0.5
+          ],
+          [
+            0.5,
+            0.5
+          ],
+          [
+            0.5,
+            2
+          ]
+        ]
+      ],
+      "defaultVariant": "BASIC",
+      "variants": [
+        {
+          "code": "BASIC",
+          "name": "Standaard",
+          "status": "enabled",
+          "modelFile": "dg_str_corner_0202_basic.glb",
+          "legacyModelFile": "corner-2x2_v2.glb",
+          "id": "DG_STR_CORNER_0202_BASIC",
+          "displayName": "Hoek 2 × 2"
+        },
+        {
+          "code": "PILLAR",
+          "name": "Met pilaar",
+          "status": "planned",
+          "modelFile": "dg_str_corner_0202_pillar.glb",
+          "legacyModelFile": "",
+          "id": "DG_STR_CORNER_0202_PILLAR",
+          "displayName": "Hoek 2 × 2 — Met pilaar"
+        },
+        {
+          "code": "ROUND",
+          "name": "Afronding",
+          "status": "disabled",
+          "modelFile": "dg_str_corner_0202_round.glb",
+          "legacyModelFile": "round-corner-2.glb",
+          "id": "DG_STR_CORNER_0202_ROUND",
+          "displayName": "Hoek 2 × 2 — Afronding"
+        }
+      ],
+      "legacyPartIds": [
+        "corner-2x2",
+        "round-corner-2"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "DG_STR_TEE_0101",
+      "displayName": "T-stuk 1 × 1",
+      "packId": "dungeon",
+      "classId": "structure",
+      "typeId": "tee",
+      "width": 1,
+      "depth": 1,
+      "status": "enabled",
+      "anchorType": "cell",
+      "footprintCells": [
+        "0:0"
+      ],
+      "paths": [
+        [
+          [
+            0,
+            0.5
+          ],
+          [
+            1,
+            0.5
+          ]
+        ],
+        [
+          [
+            0.5,
+            0.5
+          ],
+          [
+            0.5,
+            1
+          ]
+        ]
+      ],
+      "defaultVariant": "BASIC",
+      "variants": [
+        {
+          "code": "BASIC",
+          "name": "Standaard",
+          "status": "enabled",
+          "modelFile": "dg_str_tee_0101_basic.glb",
+          "legacyModelFile": "t-piece-1_v2.glb",
+          "id": "DG_STR_TEE_0101_BASIC",
+          "displayName": "T-stuk 1 × 1"
+        },
+        {
+          "code": "PILLAR",
+          "name": "Met pilaar",
+          "status": "planned",
+          "modelFile": "dg_str_tee_0101_pillar.glb",
+          "legacyModelFile": "",
+          "id": "DG_STR_TEE_0101_PILLAR",
+          "displayName": "T-stuk 1 × 1 — Met pilaar"
+        }
+      ],
+      "legacyPartIds": [
+        "t-piece-1"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "DG_STR_TEE_0302",
+      "displayName": "T-stuk 3 × 2",
+      "packId": "dungeon",
+      "classId": "structure",
+      "typeId": "tee",
+      "width": 3,
+      "depth": 2,
+      "status": "disabled",
+      "anchorType": "cell",
+      "footprintCells": [
+        "0:0",
+        "1:0",
+        "2:0",
+        "1:1"
+      ],
+      "paths": [
+        [
+          [
+            0,
+            0.5
+          ],
+          [
+            3,
+            0.5
+          ]
+        ],
+        [
+          [
+            1.5,
+            0.5
+          ],
+          [
+            1.5,
+            2
+          ]
+        ]
+      ],
+      "defaultVariant": "BASIC",
+      "variants": [
+        {
+          "code": "BASIC",
+          "name": "Standaard",
+          "status": "disabled",
+          "modelFile": "dg_str_tee_0302_basic.glb",
+          "legacyModelFile": "t-piece-2.glb",
+          "id": "DG_STR_TEE_0302_BASIC",
+          "displayName": "T-stuk 3 × 2"
+        },
+        {
+          "code": "PILLAR",
+          "name": "Met pilaar",
+          "status": "planned",
+          "modelFile": "dg_str_tee_0302_pillar.glb",
+          "legacyModelFile": "",
+          "id": "DG_STR_TEE_0302_PILLAR",
+          "displayName": "T-stuk 3 × 2 — Met pilaar"
+        }
+      ],
+      "legacyPartIds": [
+        "t-piece-2"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "DG_STR_CROSS_0101",
+      "displayName": "Kruis 1 × 1",
+      "packId": "dungeon",
+      "classId": "structure",
+      "typeId": "cross",
+      "width": 1,
+      "depth": 1,
+      "status": "enabled",
+      "anchorType": "cell",
+      "footprintCells": [
+        "0:0"
+      ],
+      "paths": [
+        [
+          [
+            0,
+            0.5
+          ],
+          [
+            1,
+            0.5
+          ]
+        ],
+        [
+          [
+            0.5,
+            0
+          ],
+          [
+            0.5,
+            1
+          ]
+        ]
+      ],
+      "defaultVariant": "BASIC",
+      "variants": [
+        {
+          "code": "BASIC",
+          "name": "Standaard",
+          "status": "enabled",
+          "modelFile": "dg_str_cross_0101_basic.glb",
+          "legacyModelFile": "cross-piece-1_v2.glb",
+          "id": "DG_STR_CROSS_0101_BASIC",
+          "displayName": "Kruis 1 × 1"
+        },
+        {
+          "code": "PILLAR",
+          "name": "Met pilaar",
+          "status": "planned",
+          "modelFile": "dg_str_cross_0101_pillar.glb",
+          "legacyModelFile": "",
+          "id": "DG_STR_CROSS_0101_PILLAR",
+          "displayName": "Kruis 1 × 1 — Met pilaar"
+        }
+      ],
+      "legacyPartIds": [
+        "cross-piece-1"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "DG_STR_PILLAR_0101",
+      "displayName": "Pilaar 1 × 1",
+      "packId": "dungeon",
+      "classId": "structure",
+      "typeId": "pillar",
+      "width": 1,
+      "depth": 1,
+      "status": "enabled",
+      "anchorType": "cell",
+      "footprintCells": [
+        "0:0"
+      ],
+      "paths": [],
+      "defaultVariant": "BASIC",
+      "variants": [
+        {
+          "code": "BASIC",
+          "name": "Standaard",
+          "status": "enabled",
+          "modelFile": "dg_str_pillar_0101_basic.glb",
+          "legacyModelFile": "Pillar_Single.glb",
+          "id": "DG_STR_PILLAR_0101_BASIC",
+          "displayName": "Pilaar 1 × 1"
+        }
+      ],
+      "legacyPartIds": [
+        "pillar-single"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "DG_STR_WALLEND_0101",
+      "displayName": "Muureinde 1 × 1",
+      "packId": "dungeon",
+      "classId": "structure",
+      "typeId": "wallend",
+      "width": 1,
+      "depth": 1,
+      "status": "enabled",
+      "anchorType": "cell",
+      "footprintCells": [
+        "0:0"
+      ],
+      "paths": [
+        [
+          [
+            0,
+            0.5
+          ],
+          [
+            0.5,
+            0.5
+          ]
+        ]
+      ],
+      "defaultVariant": "BASIC",
+      "variants": [
+        {
+          "code": "BASIC",
+          "name": "Standaard",
+          "status": "enabled",
+          "modelFile": "dg_str_wallend_0101_basic.glb",
+          "legacyModelFile": "wall-end-1.glb",
+          "id": "DG_STR_WALLEND_0101_BASIC",
+          "displayName": "Muureinde 1 × 1"
+        },
+        {
+          "code": "RUINED",
+          "name": "Ruined",
+          "status": "planned",
+          "modelFile": "dg_str_wallend_0101_ruined.glb",
+          "legacyModelFile": "",
+          "id": "DG_STR_WALLEND_0101_RUINED",
+          "displayName": "Muureinde 1 × 1 — Ruined"
+        }
+      ],
+      "legacyPartIds": [
+        "wall-end-1"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "DG_PRP_CHEST_0101",
+      "displayName": "Kist 1 × 1",
+      "packId": "dungeon",
+      "classId": "prop",
+      "typeId": "chest",
+      "width": 1,
+      "depth": 1,
+      "status": "disabled",
+      "anchorType": "cell",
+      "footprintCells": [
+        "0:0"
+      ],
+      "paths": [],
+      "defaultVariant": "BASIC",
+      "variants": [
+        {
+          "code": "BASIC",
+          "name": "Standaard",
+          "status": "disabled",
+          "modelFile": "dg_prp_chest_0101_basic.glb",
+          "legacyModelFile": "chest.glb",
+          "id": "DG_PRP_CHEST_0101_BASIC",
+          "displayName": "Kist 1 × 1"
+        }
+      ],
+      "legacyPartIds": [
+        "chest"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "GN_PRP_FIRE_0101",
+      "displayName": "Kampvuur 1 × 1",
+      "packId": "generic",
+      "classId": "prop",
+      "typeId": "campfire",
+      "width": 1,
+      "depth": 1,
+      "status": "enabled",
+      "anchorType": "cell",
+      "footprintCells": [
+        "0:0"
+      ],
+      "paths": [],
+      "defaultVariant": "BASIC",
+      "variants": [
+        {
+          "code": "BASIC",
+          "name": "Standaard",
+          "status": "enabled",
+          "modelFile": "gn_prp_fire_0101_basic.glb",
+          "legacyModelFile": "campfire.glb",
+          "id": "GN_PRP_FIRE_0101_BASIC",
+          "displayName": "Kampvuur 1 × 1"
+        }
+      ],
+      "legacyPartIds": [
+        "campfire"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "GN_PRP_FIGURE_0101",
+      "displayName": "Referentiefiguur 1 × 1",
+      "packId": "generic",
+      "classId": "prop",
+      "typeId": "figure",
+      "width": 1,
+      "depth": 1,
+      "status": "enabled",
+      "anchorType": "cell",
+      "footprintCells": [
+        "0:0"
+      ],
+      "paths": [],
+      "defaultVariant": "BASIC",
+      "variants": [
+        {
+          "code": "BASIC",
+          "name": "Standaard",
+          "status": "enabled",
+          "modelFile": "gn_prp_figure_0101_basic.glb",
+          "legacyModelFile": "action-figure.glb",
+          "id": "GN_PRP_FIGURE_0101_BASIC",
+          "displayName": "Referentiefiguur 1 × 1"
+        }
+      ],
+      "legacyPartIds": [
+        "action-figure"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "CS_STR_WALL_0202",
+      "displayName": "Muur Recht 2 × 2",
+      "packId": "castle",
+      "classId": "structure",
+      "typeId": "wall",
+      "width": 2,
+      "depth": 2,
+      "status": "enabled",
+      "anchorType": "cell",
+      "footprintCells": [
+        "0:0",
+        "1:0",
+        "0:1",
+        "1:1"
+      ],
+      "paths": [
+        [
+          [
+            0,
+            1
+          ],
+          [
+            2,
+            1
+          ]
+        ]
+      ],
+      "defaultVariant": "BASIC",
+      "variants": [
+        {
+          "code": "BASIC",
+          "name": "Standaard",
+          "status": "enabled",
+          "modelFile": "cs_str_wall_0202_basic.glb",
+          "legacyModelFile": "wall-double-2.glb",
+          "id": "CS_STR_WALL_0202_BASIC",
+          "displayName": "Muur Recht 2 × 2"
+        },
+        {
+          "code": "DOOR",
+          "name": "Deur",
+          "status": "planned",
+          "modelFile": "cs_str_wall_0202_door.glb",
+          "legacyModelFile": "",
+          "id": "CS_STR_WALL_0202_DOOR",
+          "displayName": "Muur Recht 2 × 2 — Deur"
+        },
+        {
+          "code": "WINDOW",
+          "name": "Raam",
+          "status": "planned",
+          "modelFile": "cs_str_wall_0202_window.glb",
+          "legacyModelFile": "",
+          "id": "CS_STR_WALL_0202_WINDOW",
+          "displayName": "Muur Recht 2 × 2 — Raam"
+        },
+        {
+          "code": "RUINED",
+          "name": "Ruined",
+          "status": "planned",
+          "modelFile": "cs_str_wall_0202_ruined.glb",
+          "legacyModelFile": "",
+          "id": "CS_STR_WALL_0202_RUINED",
+          "displayName": "Muur Recht 2 × 2 — Ruined"
+        }
+      ],
+      "legacyPartIds": [
+        "wall-double-2"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "CS_STR_TWRSTR_0202",
+      "displayName": "Toren Recht 2 × 2",
+      "packId": "castle",
+      "classId": "structure",
+      "typeId": "tower_straight",
+      "width": 2,
+      "depth": 2,
+      "status": "enabled",
+      "anchorType": "cell",
+      "footprintCells": [
+        "0:0",
+        "1:0",
+        "0:1",
+        "1:1"
+      ],
+      "paths": [
+        [
+          [
+            0,
+            1
+          ],
+          [
+            2,
+            1
+          ]
+        ]
+      ],
+      "defaultVariant": "BASIC",
+      "variants": [
+        {
+          "code": "BASIC",
+          "name": "Standaard",
+          "status": "enabled",
+          "modelFile": "cs_str_twrstr_0202_basic.glb",
+          "legacyModelFile": "tower-straight-2x2.glb",
+          "id": "CS_STR_TWRSTR_0202_BASIC",
+          "displayName": "Toren Recht 2 × 2"
+        }
+      ],
+      "legacyPartIds": [
+        "tower-straight-2x2"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "CS_STR_TWRCNR_0202",
+      "displayName": "Toren Hoek 2 × 2",
+      "packId": "castle",
+      "classId": "structure",
+      "typeId": "tower_corner",
+      "width": 2,
+      "depth": 2,
+      "status": "enabled",
+      "anchorType": "cell",
+      "footprintCells": [
+        "0:0",
+        "1:0",
+        "0:1",
+        "1:1"
+      ],
+      "paths": [
+        [
+          [
+            1,
+            0
+          ],
+          [
+            1,
+            1
+          ],
+          [
+            2,
+            1
+          ]
+        ]
+      ],
+      "defaultVariant": "BASIC",
+      "variants": [
+        {
+          "code": "BASIC",
+          "name": "Standaard",
+          "status": "enabled",
+          "modelFile": "cs_str_twrcnr_0202_basic.glb",
+          "legacyModelFile": "tower-corner-2x2.glb",
+          "id": "CS_STR_TWRCNR_0202_BASIC",
+          "displayName": "Toren Hoek 2 × 2"
+        }
+      ],
+      "legacyPartIds": [
+        "tower-corner-2x2"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "CS_STR_GATE_0202",
+      "displayName": "Poort 2 × 2",
+      "packId": "castle",
+      "classId": "structure",
+      "typeId": "gate",
+      "width": 2,
+      "depth": 2,
+      "status": "enabled",
+      "anchorType": "cell",
+      "footprintCells": [
+        "0:0",
+        "1:0",
+        "0:1",
+        "1:1"
+      ],
+      "paths": [
+        [
+          [
+            0,
+            1
+          ],
+          [
+            2,
+            1
+          ]
+        ]
+      ],
+      "defaultVariant": "BASIC",
+      "variants": [
+        {
+          "code": "BASIC",
+          "name": "Standaard",
+          "status": "enabled",
+          "modelFile": "cs_str_gate_0202_basic.glb",
+          "legacyModelFile": "gate-2x2.glb",
+          "id": "CS_STR_GATE_0202_BASIC",
+          "displayName": "Poort 2 × 2"
+        }
+      ],
+      "legacyPartIds": [
+        "gate-2x2"
+      ],
+      "notes": ""
+    }
+  ]
+}
+</script>
+<script>
+(function () {
+  'use strict';
+
+  const STORAGE_KEY = 'skaldis-asset-manager-db-v1';
+  const HANDLE_DB = 'skaldis-asset-manager-handles-v1';
+  const HANDLE_STORE = 'handles';
+  const HANDLE_KEY = 'project-root';
+  const SEED_URL = './data/assets.json';
+
+  let db = null;
+  let selectedAssetKey = null;
+  let projectHandle = null;
+  let pendingFiles = new Map();
+  let confirmResolver = null;
+  let threeState = null;
+  let previewObjectUrl = null;
+
+  const $ = id => document.getElementById(id);
+  const els = {
+    projectStatus: $('projectStatus'), connectFolderBtn: $('connectFolderBtn'), loadProjectBtn: $('loadProjectBtn'), saveProjectBtn: $('saveProjectBtn'),
+    importBtn: $('importBtn'), exportBtn: $('exportBtn'), importInput: $('importInput'), assetList: $('assetList'), searchInput: $('searchInput'), packFilter: $('packFilter'), statusFilter: $('statusFilter'),
+    familyCount: $('familyCount'), variantCount: $('variantCount'), plannedCount: $('plannedCount'), newAssetBtn: $('newAssetBtn'), duplicateAssetBtn: $('duplicateAssetBtn'),
+    emptyEditor: $('emptyEditor'), editorShell: $('editorShell'), editorTitle: $('editorTitle'), editorSub: $('editorSub'), validateBtn: $('validateBtn'), deleteAssetBtn: $('deleteAssetBtn'),
+    assetPack: $('assetPack'), assetClass: $('assetClass'), assetType: $('assetType'), assetStatus: $('assetStatus'), assetWidth: $('assetWidth'), assetDepth: $('assetDepth'), assetAnchor: $('assetAnchor'), defaultVariant: $('defaultVariant'),
+    familyIdPreview: $('familyIdPreview'), displayName: $('displayName'), legacyIds: $('legacyIds'), assetNotes: $('assetNotes'), footprintCanvas: $('footprintCanvas'), footprintText: $('footprintText'), pathsText: $('pathsText'),
+    rectFootprintBtn: $('rectFootprintBtn'), clearFootprintBtn: $('clearFootprintBtn'), defaultPathBtn: $('defaultPathBtn'), previewVariant: $('previewVariant'), previewBtn: $('previewBtn'), resetPreviewBtn: $('resetPreviewBtn'), threePreview: $('threePreview'), previewMsg: $('previewMsg'),
+    variantList: $('variantList'), addVariantBtn: $('addVariantBtn'), validationList: $('validationList'), packTaxList: $('packTaxList'), classTaxList: $('classTaxList'), typeTaxList: $('typeTaxList'),
+    rawJson: $('rawJson'), rawJsonStatus: $('rawJsonStatus'), formatJsonBtn: $('formatJsonBtn'), applyRawJsonBtn: $('applyRawJsonBtn'), toast: $('toast'), confirmModal: $('confirmModal'), confirmTitle: $('confirmTitle'), confirmText: $('confirmText'), confirmCancel: $('confirmCancel'), confirmOk: $('confirmOk')
+  };
+
+  function deepClone(value) { return JSON.parse(JSON.stringify(value)); }
+  function runtimeKey() { return (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now().toString(36)); }
+  function ensureRuntimeKeys() {
+    (db.assets || []).forEach(asset => {
+      if (!asset._key) asset._key = runtimeKey();
+      (asset.variants || []).forEach(v => { if (!v._key) v._key = runtimeKey(); });
+    });
+  }
+  function cleanForExport(value) {
+    if (Array.isArray(value)) return value.map(cleanForExport);
+    if (value && typeof value === 'object') {
+      const result = {};
+      Object.entries(value).forEach(([k,v]) => { if (!k.startsWith('_')) result[k] = cleanForExport(v); });
+      return result;
+    }
+    return value;
+  }
+  function serializeDB(pretty = true) {
+    const copy = cleanForExport(db);
+    copy.updatedAt = new Date().toISOString();
+    return JSON.stringify(copy, null, pretty ? 2 : 0);
+  }
+  function toast(message, type = '') {
+    els.toast.textContent = message;
+    els.toast.className = `toast ${type} show`;
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(() => els.toast.classList.remove('show'), 2800);
+  }
+  function askConfirm(title, text, okText = 'Verwijderen') {
+    els.confirmTitle.textContent = title; els.confirmText.textContent = text; els.confirmOk.textContent = okText; els.confirmModal.hidden = false;
+    return new Promise(resolve => { confirmResolver = resolve; });
+  }
+  els.confirmCancel.addEventListener('click', () => { els.confirmModal.hidden = true; confirmResolver?.(false); confirmResolver = null; });
+  els.confirmOk.addEventListener('click', () => { els.confirmModal.hidden = true; confirmResolver?.(true); confirmResolver = null; });
+
+  function normalizeCode(value) { return String(value || '').trim().toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, ''); }
+  function normalizeId(value) { return String(value || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, ''); }
+  function padSize(n) { return String(Math.max(1, Math.min(99, Number(n) || 1))).padStart(2, '0'); }
+  function packById(id) { return db.packs.find(x => x.id === id); }
+  function classById(id) { return db.classes.find(x => x.id === id); }
+  function typeById(id) { return db.types.find(x => x.id === id); }
+  function assetById(id) { return db.assets.find(x => x.id === id); }
+  function assetByKey(key) { return db.assets.find(x => x._key === key); }
+  function selectedAsset() { return assetByKey(selectedAssetKey); }
+  function familyIdFor(asset) {
+    const p = packById(asset.packId), c = classById(asset.classId), t = typeById(asset.typeId);
+    if (!p || !c || !t) return 'INVALID_ID';
+    return `${normalizeCode(p.code)}_${normalizeCode(c.code)}_${normalizeCode(t.code)}_${padSize(asset.width)}${padSize(asset.depth)}`;
+  }
+  function displayNameFor(asset) {
+    const t = typeById(asset.typeId);
+    return `${t?.name || 'Asset'} ${Number(asset.width) || 1} × ${Number(asset.depth) || 1}`;
+  }
+  function variantIdFor(asset, variant) { return `${familyIdFor(asset)}_${normalizeCode(variant.code || 'VARIANT')}`; }
+  function variantDisplayFor(asset, variant) { return normalizeCode(variant.code) === 'BASIC' ? displayNameFor(asset) : `${displayNameFor(asset)} — ${variant.name || normalizeCode(variant.code)}`; }
+  function modelFileFor(asset, variant) { return `${variantIdFor(asset, variant).toLowerCase()}.glb`; }
+
+  function refreshDerived(asset) {
+    if (!asset) return;
+    asset.id = familyIdFor(asset);
+    asset.displayName = displayNameFor(asset);
+    (asset.variants || []).forEach(v => {
+      v.code = normalizeCode(v.code || 'VARIANT');
+      v.id = variantIdFor(asset, v);
+      v.displayName = variantDisplayFor(asset, v);
+      v.modelFile = modelFileFor(asset, v);
+    });
+  }
+  function refreshAllDerived() { db.assets.forEach(refreshDerived); }
+
+  function saveLocal() {
+    try { localStorage.setItem(STORAGE_KEY, serializeDB(false)); }
+    catch (error) { console.warn(error); }
+  }
+  function databaseChanged(message) {
+    refreshAllDerived();
+    db.updatedAt = new Date().toISOString();
+    saveLocal();
+    renderAll();
+    if (message) toast(message, 'good');
+  }
+
+  async function loadInitial() {
+    let loaded = null;
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) loaded = JSON.parse(raw);
+    } catch (error) { console.warn('Local database kon niet worden gelezen.', error); }
+    if (!loaded) {
+      try { const response = await fetch(SEED_URL, { cache: 'no-store' }); if (response.ok) loaded = await response.json(); }
+      catch (error) { console.warn('Seed database kon niet via fetch worden geladen.', error); }
+    }
+    if (!loaded) {
+      try { loaded = JSON.parse(document.getElementById('seedData')?.textContent || 'null'); }
+      catch (error) { console.warn('Ingebouwde seed database kon niet worden geladen.', error); }
+    }
+    if (!loaded) loaded = { schemaVersion: 1, app: 'SKALDIS BUILD Asset Database', updatedAt: new Date().toISOString(), settings: { cellSizeMm: 25.4, modelDirectory: './models/' }, packs: [], classes: [], types: [], assets: [] };
+    setDatabase(loaded, false);
+    await restoreStoredHandle();
+  }
+
+  function setDatabase(next, notify = true) {
+    if (!next || !Array.isArray(next.assets) || !Array.isArray(next.packs) || !Array.isArray(next.classes) || !Array.isArray(next.types)) throw new Error('Ongeldige SKALDIS assetdatabase.');
+    db = deepClone(next);
+    ensureRuntimeKeys();
+    refreshAllDerived();
+    selectedAssetKey = db.assets[0]?._key || null;
+    pendingFiles.clear();
+    saveLocal();
+    renderAll();
+    if (notify) toast('Assetdatabase geladen.', 'good');
+  }
+
+  function renderAll() {
+    if (!db) return;
+    renderStats(); renderFilters(); renderAssetList(); renderEditor(); renderTaxonomy(); syncRawJson();
+  }
+  function renderStats() {
+    els.familyCount.textContent = db.assets.length;
+    els.variantCount.textContent = db.assets.reduce((s,a) => s + (a.variants?.length || 0), 0);
+    els.plannedCount.textContent = db.assets.reduce((s,a) => s + (a.variants || []).filter(v => v.status === 'planned').length, 0);
+  }
+  function fillSelect(select, items, value, labelFn = item => item.name) {
+    const current = value;
+    select.innerHTML = '';
+    items.forEach(item => { const option = document.createElement('option'); option.value = item.id; option.textContent = labelFn(item); select.appendChild(option); });
+    if (items.some(x => x.id === current)) select.value = current;
+  }
+  function renderFilters() {
+    const current = els.packFilter.value;
+    els.packFilter.innerHTML = '<option value="">Alle packs</option>' + db.packs.map(p => `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}</option>`).join('');
+    els.packFilter.value = db.packs.some(p => p.id === current) ? current : '';
+  }
+  function filteredAssets() {
+    const q = els.searchInput.value.trim().toLowerCase(), pack = els.packFilter.value, status = els.statusFilter.value;
+    return db.assets.filter(a => {
+      if (pack && a.packId !== pack) return false;
+      if (status && a.status !== status) return false;
+      if (!q) return true;
+      const hay = [a.id, a.displayName, packById(a.packId)?.name, typeById(a.typeId)?.name, ...(a.variants || []).flatMap(v => [v.id, v.name, v.modelFile])].join(' ').toLowerCase();
+      return hay.includes(q);
+    }).sort((a,b) => (packById(a.packId)?.name || '').localeCompare(packById(b.packId)?.name || '') || a.displayName.localeCompare(b.displayName, 'nl'));
+  }
+  function renderAssetList() {
+    const list = filteredAssets();
+    els.assetList.innerHTML = '';
+    if (!list.length) { els.assetList.innerHTML = '<div style="color:var(--muted);font-size:11px;padding:10px">Geen assets gevonden.</div>'; return; }
+    list.forEach(asset => {
+      const button = document.createElement('button'); button.type = 'button'; button.className = 'asset-card' + (asset._key === selectedAssetKey ? ' active' : '');
+      button.innerHTML = `<div class="asset-card-top"><strong>${escapeHtml(asset.displayName)}</strong><span class="chip ${escapeHtml(asset.status)}">${escapeHtml(asset.status)}</span></div><small class="mono">${escapeHtml(asset.id)}</small><small>${escapeHtml(packById(asset.packId)?.name || asset.packId)} · ${(asset.variants || []).length} varianten</small>`;
+      button.addEventListener('click', () => { selectedAssetKey = asset._key; renderAssetList(); renderEditor(); });
+      els.assetList.appendChild(button);
+    });
+    els.duplicateAssetBtn.disabled = !selectedAsset();
+  }
+
+  function renderEditor() {
+    const asset = selectedAsset();
+    els.emptyEditor.hidden = Boolean(asset); els.editorShell.hidden = !asset; els.duplicateAssetBtn.disabled = !asset;
+    if (!asset) return;
+    refreshDerived(asset);
+    els.editorTitle.textContent = asset.displayName; els.editorSub.textContent = asset.id;
+    fillSelect(els.assetPack, db.packs, asset.packId); fillSelect(els.assetClass, db.classes, asset.classId);
+    const types = db.types.filter(t => !asset.classId || t.classId === asset.classId || !t.classId);
+    fillSelect(els.assetType, types.length ? types : db.types, asset.typeId);
+    els.assetStatus.value = asset.status || 'enabled'; els.assetWidth.value = asset.width; els.assetDepth.value = asset.depth; els.assetAnchor.value = asset.anchorType || 'cell';
+    els.familyIdPreview.textContent = asset.id; els.displayName.value = asset.displayName; els.legacyIds.value = (asset.legacyPartIds || []).join(', '); els.assetNotes.value = asset.notes || '';
+    renderDefaultVariant(asset); renderVariantList(asset); renderFootprint(asset); renderPreviewOptions(asset); renderValidation(asset);
+  }
+  function renderDefaultVariant(asset) {
+    els.defaultVariant.innerHTML = (asset.variants || []).map(v => `<option value="${escapeHtml(v.code)}">${escapeHtml(v.code)} — ${escapeHtml(v.name)}</option>`).join('');
+    if (asset.variants?.some(v => v.code === asset.defaultVariant)) els.defaultVariant.value = asset.defaultVariant; else if (asset.variants?.length) { asset.defaultVariant = asset.variants[0].code; els.defaultVariant.value = asset.defaultVariant; }
+  }
+
+  function renderVariantList(asset) {
+    els.variantList.innerHTML = '';
+    (asset.variants || []).forEach(variant => {
+      const card = document.createElement('div'); card.className = 'variant-card'; card.dataset.key = variant._key;
+      const pending = pendingFiles.get(variant._key);
+      card.innerHTML = `
+        <div class="variant-grid">
+          <div class="field"><label>Code</label><input data-v="code" value="${escapeAttr(variant.code)}" /></div>
+          <div class="field"><label>Naam</label><input data-v="name" value="${escapeAttr(variant.name || '')}" /></div>
+          <div class="field"><label>Status</label><select data-v="status"><option value="enabled">Enabled</option><option value="planned">Planned</option><option value="disabled">Disabled</option></select></div>
+          <div class="field"><label>Legacy model</label><input data-v="legacyModelFile" value="${escapeAttr(variant.legacyModelFile || '')}" placeholder="oude-bestandsnaam.glb" /></div>
+          <div class="field"><label>GLB upload</label><button class="file-button ${pending ? 'queued' : ''}" type="button">${pending ? '✓ ' + escapeHtml(pending.name) : 'Kies GLB'}<input data-v-file type="file" accept=".glb,model/gltf-binary" /></button></div>
+          <button class="danger variant-remove" data-v-remove type="button" ${asset.variants.length <= 1 || variant.code === asset.defaultVariant ? 'disabled' : ''}>Verwijder</button>
+        </div>
+        <div class="variant-id"><div>ID: <strong class="mono">${escapeHtml(variant.id)}</strong></div><div>Bestand: <strong class="mono">${escapeHtml(variant.modelFile)}</strong></div></div>`;
+      card.querySelector('[data-v="status"]').value = variant.status || 'planned';
+      card.querySelectorAll('[data-v]').forEach(input => input.addEventListener('change', () => {
+        const prop = input.dataset.v; let value = input.value;
+        const oldCode = variant.code;
+        if (prop === 'code') value = normalizeCode(value || 'VARIANT');
+        variant[prop] = value;
+        if (prop === 'code' && asset.defaultVariant === oldCode) asset.defaultVariant = value;
+        refreshDerived(asset); saveLocal(); renderEditor(); renderAssetList(); syncRawJson();
+      }));
+      card.querySelector('[data-v-file]').addEventListener('change', event => {
+        const file = event.target.files?.[0]; if (!file) return;
+        pendingFiles.set(variant._key, file); renderVariantList(asset); renderValidation(asset); toast(`${file.name} klaar om als ${variant.modelFile} op te slaan.`, 'good');
+      });
+      const remove = card.querySelector('[data-v-remove]');
+      if (remove) remove.addEventListener('click', async () => {
+        if (!(await askConfirm('Variant verwijderen', `${variant.id} verwijderen?`))) return;
+        asset.variants = asset.variants.filter(v => v._key !== variant._key); pendingFiles.delete(variant._key); if (!asset.variants.some(v => v.code === asset.defaultVariant)) asset.defaultVariant = asset.variants[0]?.code || '';
+        databaseChanged('Variant verwijderd.');
+      });
+      els.variantList.appendChild(card);
+    });
+  }
+
+  function renderPreviewOptions(asset) {
+    const current = els.previewVariant.value;
+    els.previewVariant.innerHTML = (asset.variants || []).map(v => `<option value="${escapeAttr(v._key)}">${escapeHtml(v.code)} — ${escapeHtml(v.name)}</option>`).join('');
+    if (asset.variants.some(v => v._key === current)) els.previewVariant.value = current;
+  }
+
+  function renderFootprint(asset) {
+    els.footprintText.value = (asset.footprintCells || []).join(', ');
+    els.pathsText.value = JSON.stringify(asset.paths || []);
+    drawFootprint(asset);
+  }
+  function drawFootprint(asset) {
+    const canvas = els.footprintCanvas, ctx = canvas.getContext('2d'); const w = Math.max(1, Number(asset.width)||1), d = Math.max(1, Number(asset.depth)||1);
+    const pad = 28, cell = Math.min((canvas.width-pad*2)/w, (canvas.height-pad*2)/d, 68); const gridW=w*cell, gridH=d*cell; const ox=(canvas.width-gridW)/2, oy=(canvas.height-gridH)/2;
+    canvas._layout = { ox, oy, cell, w, d };
+    ctx.clearRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#101317'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    const occupied = new Set(asset.footprintCells || []);
+    for(let y=0;y<d;y++) for(let x=0;x<w;x++) { const key=`${x}:${y}`; ctx.fillStyle=occupied.has(key)?'rgba(215,255,63,.14)':'#15191d'; ctx.fillRect(ox+x*cell+1,oy+y*cell+1,cell-2,cell-2); }
+    ctx.strokeStyle='#46505b'; ctx.lineWidth=1;
+    for(let x=0;x<=w;x++){ctx.beginPath();ctx.moveTo(ox+x*cell,oy);ctx.lineTo(ox+x*cell,oy+gridH);ctx.stroke();}
+    for(let y=0;y<=d;y++){ctx.beginPath();ctx.moveTo(ox,oy+y*cell);ctx.lineTo(ox+gridW,oy+y*cell);ctx.stroke();}
+    ctx.strokeStyle='#d7ff3f';ctx.lineWidth=Math.max(3,Math.min(8,cell*.12));ctx.lineCap='square';ctx.lineJoin='miter';
+    (asset.paths||[]).forEach(path=>{if(path.length<2)return;ctx.beginPath();ctx.moveTo(ox+path[0][0]*cell,oy+path[0][1]*cell);path.slice(1).forEach(([x,y])=>ctx.lineTo(ox+x*cell,oy+y*cell));ctx.stroke();});
+  }
+  els.footprintCanvas.addEventListener('pointerdown', event => {
+    const asset = selectedAsset(), l = els.footprintCanvas._layout; if (!asset || !l) return;
+    const r = els.footprintCanvas.getBoundingClientRect(), px=(event.clientX-r.left)*els.footprintCanvas.width/r.width, py=(event.clientY-r.top)*els.footprintCanvas.height/r.height;
+    const x=Math.floor((px-l.ox)/l.cell), y=Math.floor((py-l.oy)/l.cell); if(x<0||x>=l.w||y<0||y>=l.d)return;
+    const key=`${x}:${y}`, set=new Set(asset.footprintCells||[]); set.has(key)?set.delete(key):set.add(key); asset.footprintCells=[...set].sort(cellSort); saveLocal(); renderFootprint(asset); renderValidation(asset); syncRawJson();
+  });
+  function cellSort(a,b){const [ax,ay]=a.split(':').map(Number),[bx,by]=b.split(':').map(Number);return ay-by||ax-bx;}
+  function parseFootprintText(text) { return [...new Set(String(text).split(/[,;\n]+/).map(x=>x.trim()).filter(Boolean))].sort(cellSort); }
+  function rectFootprint(asset){const cells=[];for(let y=0;y<asset.depth;y++)for(let x=0;x<asset.width;x++)cells.push(`${x}:${y}`);return cells;}
+  function defaultPaths(asset) {
+    const w=Number(asset.width)||1,d=Number(asset.depth)||1,type=asset.typeId;
+    if (type==='wall'||type==='gate'||type==='tower_straight') return [[[0,d/2],[w,d/2]]];
+    if (type==='corner'||type==='tower_corner') return [[[w,0.5],[0.5,0.5],[0.5,d]]];
+    if (type==='tee') return [[[0,0.5],[w,0.5]],[[w/2,0.5],[w/2,d]]];
+    if (type==='cross') return [[[0,d/2],[w,d/2]],[[w/2,0],[w/2,d]]];
+    if (type==='wallend') return [[[0,d/2],[w/2,d/2]]];
+    return [];
+  }
+
+  function validateAsset(asset) {
+    const rows = [];
+    const add=(type,text)=>rows.push({type,text});
+    const duplicates=db.assets.filter(a=>a!==asset&&familyIdFor(a)===familyIdFor(asset));
+    if(duplicates.length)add('bad',`Familie-ID ${asset.id} bestaat al.`);else add('good','Familie-ID is uniek.');
+    if(!packById(asset.packId)||!classById(asset.classId)||!typeById(asset.typeId))add('bad','Pack, class of type is ongeldig.');
+    if(asset.width<1||asset.width>99||asset.depth<1||asset.depth>99)add('bad','Afmetingen moeten tussen 1 en 99 liggen.');
+    const badCells=(asset.footprintCells||[]).filter(raw=>{const [x,y]=raw.split(':').map(Number);return !Number.isInteger(x)||!Number.isInteger(y)||x<0||y<0||x>=asset.width||y>=asset.depth;});
+    if(badCells.length)add('bad',`Footprint bevat ongeldige cellen: ${badCells.join(', ')}`);else if(!(asset.footprintCells||[]).length)add('warn','Footprint is leeg.');else add('good',`Footprint bevat ${asset.footprintCells.length} geldige cellen.`);
+    const codes=new Set(); (asset.variants||[]).forEach(v=>{const c=normalizeCode(v.code);if(codes.has(c))add('bad',`Variantcode ${c} komt dubbel voor.`);codes.add(c);if(!c)add('bad','Een variant heeft geen code.');if(!v.name)add('warn',`${c||'Variant'} heeft geen naam.`);if(v.status==='enabled'&&!v.legacyModelFile&&!pendingFiles.has(v._key))add('warn',`${v.id}: enabled maar geen legacy-model of geüploade GLB geregistreerd.`);});
+    if(!(asset.variants||[]).length)add('bad','Familie heeft geen varianten.');
+    if(!asset.variants.some(v=>v.code===asset.defaultVariant))add('bad','Default variant bestaat niet.');else add('good',`Default variant: ${asset.defaultVariant}.`);
+    return rows;
+  }
+  function renderValidation(asset) {
+    const rows=validateAsset(asset); els.validationList.innerHTML=rows.map(r=>`<div class="validation-row ${r.type}"><span>${r.type==='good'?'✓':r.type==='bad'?'✕':'!'}</span><span>${escapeHtml(r.text)}</span></div>`).join('');
+  }
+  function validateDatabase() { return db.assets.flatMap(asset => validateAsset(asset).filter(r=>r.type==='bad').map(r=>`${asset.id}: ${r.text}`)); }
+
+  function renderTaxonomy() {
+    renderTaxList('packs', els.packTaxList, db.packs); renderTaxList('classes', els.classTaxList, db.classes); renderTaxList('types', els.typeTaxList, db.types);
+  }
+  function renderTaxList(kind, host, items) {
+    host.innerHTML=''; items.forEach(item=>{
+      const row=document.createElement('div'); row.className='taxonomy-row'+(kind==='types'?' types':'');
+      row.innerHTML = kind==='types'
+        ? `<input data-t="name" value="${escapeAttr(item.name)}"><input data-t="code" class="mono" value="${escapeAttr(item.code)}"><select data-t="classId"></select><button data-t-del class="danger" type="button">×</button>`
+        : `<input data-t="name" value="${escapeAttr(item.name)}"><input data-t="code" class="mono" value="${escapeAttr(item.code)}"><button data-t-del class="danger" type="button">×</button>`;
+      if(kind==='types'){const sel=row.querySelector('[data-t="classId"]'); fillSelect(sel, db.classes, item.classId);}
+      row.querySelectorAll('[data-t]').forEach(input=>input.addEventListener('change',()=>{
+        item[input.dataset.t]=input.dataset.t==='code'?normalizeCode(input.value):input.value;
+        if(input.dataset.t==='name'||input.dataset.t==='code') item.id=normalizeId(item.id||item.name||item.code);
+        databaseChanged();
+      }));
+      row.querySelector('[data-t-del]').addEventListener('click',async()=>{
+        const used = kind==='packs'?db.assets.some(a=>a.packId===item.id):kind==='classes'?db.assets.some(a=>a.classId===item.id)||db.types.some(t=>t.classId===item.id):db.assets.some(a=>a.typeId===item.id);
+        if(used){toast(`${item.name} wordt nog gebruikt en kan niet verwijderd worden.`,'bad');return;}
+        if(!(await askConfirm(`${item.name} verwijderen`, 'Deze taxonomiewaarde wordt definitief uit de lokale database verwijderd.')))return;
+        db[kind]=db[kind].filter(x=>x!==item);databaseChanged(`${item.name} verwijderd.`);
+      });
+      host.appendChild(row);
+    });
+  }
+
+  function syncRawJson() { if (!db) return; els.rawJson.value=serializeDB(true); els.rawJsonStatus.textContent=`${db.assets.length} families · ${db.assets.reduce((s,a)=>s+a.variants.length,0)} varianten`; }
+
+  function newAsset() {
+    const pack=db.packs[0], cls=db.classes[0], type=db.types.find(t=>t.classId===cls?.id)||db.types[0];
+    if(!pack||!cls||!type){toast('Maak eerst minstens één pack, class en type aan.','bad');return;}
+    const asset={_key:runtimeKey(),id:'',displayName:'',packId:pack.id,classId:cls.id,typeId:type.id,width:1,depth:1,status:'planned',anchorType:'cell',footprintCells:['0:0'],paths:defaultPaths({typeId:type.id,width:1,depth:1}),defaultVariant:'BASIC',variants:[{_key:runtimeKey(),code:'BASIC',name:'Standaard',status:'planned',modelFile:'',legacyModelFile:''}],legacyPartIds:[],notes:''};
+    refreshDerived(asset); if(db.assets.some(a=>a.id===asset.id)){let freeType=db.types.find(t=>!db.assets.some(a=>a.id===`${pack.code}_${cls.code}_${t.code}_0101`));if(freeType){asset.typeId=freeType.id;refreshDerived(asset);}}
+    db.assets.push(asset);selectedAssetKey=asset._key;databaseChanged('Nieuwe assetfamilie aangemaakt.');
+  }
+  function duplicateAsset() {
+    const original=selectedAsset();if(!original)return;const copy=deepClone(original);copy._key=runtimeKey();copy.variants.forEach(v=>v._key=runtimeKey());copy.status='planned';copy.notes=(copy.notes?copy.notes+'\n':'')+'Duplicaat — controleer de identiteit en afmetingen.';copy.legacyPartIds=[];copy.variants.forEach(v=>{v.legacyModelFile='';v.status='planned';});
+    // Geef het duplicaat meteen een tijdelijke unieke familie-ID door de breedte te verhogen.
+    // De gebruiker kan daarna pack/type/afmetingen vrij aanpassen.
+    let guard=0; refreshDerived(copy);
+    while(db.assets.some(a=>a.id===copy.id) && guard<99){
+      copy.width = copy.width < 99 ? copy.width + 1 : 1;
+      if(copy.width===1) copy.depth = copy.depth < 99 ? copy.depth + 1 : 1;
+      copy.footprintCells = rectFootprint(copy); copy.paths = defaultPaths(copy); refreshDerived(copy); guard++;
+    }
+    db.assets.push(copy);selectedAssetKey=copy._key;ensureRuntimeKeys();databaseChanged('Duplicaat aangemaakt met een tijdelijke unieke afmeting.');
+  }
+
+  async function deleteAsset() {
+    const asset=selectedAsset();if(!asset)return;if(!(await askConfirm('Assetfamilie verwijderen', `${asset.displayName} en alle ${asset.variants.length} varianten verwijderen?`)))return;
+    asset.variants.forEach(v=>pendingFiles.delete(v._key));db.assets=db.assets.filter(a=>a!==asset);selectedAssetKey=db.assets[0]?._key||null;databaseChanged('Assetfamilie verwijderd.');
+  }
+
+  function bindEditorFields() {
+    const bindings = [
+      [els.assetPack,'packId'],[els.assetClass,'classId'],[els.assetType,'typeId'],[els.assetStatus,'status'],[els.assetWidth,'width'],[els.assetDepth,'depth'],[els.assetAnchor,'anchorType'],[els.defaultVariant,'defaultVariant'],[els.assetNotes,'notes']
+    ];
+    bindings.forEach(([el,prop])=>el.addEventListener('change',()=>{
+      const asset=selectedAsset();if(!asset)return;let value=el.value;if(prop==='width'||prop==='depth')value=Math.max(1,Math.min(99,Number(value)||1));asset[prop]=value;
+      if(prop==='classId'){const allowed=db.types.filter(t=>t.classId===value);if(allowed.length&&!allowed.some(t=>t.id===asset.typeId))asset.typeId=allowed[0].id;}
+      if(prop==='width'||prop==='depth'){asset.footprintCells=(asset.footprintCells||[]).filter(raw=>{const [x,y]=raw.split(':').map(Number);return x>=0&&y>=0&&x<asset.width&&y<asset.depth;});if(!asset.footprintCells.length)asset.footprintCells=rectFootprint(asset);}
+      refreshDerived(asset);saveLocal();renderAll();
+    }));
+    els.legacyIds.addEventListener('change',()=>{const a=selectedAsset();if(!a)return;a.legacyPartIds=els.legacyIds.value.split(',').map(x=>x.trim()).filter(Boolean);databaseChanged();});
+    els.footprintText.addEventListener('change',()=>{const a=selectedAsset();if(!a)return;a.footprintCells=parseFootprintText(els.footprintText.value);saveLocal();renderFootprint(a);renderValidation(a);syncRawJson();});
+    els.pathsText.addEventListener('change',()=>{const a=selectedAsset();if(!a)return;try{const paths=JSON.parse(els.pathsText.value||'[]');if(!Array.isArray(paths))throw new Error('Paths moet een array zijn.');a.paths=paths;saveLocal();renderFootprint(a);renderValidation(a);syncRawJson();toast('Paths bijgewerkt.','good');}catch(e){toast(`Ongeldige Paths JSON: ${e.message}`,'bad');}});
+  }
+
+  els.rectFootprintBtn.addEventListener('click',()=>{const a=selectedAsset();if(!a)return;a.footprintCells=rectFootprint(a);databaseChanged();});
+  els.clearFootprintBtn.addEventListener('click',()=>{const a=selectedAsset();if(!a)return;a.footprintCells=[];databaseChanged();});
+  els.defaultPathBtn.addEventListener('click',()=>{const a=selectedAsset();if(!a)return;a.paths=defaultPaths(a);databaseChanged();});
+  els.addVariantBtn.addEventListener('click',()=>{const a=selectedAsset();if(!a)return;let n=1,code='VARIANT';while(a.variants.some(v=>v.code===code)){n++;code=`VARIANT${n}`;}a.variants.push({_key:runtimeKey(),code,name:'Nieuwe variant',status:'planned',modelFile:'',legacyModelFile:''});refreshDerived(a);databaseChanged('Variant toegevoegd.');});
+  els.newAssetBtn.addEventListener('click',newAsset); els.duplicateAssetBtn.addEventListener('click',duplicateAsset); els.deleteAssetBtn.addEventListener('click',deleteAsset);
+  els.validateBtn.addEventListener('click',()=>{const errors=validateDatabase();if(errors.length)toast(`${errors.length} validatiefout(en) gevonden.`,'bad');else toast('Database is geldig voor export.','good');renderValidation(selectedAsset());});
+  els.searchInput.addEventListener('input',renderAssetList);els.packFilter.addEventListener('change',renderAssetList);els.statusFilter.addEventListener('change',renderAssetList);
+
+  document.querySelectorAll('.tab-btn').forEach(btn=>btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b===btn));
+    const tab=btn.dataset.tab;$('assetTab').hidden=tab!=='asset';$('taxonomyTab').hidden=tab!=='taxonomy';$('databaseTab').hidden=tab!=='database';if(tab==='database')syncRawJson();
+  }));
+
+  document.querySelectorAll('[data-tax-add]').forEach(btn=>btn.addEventListener('click',()=>{
+    const kind=btn.dataset.taxAdd;
+    if(kind==='packs')db.packs.push({id:`pack_${runtimeKey().slice(0,5)}`,code:'PK',name:'Nieuw pack',status:'enabled'});
+    else if(kind==='classes')db.classes.push({id:`class_${runtimeKey().slice(0,5)}`,code:'CLS',name:'Nieuwe class'});
+    else db.types.push({id:`type_${runtimeKey().slice(0,5)}`,code:'TYPE',name:'Nieuw type',classId:db.classes[0]?.id||'',placeholder:'straight'});
+    databaseChanged();
+  }));
+
+  els.formatJsonBtn.addEventListener('click',()=>{try{els.rawJson.value=JSON.stringify(JSON.parse(els.rawJson.value),null,2);toast('JSON geformatteerd.','good');}catch(e){toast(`Ongeldige JSON: ${e.message}`,'bad');}});
+  els.applyRawJsonBtn.addEventListener('click',()=>{try{setDatabase(JSON.parse(els.rawJson.value));}catch(e){toast(e.message,'bad');}});
+
+  els.importBtn.addEventListener('click',()=>els.importInput.click());
+  els.importInput.addEventListener('change',async e=>{const f=e.target.files?.[0];if(!f)return;try{setDatabase(JSON.parse(await f.text()));}catch(err){toast(`Import mislukt: ${err.message}`,'bad');}finally{e.target.value='';}});
+  els.exportBtn.addEventListener('click',()=>{
+    const errors=validateDatabase();if(errors.length&&!confirm(`De database heeft ${errors.length} validatiefout(en). Toch exporteren?`))return;
+    const blob=new Blob([serializeDB(true)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='assets.json';document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);toast('assets.json geëxporteerd.','good');
+  });
+
+  function openHandleDB() { return new Promise((resolve,reject)=>{const req=indexedDB.open(HANDLE_DB,1);req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains(HANDLE_STORE))req.result.createObjectStore(HANDLE_STORE);};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);}); }
+  async function storeHandle(handle){try{const idb=await openHandleDB();await new Promise((resolve,reject)=>{const tx=idb.transaction(HANDLE_STORE,'readwrite');tx.objectStore(HANDLE_STORE).put(handle,HANDLE_KEY);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});idb.close();}catch(e){console.warn(e);}}
+  async function getStoredHandle(){try{const idb=await openHandleDB();const value=await new Promise((resolve,reject)=>{const tx=idb.transaction(HANDLE_STORE,'readonly');const req=tx.objectStore(HANDLE_STORE).get(HANDLE_KEY);req.onsuccess=()=>resolve(req.result||null);req.onerror=()=>reject(req.error);});idb.close();return value;}catch(e){return null;}}
+  async function restoreStoredHandle(){if(!('showDirectoryPicker'in window))return;const handle=await getStoredHandle();if(!handle)return;try{const permission=await handle.queryPermission({mode:'readwrite'});if(permission==='granted'){projectHandle=handle;syncProjectStatus();}}catch(e){console.warn(e);}}
+  function syncProjectStatus(){const connected=Boolean(projectHandle);els.projectStatus.classList.toggle('connected',connected);els.projectStatus.querySelector('span:last-child').textContent=connected?`Project: ${projectHandle.name}`:'Geen projectmap gekoppeld';els.loadProjectBtn.disabled=!connected;els.saveProjectBtn.disabled=!connected;}
+  async function requireProjectPermission(){if(!projectHandle)return false;let p=await projectHandle.queryPermission({mode:'readwrite'});if(p!=='granted')p=await projectHandle.requestPermission({mode:'readwrite'});return p==='granted';}
+  els.connectFolderBtn.addEventListener('click',async()=>{
+    if(!('showDirectoryPicker'in window)){toast('Deze browser ondersteunt geen directe projectmaptoegang. Gebruik Chrome/Edge via localhost en anders Import/Export JSON.','bad');return;}
+    try{projectHandle=await window.showDirectoryPicker({mode:'readwrite'});if(!(await requireProjectPermission()))throw new Error('Schrijftoegang niet toegestaan.');await storeHandle(projectHandle);syncProjectStatus();toast(`Projectmap ${projectHandle.name} gekoppeld.`,'good');}catch(e){if(e.name!=='AbortError')toast(e.message,'bad');}
+  });
+  async function getProjectFile(relative,create=false){const parts=relative.split('/').filter(Boolean);let dir=projectHandle;for(let i=0;i<parts.length-1;i++)dir=await dir.getDirectoryHandle(parts[i],{create});return dir.getFileHandle(parts.at(-1),{create});}
+  els.loadProjectBtn.addEventListener('click',async()=>{try{if(!(await requireProjectPermission()))return;const h=await getProjectFile('data/assets.json',false),file=await h.getFile();setDatabase(JSON.parse(await file.text()));toast('data/assets.json uit project geladen.','good');}catch(e){toast(`Laden mislukt: ${e.message}`,'bad');}});
+  els.saveProjectBtn.addEventListener('click',async()=>{
+    try{
+      if(!(await requireProjectPermission()))return;
+      const errors=validateDatabase();if(errors.length){toast(`Opslaan geblokkeerd: ${errors.length} validatiefout(en).`,'bad');return;}
+      const dataHandle=await getProjectFile('data/assets.json',true),w=await dataHandle.createWritable();await w.write(serializeDB(true));await w.close();
+      let copied=0;
+      for(const asset of db.assets)for(const variant of asset.variants){const file=pendingFiles.get(variant._key);if(!file)continue;const target=await getProjectFile(`models/${variant.modelFile}`,true),out=await target.createWritable();await out.write(file);await out.close();copied++;}
+      pendingFiles.clear();renderEditor();toast(`Project opgeslagen: assets.json${copied?` + ${copied} GLB-bestand(en)`:''}.`,'good');
+    }catch(e){toast(`Opslaan mislukt: ${e.message}`,'bad');}
+  });
+
+  async function modelBlobFor(asset,variant){
+    const pending=pendingFiles.get(variant._key);if(pending)return pending;
+    if(projectHandle){
+      try{if(await requireProjectPermission()){const h=await getProjectFile(`models/${variant.modelFile}`,false);return await h.getFile();}}catch(e){}
+      if(variant.legacyModelFile){try{const h=await getProjectFile(`models/${variant.legacyModelFile}`,false);return await h.getFile();}catch(e){}}
+    }
+    return null;
+  }
+  async function ensureThree(){
+    if(threeState)return threeState;
+    const THREE=await import('three'),modControls=await import('three/addons/controls/OrbitControls.js'),modLoader=await import('three/addons/loaders/GLTFLoader.js');
+    const host=els.threePreview,scene=new THREE.Scene();scene.background=new THREE.Color(0x101317);const camera=new THREE.PerspectiveCamera(40,1,.01,500);camera.position.set(3,3,4);const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));host.innerHTML='';host.appendChild(renderer.domElement);const controls=new modControls.OrbitControls(camera,renderer.domElement);controls.enableDamping=true;scene.add(new THREE.HemisphereLight(0xffffff,0x29241d,1.5));const light=new THREE.DirectionalLight(0xffffff,2);light.position.set(4,7,5);scene.add(light);const grid=new THREE.GridHelper(10,10,0x46515d,0x343a43);scene.add(grid);const modelGroup=new THREE.Group();scene.add(modelGroup);
+    const resize=()=>{const w=Math.max(1,host.clientWidth),h=Math.max(1,host.clientHeight);renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();};new ResizeObserver(resize).observe(host);resize();(function animate(){controls.update();renderer.render(scene,camera);requestAnimationFrame(animate);})();threeState={THREE,camera,renderer,controls,loader:new modLoader.GLTFLoader(),modelGroup};return threeState;
+  }
+  function clearThreeModel(){if(!threeState)return;threeState.modelGroup.traverse(o=>{if(o.isMesh){o.geometry?.dispose?.();if(Array.isArray(o.material))o.material.forEach(m=>m.dispose?.());else o.material?.dispose?.();}});threeState.modelGroup.clear();if(previewObjectUrl){URL.revokeObjectURL(previewObjectUrl);previewObjectUrl=null;}}
+  function fitPreviewCamera(state,root){const {THREE,camera,controls}=state;const box=new THREE.Box3().setFromObject(root);if(box.isEmpty())return;const size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3()),span=Math.max(size.x,size.y,size.z,1);controls.target.copy(center);camera.position.set(center.x+span*1.25,center.y+span*.9,center.z+span*1.5);camera.near=Math.max(.001,span/1000);camera.far=span*100;camera.updateProjectionMatrix();controls.update();}
+  els.previewBtn.addEventListener('click',async()=>{
+    const asset=selectedAsset(),variant=asset?.variants.find(v=>v._key===els.previewVariant.value);if(!asset||!variant)return;els.previewMsg.textContent='Model laden…';
+    try{const state=await ensureThree();clearThreeModel();let source=null;const blob=await modelBlobFor(asset,variant);let gltf;if(blob){previewObjectUrl=URL.createObjectURL(blob);source=previewObjectUrl;gltf=await state.loader.loadAsync(source);}else{try{source=`./models/${variant.modelFile}`;gltf=await state.loader.loadAsync(source);}catch(primaryError){if(!variant.legacyModelFile)throw primaryError;source=`./models/${variant.legacyModelFile}`;gltf=await state.loader.loadAsync(source);}}state.modelGroup.add(gltf.scene);fitPreviewCamera(state,gltf.scene);els.previewMsg.textContent='';}catch(e){els.previewMsg.textContent=`Preview niet beschikbaar. Upload de GLB, koppel de projectmap of plaats ${variant.modelFile} in /models.\n${e.message}`;}
+  });
+  els.resetPreviewBtn.addEventListener('click',()=>{if(threeState&&threeState.modelGroup.children[0])fitPreviewCamera(threeState,threeState.modelGroup.children[0]);});
+
+  function escapeHtml(v){return String(v??'').replace(/[&<>'"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));}
+  function escapeAttr(v){return escapeHtml(v);}
+
+  bindEditorFields();
+  loadInitial().then(()=>syncProjectStatus()).catch(error=>{console.error(error);toast(error.message,'bad');});
+})();
+</script>
+</body>
+</html>
