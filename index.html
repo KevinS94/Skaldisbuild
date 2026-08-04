@@ -710,6 +710,7 @@
       <div class="toolbar">
         <span class="wip-tooltip" data-tooltip="Work in progress" tabindex="0"><button id="libraryBtn" type="button" disabled aria-disabled="true">Bibliotheek</button></span>
         <button id="rotateBtn" class="config-action" type="button">Roteren <span class="kbd">R</span></button>
+        <button id="duplicateBtn" class="config-action" type="button">Dupliceren <span class="kbd">D</span></button>
         <button id="undoBtn" class="config-action" type="button">Undo</button>
         <button id="redoBtn" class="config-action" type="button">Redo</button>
         <button id="deleteBtn" class="config-action danger" type="button">Verwijder <span class="kbd">Del</span></button>
@@ -731,6 +732,7 @@
           Klik een geplaatst onderdeel om het te selecteren.<br />
           Sleep om te verplaatsen.<br />
           <span class="kbd">R</span> roteert 90°.<br />
+          <span class="kbd">D</span> dupliceert het geselecteerde onderdeel.<br />
           <span class="kbd">Esc</span> annuleert.
         </div>
       </aside>
@@ -816,9 +818,13 @@
     const CATALOG_ENDPOINT = `${SKALDIS_API_BASE}/build-catalog`;
     const MODEL_URL_ENDPOINT = `${SKALDIS_API_BASE}/build-model-url`;
 
-    const PACKS = {
-      private: { name: 'Private collection', code: 'PRIVATE', sortOrder: -1 }
-    };
+    // Optional BUILD features live behind explicit flags so they can never
+    // interfere with the core remote asset catalog.
+    const FEATURES = Object.freeze({
+      privateCollection: false
+    });
+
+    const PACKS = {};
     const PACK_ORDER = [];
     const PARTS = {};
     const PART_VARIANTS = {};
@@ -887,7 +893,7 @@
     }
 
     function resetRemoteCatalog() {
-      Object.keys(PACKS).filter(key => key !== 'private').forEach(key => delete PACKS[key]);
+      Object.keys(PACKS).forEach(key => delete PACKS[key]);
       PACK_ORDER.splice(0);
       Object.keys(PARTS).forEach(key => delete PARTS[key]);
       Object.keys(PART_VARIANTS).forEach(key => delete PART_VARIANTS[key]);
@@ -980,6 +986,10 @@
     let pieces = [];
     let selectedId = null;
     let activePartId = null;
+    // Variant die hoort bij het onderdeel dat momenteel klaarstaat om te plaatsen.
+    // Dit staat bewust los van selectedId: een zojuist geplaatst stuk kan geselecteerd
+    // blijven terwijl R de volgende plaatsing roteert.
+    let activeVariantId = null;
     let activeRotation = 0;
     let hoverCandidate = null;
     let dragState = null;
@@ -1124,10 +1134,12 @@
         event.dataTransfer.setData('text/plain', id);
         event.dataTransfer.effectAllowed = 'copy';
         activePartId = id;
+        activeVariantId = defaultVariantForPart(id)?.id || PARTS[id]?.defaultVariant || null;
         selectedId = null;
         refreshActiveCards();
         updateSelectionText();
         rebuild3D();
+        updateButtons();
       });
       return card;
     }
@@ -1184,20 +1196,35 @@
       );
       packAccordion.innerHTML = '';
       const allEntries = enabledPartEntries();
-      const privateEntries = allEntries.filter(([id]) => (collectionInventory[id] || 0) > 0);
-      packAccordion.appendChild(createPackAccordion('private', privateEntries, {
-        open: openState.private ?? true,
-        inventoryMode: true,
-        emptyText: 'Nog geen stukken toegevoegd. Open de bibliotheek om je collectie samen te stellen.'
-      }));
 
+      // Private Collection is currently frozen. Keeping it behind a feature
+      // flag prevents this optional feature from affecting the core catalog.
+      if (FEATURES.privateCollection) {
+        const privateEntries = allEntries.filter(([id]) => (collectionInventory[id] || 0) > 0);
+        if (!PACKS.private) PACKS.private = { name: 'Private collection', code: 'PRIVATE', sortOrder: -1 };
+        packAccordion.appendChild(createPackAccordion('private', privateEntries, {
+          open: openState.private ?? true,
+          inventoryMode: true,
+          emptyText: 'Nog geen stukken toegevoegd. Open de bibliotheek om je collectie samen te stellen.'
+        }));
+      }
+
+      let renderedPackCount = 0;
       PACK_ORDER.forEach((packId, index) => {
+        const pack = PACKS[packId];
+        if (!pack) return;
         const entries = allEntries.filter(([, part]) => part.pack === packId);
+        if (!entries.length) return;
         packAccordion.appendChild(createPackAccordion(packId, entries, {
-          open: openState[packId] ?? index === 0,
+          open: openState[packId] ?? renderedPackCount === 0,
           emptyText: 'Deze pack bevat voorlopig geen actieve assets.'
         }));
+        renderedPackCount += 1;
       });
+
+      if (!renderedPackCount) {
+        packAccordion.innerHTML = '<div class="pack-empty">Geen actieve BUILD-assets gevonden.</div>';
+      }
       refreshActiveCards();
     }
 
@@ -1267,6 +1294,7 @@
     }
 
     function showLibrary(show) {
+      if (!FEATURES.privateCollection) return;
       configuratorScreen.hidden = show;
       libraryScreen.hidden = !show;
       document.body.classList.toggle('library-mode', show);
@@ -1287,20 +1315,27 @@
       document.getElementById('undoBtn').disabled = history.length === 0;
       document.getElementById('redoBtn').disabled = future.length === 0;
       document.getElementById('deleteBtn').disabled = !selectedId;
+      document.getElementById('duplicateBtn').disabled = !selectedId;
     }
 
     function setActivePart(partId) {
       if (!isPartEnabled(PARTS[partId])) {
         activePartId = null;
+        activeVariantId = null;
         refreshActiveCards();
         updateStatus('Dit onderdeel is uitgeschakeld.', false);
         return;
       }
-      activePartId = activePartId === partId ? null : partId;
+
+      const togglingOff = activePartId === partId;
+      activePartId = togglingOff ? null : partId;
+      activeVariantId = togglingOff
+        ? null
+        : (defaultVariantForPart(partId)?.id || PARTS[partId]?.defaultVariant || null);
       selectedId = null;
       hoverCandidate = null;
       refreshActiveCards();
-      updateStatus(activePartId ? `${PARTS[activePartId].name} geselecteerd.` : 'Selecteer of sleep een onderdeel.');
+      updateStatus(activePartId ? `${PARTS[activePartId].name} geselecteerd om te plaatsen.` : 'Selecteer of sleep een onderdeel.');
       draw2D();
       rebuild3D();
       updateButtons();
@@ -1383,6 +1418,11 @@
         y = Math.floor(grid.y);
       }
       const candidate = { partId, x, y, rotation };
+      // Alleen nieuwe plaatsingen dragen een actieve variant mee. Bij het verplaatsen
+      // van een bestaand stuk blijft de variant van dat stuk onaangeroerd.
+      if (!dragOffset && activePartId === partId) {
+        candidate.variantId = activeVariantId || defaultVariantForPart(partId)?.id || PARTS[partId]?.defaultVariant || null;
+      }
       candidate.valid = isPlacementValid(candidate, dragState?.pieceId ?? null);
       return candidate;
     }
@@ -1395,7 +1435,19 @@
       }
       if (!candidate?.valid) { updateStatus('Deze positie is niet geldig.', false); return; }
       pushHistory();
-      const piece = { id: `piece-${nextId++}`, partId: candidate.partId, x: candidate.x, y: candidate.y, rotation: candidate.rotation, variantId: PARTS[candidate.partId]?.defaultVariant || null };
+      const fallbackVariantId = defaultVariantForPart(candidate.partId)?.id || PARTS[candidate.partId]?.defaultVariant || null;
+      const requestedVariantId = candidate.variantId || (activePartId === candidate.partId ? activeVariantId : null) || fallbackVariantId;
+      const resolvedVariantId = variantsForPart(candidate.partId).some(variant => variant.id === requestedVariantId)
+        ? requestedVariantId
+        : fallbackVariantId;
+      const piece = {
+        id: `piece-${nextId++}`,
+        partId: candidate.partId,
+        x: candidate.x,
+        y: candidate.y,
+        rotation: candidate.rotation,
+        variantId: resolvedVariantId
+      };
       pieces.push(piece);
       selectedId = piece.id;
       syncAll(`${PARTS[piece.partId].name} geplaatst.`);
@@ -1498,7 +1550,7 @@
       canvas.setPointerCapture(event.pointerId);
       const point=canvasPoint(event), hit=hitPiece(point);
       if (hit) {
-        selectedId=hit.id; activePartId=null; refreshActiveCards();
+        selectedId=hit.id; activePartId=null; activeVariantId=null; refreshActiveCards();
         const grid=toGrid(point);
         dragState={ pieceId:hit.id, original:{...hit}, offset:{x:grid.x-hit.x,y:grid.y-hit.y}, moved:false };
         updateSelectionText(); draw2D(); rebuild3D(); updateButtons(); return;
@@ -1553,6 +1605,7 @@
       const defaultCode = part?.defaultVariant || defaultVariantForPart(piece.partId)?.id || null;
       selectedId = piece.id;
       activePartId = null;
+      activeVariantId = null;
       refreshActiveCards();
       updateSelectionText();
       draw2D();
@@ -1652,13 +1705,64 @@
     canvasWrap.addEventListener('auxclick', event => { if (event.button === 1) event.preventDefault(); });
 
     function rotateCurrent() {
-      const selected=pieces.find(piece=>piece.id===selectedId);
-      if(selected){ const rotated={...selected,rotation:(selected.rotation+90)%360}; if(!isPlacementValid(rotated,selected.id)){updateStatus('Roteren kan hier niet.',false);return;} pushHistory(); selected.rotation=rotated.rotation; syncAll('Onderdeel 90° gedraaid.'); }
-      else { activeRotation=(activeRotation+90)%360; hoverCandidate=null; updateStatus(`Plaatsingsrotatie: ${activeRotation}°.`); draw2D(); }
+      // Plaatsingsmodus heeft altijd voorrang. Na het plaatsen blijft activePartId actief,
+      // dus R/Roteren draait de VOLGENDE plaatsing en niet onbedoeld het laatst geplaatste stuk.
+      if (activePartId) {
+        activeRotation = (activeRotation + 90) % 360;
+        hoverCandidate = null;
+        updateStatus(`${PARTS[activePartId]?.name || 'Onderdeel'} klaar om te plaatsen op ${activeRotation}°.`);
+        draw2D();
+        return;
+      }
+
+      const selected = pieces.find(piece => piece.id === selectedId);
+      if (!selected) {
+        updateStatus('Selecteer eerst een onderdeel of kies een onderdeel om te plaatsen.', false);
+        return;
+      }
+
+      const rotated = { ...selected, rotation: (selected.rotation + 90) % 360 };
+      if (!isPlacementValid(rotated, selected.id)) {
+        updateStatus('Roteren kan hier niet.', false);
+        return;
+      }
+      pushHistory();
+      selected.rotation = rotated.rotation;
+      syncAll('Onderdeel 90° gedraaid.');
     }
+
+    function duplicateSelected() {
+      const selected = pieces.find(piece => piece.id === selectedId);
+      if (!selected) {
+        updateStatus('Selecteer eerst een geplaatst onderdeel om te dupliceren.', false);
+        return;
+      }
+
+      const part = PARTS[selected.partId];
+      if (!isPartEnabled(part)) {
+        updateStatus('Dit onderdeel is niet meer beschikbaar.', false);
+        return;
+      }
+
+      const selectedVariant = variantForPiece(selected);
+      activePartId = selected.partId;
+      activeRotation = selected.rotation;
+      activeVariantId = selectedVariant?.id || part.defaultVariant || defaultVariantForPart(selected.partId)?.id || null;
+      selectedId = null;
+      hoverCandidate = null;
+      closeVariantMenu();
+      refreshActiveCards();
+      updateSelectionText();
+      updateButtons();
+      draw2D();
+      rebuild3D();
+      updateStatus(`Duplicaat klaar: ${pieceDisplayName(selected)} · ${activeRotation}°. Klik op het raster om te plaatsen.`);
+    }
+
     function deleteSelected(){ if(!selectedId)return; pushHistory(); pieces=pieces.filter(piece=>piece.id!==selectedId); selectedId=null; syncAll('Onderdeel verwijderd.'); }
 
     document.getElementById('rotateBtn').addEventListener('click',rotateCurrent);
+    document.getElementById('duplicateBtn').addEventListener('click',duplicateSelected);
     document.getElementById('deleteBtn').addEventListener('click',deleteSelected);
     document.getElementById('undoBtn').addEventListener('click',undo);
     document.getElementById('redoBtn').addEventListener('click',redo);
@@ -1747,6 +1851,7 @@
         resize3DGrid();
         selectedId = null;
         activePartId = null;
+        activeVariantId = null;
         activeRotation = 0;
         history = [];
         future = [];
@@ -1768,7 +1873,9 @@
       if (event.key === 'Enter') applyGridDimensions(Number(gridColsInput.value), Number(gridRowsInput.value));
     }));
 
-    libraryBtn.addEventListener('click', () => showLibrary(libraryScreen.hidden));
+    if (FEATURES.privateCollection) {
+      libraryBtn.addEventListener('click', () => showLibrary(libraryScreen.hidden));
+    }
     document.getElementById('saveBtn').addEventListener('click', saveProject);
     document.getElementById('openBtn').addEventListener('click', () => document.getElementById('openFileInput').click());
     document.getElementById('openFileInput').addEventListener('change', event => openProjectFile(event.target.files?.[0]));
@@ -1781,8 +1888,9 @@
 
     window.addEventListener('keydown',event=>{
       if(event.key.toLowerCase()==='r')rotateCurrent();
+      if(event.key.toLowerCase()==='d' && !event.ctrlKey && !event.metaKey && !event.altKey){ event.preventDefault(); duplicateSelected(); }
       if(event.key==='Delete'||event.key==='Backspace')deleteSelected();
-      if(event.key==='Escape'){ if(!variantMenu.hidden)closeVariantMenu(); else if(!libraryScreen.hidden)showLibrary(false); else if(drawer.classList.contains('open'))setDrawer(false); else {activePartId=null;selectedId=null;hoverCandidate=null;refreshActiveCards();syncAll('Selectie geannuleerd.');} }
+      if(event.key==='Escape'){ if(!variantMenu.hidden)closeVariantMenu(); else if(!libraryScreen.hidden)showLibrary(false); else if(drawer.classList.contains('open'))setDrawer(false); else {activePartId=null;activeVariantId=null;selectedId=null;hoverCandidate=null;refreshActiveCards();syncAll('Selectie geannuleerd.');} }
       if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='z'){event.preventDefault();event.shiftKey?redo():undo();}
     });
 
@@ -2153,19 +2261,22 @@
     async function initializeBuild() {
       updateStatus('Assetcatalogus laden…');
       try {
-        await loadRemoteCatalog();
-        ensureCollectionInventoryEntries();
+        const catalog = await loadRemoteCatalog();
+        if (FEATURES.privateCollection) {
+          ensureCollectionInventoryEntries();
+          renderLibrary();
+        }
         renderCatalog();
-        renderLibrary();
         updateBom();
         updateSelectionText();
         updateButtons();
         draw2D();
         initialize3D();
-        updateStatus(`${Object.keys(PARTS).length} assets geladen vanuit SKALDIS.`);
+        updateStatus(`${Object.keys(PARTS).length} assets geladen uit ${PACK_ORDER.length} packs.`);
       } catch (error) {
         console.error('SKALDIS assetcatalogus kon niet worden geladen:', error);
-        packAccordion.innerHTML = `<div class="pack-empty">Assetcatalogus kon niet worden geladen.<br>${String(error.message || error)}</div>`;
+        packAccordion.innerHTML = `<div class="pack-empty">Assetcatalogus kon niet worden geladen.<br>${String(error.message || error)}<br><br><button id="retryCatalogBtn" type="button">Opnieuw proberen</button></div>`;
+        document.getElementById('retryCatalogBtn')?.addEventListener('click', initializeBuild, { once: true });
         updateStatus(`Assetcatalogus kon niet worden geladen: ${error.message}`, false);
         updateButtons();
         draw2D();
@@ -2485,7 +2596,7 @@
         window.setTimeout(function () { setView('build'); }, 0);
       }
 
-      if (event.target.closest('#libraryBtn')) {
+      if (event.target.closest('#libraryBtn') && !event.target.closest('#libraryBtn').disabled) {
         window.setTimeout(syncLibraryState, 0);
       }
     });
