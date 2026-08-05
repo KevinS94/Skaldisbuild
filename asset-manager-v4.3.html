@@ -1,0 +1,1545 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="SKALDIS BUILD Asset Manager" />
+  <title>SKALDIS BUILD — Asset Manager v4.1</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0e1013;
+      --panel: #171a1f;
+      --panel2: #20242a;
+      --panel3: #111418;
+      --line: #343a43;
+      --line2: #48515c;
+      --text: #f2f4f6;
+      --muted: #9aa3ad;
+      --accent: #d7ff3f;
+      --accentDark: #11170a;
+      --danger: #ff675f;
+      --good: #70df93;
+      --warn: #ffd166;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    body { min-height: 100vh; }
+    button, input, select, textarea { font: inherit; }
+    button { border: 1px solid var(--line); border-radius: 8px; background: var(--panel2); color: var(--text); padding: 8px 10px; cursor: pointer; }
+    button:hover { border-color: var(--line2); }
+    button:disabled { opacity: .4; cursor: not-allowed; }
+    button.primary { background: var(--accent); color: var(--accentDark); border-color: var(--accent); font-weight: 800; }
+    button.danger { color: #ffb5b1; }
+    button.ghost { background: transparent; }
+    input, select, textarea { width: 100%; border: 1px solid var(--line); border-radius: 8px; background: #101317; color: var(--text); padding: 8px 9px; outline: none; }
+    input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+    input[readonly] { color: #c6ccd2; background: #15191d; }
+    textarea { resize: vertical; min-height: 72px; }
+    code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .app { min-height: 100vh; display: grid; grid-template-rows: auto 1fr; }
+    header { position: sticky; top: 0; z-index: 20; min-height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--line); background: #121518; }
+    .brand { display: flex; align-items: baseline; gap: 9px; white-space: nowrap; }
+    .brand strong { letter-spacing: .12em; font-size: 14px; }
+    .brand span { color: var(--muted); font-size: 13px; }
+    .toolbar { display: flex; gap: 7px; flex-wrap: wrap; justify-content: flex-end; align-items: center; }
+    .project-status { display: flex; align-items: center; gap: 7px; padding: 6px 9px; border: 1px solid var(--line); border-radius: 8px; color: var(--muted); font-size: 12px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #5a626b; }
+    .project-status.connected .dot { background: var(--good); }
+    main { min-height: 0; display: grid; grid-template-columns: 330px minmax(590px, 1fr); }
+    .sidebar { min-height: calc(100vh - 64px); border-right: 1px solid var(--line); background: var(--panel); display: grid; grid-template-rows: auto auto auto 1fr auto; }
+    .side-head { padding: 14px; border-bottom: 1px solid var(--line); }
+    .side-head h1 { font-size: 16px; margin: 0 0 5px; }
+    .side-head p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
+    .stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+    .stat { border: 1px solid var(--line); border-radius: 8px; padding: 8px; background: #14181d; }
+    .stat span { display: block; color: var(--muted); font-size: 10px; margin-bottom: 2px; }
+    .stat strong { font-size: 17px; }
+    .filters { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+    .filters input { grid-column: 1 / -1; }
+    .asset-list { min-height: 0; overflow: auto; padding: 8px; display: grid; align-content: start; gap: 6px; }
+    .asset-card { width: 100%; border: 1px solid var(--line); border-radius: 9px; background: var(--panel2); padding: 9px 10px; text-align: left; color: var(--text); cursor: pointer; }
+    .asset-card:hover, .asset-card.active { border-color: var(--accent); }
+    .asset-card.active { box-shadow: inset 0 0 0 1px var(--accent); }
+    .asset-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+    .asset-card strong { font-size: 12px; line-height: 1.3; }
+    .asset-card small { display: block; margin-top: 3px; color: var(--muted); font-size: 10px; }
+    .chip { display: inline-flex; align-items: center; gap: 5px; min-height: 20px; padding: 2px 6px; border-radius: 999px; border: 1px solid var(--line2); color: var(--muted); font-size: 9px; font-weight: 700; text-transform: uppercase; white-space: nowrap; }
+    .chip.enabled { color: var(--good); border-color: rgba(112,223,147,.45); }
+    .chip.disabled { color: #aeb4bb; }
+    .chip.planned { color: var(--warn); border-color: rgba(255,209,102,.42); }
+    .side-foot { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; padding: 10px 12px; border-top: 1px solid var(--line); }
+    .editor { min-width: 0; padding: 16px; }
+    .empty-editor { min-height: 240px; display: grid; place-items: center; text-align: center; color: var(--muted); }
+    .empty-editor strong { display: block; color: var(--text); margin-bottom: 6px; }
+    .empty-editor[hidden], .editor-shell[hidden] { display: none !important; }
+    .editor-shell { display: grid; gap: 14px; max-width: 1260px; margin: 0 auto; }
+    .editor-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+    .editor-head h2 { margin: 0 0 4px; font-size: 21px; }
+    .editor-head p { margin: 0; color: var(--muted); font-size: 12px; }
+    .head-actions { display: flex; flex-wrap: wrap; gap: 7px; justify-content: flex-end; }
+    .panel { border: 1px solid var(--line); border-radius: 11px; background: var(--panel); overflow: hidden; }
+    .panel-head { padding: 11px 13px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .panel-head h3 { margin: 0; font-size: 13px; letter-spacing: .04em; text-transform: uppercase; }
+    .panel-head span { color: var(--muted); font-size: 11px; }
+    .panel-body { padding: 13px; }
+    .grid-form { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 10px; }
+    .field { min-width: 0; }
+    .field label { display: block; margin-bottom: 5px; color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .045em; text-transform: uppercase; }
+    .span-2 { grid-column: span 2; } .span-3 { grid-column: span 3; } .span-4 { grid-column: span 4; } .span-6 { grid-column: span 6; } .span-8 { grid-column: span 8; } .span-12 { grid-column: 1 / -1; }
+    .id-preview { padding: 9px 10px; border: 1px dashed var(--line2); border-radius: 8px; background: #101317; color: var(--accent); font-size: 12px; overflow-wrap: anywhere; }
+    .id-copy-row { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 7px; align-items: stretch; }
+    .id-copy-row .id-preview { display: flex; align-items: center; }
+    .id-copy-row button { white-space: nowrap; }
+    .product-id-head { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .product-id-head button { padding:4px 7px; font-size:9px; }
+    .two-col { display: grid; grid-template-columns: minmax(360px, .9fr) minmax(430px, 1.1fr); gap: 14px; }
+    .footprint-wrap { display: grid; grid-template-columns: minmax(250px, 1fr) minmax(240px, .85fr); gap: 12px; align-items: start; }
+    #footprintCanvas { display: block; width: 100%; max-width: 520px; aspect-ratio: 1.35 / 1; border: 1px solid var(--line); border-radius: 8px; background: #101317; cursor: pointer; touch-action: none; }
+    .mini-tools { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .help { color: var(--muted); font-size: 11px; line-height: 1.5; margin: 8px 0 0; }
+    .variants { display: grid; gap: 8px; }
+    .variant-card { border: 1px solid var(--line); border-radius: 9px; background: var(--panel2); overflow: hidden; }
+    .variant-card.default-variant { border-color: rgba(215,255,63,.38); }
+    .variant-card-head { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 10px; align-items: center; padding: 9px 10px; background: #1b1f24; }
+    .variant-card-head:hover { background: #1e2329; }
+    .variant-summary { min-width: 0; display: flex; align-items: center; gap: 9px; }
+    .variant-toggle { min-width: 0; flex: 1; display: flex; align-items: center; gap: 9px; border: 0; padding: 2px 0; background: transparent; text-align: left; }
+    .variant-toggle:hover { border-color: transparent; }
+    .variant-chevron { width: 18px; flex: 0 0 18px; color: var(--muted); font-size: 13px; text-align: center; transition: transform .14s ease; }
+    .variant-card.expanded .variant-chevron { transform: rotate(90deg); }
+    .variant-summary-text { min-width: 0; display: grid; gap: 2px; }
+    .variant-summary-title { min-width: 0; display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+    .variant-summary-title strong { font-size: 12px; }
+    .variant-summary-meta { color: var(--muted); font-size: 9px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .default-chip { display: inline-flex; align-items: center; min-height: 18px; padding: 1px 6px; border: 1px solid rgba(215,255,63,.4); border-radius: 999px; color: var(--accent); font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
+    .variant-head-actions { display: flex; align-items: center; gap: 5px; }
+    .variant-head-actions button { min-width: 31px; padding: 5px 7px; }
+    .variant-head-actions button:disabled { opacity: .25; }
+    .variant-card-body { padding: 10px; border-top: 1px solid var(--line); }
+    .variant-card-body[hidden] { display: none; }
+    .variant-grid { display: grid; grid-template-columns: 90px 150px 120px minmax(220px,1fr) minmax(190px,1fr) auto; gap: 8px; align-items: end; }
+    .variant-id { margin-top: 7px; display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 7px; }
+    .variant-id div { border: 1px dashed #46505b; border-radius: 7px; padding: 7px 8px; font-size: 10px; color: var(--muted); overflow-wrap: anywhere; }
+    .variant-id strong { color: var(--text); font-weight: 600; }
+    .variant-model-state { margin-top: 7px; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+    .model-state { display: inline-flex; align-items: center; gap: 6px; min-height: 22px; padding: 3px 7px; border: 1px solid var(--line2); border-radius: 999px; color: var(--muted); font-size: 10px; font-weight: 700; }
+    .model-state::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #646d77; }
+    .model-state.ready { color: var(--good); border-color: rgba(112,223,147,.45); }
+    .model-state.ready::before { background: var(--good); }
+    .model-state.queued { color: var(--warn); border-color: rgba(255,209,102,.42); }
+    .model-state.queued::before { background: var(--warn); }
+    .model-path { min-width: 0; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 9px; overflow-wrap: anywhere; }
+    .file-button { position: relative; overflow: hidden; min-width: 96px; }
+    .file-button input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .queued { color: var(--good) !important; }
+    .validation { display: grid; gap: 6px; }
+    .validation-row { display: flex; align-items: flex-start; gap: 8px; font-size: 11px; color: var(--muted); }
+    .validation-row.good { color: var(--good); }
+    .validation-row.bad { color: var(--danger); }
+    .validation-row.warn { color: var(--warn); }
+    .taxonomy-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; }
+    .taxonomy-list { display: grid; gap: 6px; margin-top: 9px; }
+    .taxonomy-row { display: grid; grid-template-columns: 1fr 88px auto; gap: 6px; align-items: center; padding: 7px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel2); }
+    .taxonomy-row.types { grid-template-columns: 1fr 86px 110px auto; }
+    .taxonomy-row input, .taxonomy-row select { padding: 6px 7px; font-size: 11px; }
+    .tabs { display: flex; gap: 6px; margin-bottom: 13px; border-bottom: 1px solid var(--line); padding-bottom: 8px; }
+    .tabs button.active { background: var(--accent); color: var(--accentDark); border-color: var(--accent); font-weight: 800; }
+    .tab-view[hidden] { display: none !important; }
+    #assetTab > .editor-shell:not([hidden]) { margin-top: 0; }
+    .preview3d { min-height: 330px; position: relative; border: 1px solid var(--line); border-radius: 8px; background: #101317; overflow: hidden; }
+    #threePreview { position: absolute; inset: 0; }
+    .preview-msg { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; color: var(--muted); padding: 20px; font-size: 11px; pointer-events: none; }
+    .toast { position: fixed; right: 16px; bottom: 16px; z-index: 100; max-width: min(430px, calc(100vw - 32px)); border: 1px solid var(--line2); border-radius: 9px; background: #191d22; color: var(--text); padding: 10px 12px; box-shadow: 0 10px 35px rgba(0,0,0,.35); font-size: 12px; opacity: 0; transform: translateY(8px); pointer-events: none; transition: .18s ease; }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.good { border-color: rgba(112,223,147,.55); }
+    .toast.bad { border-color: rgba(255,103,95,.55); }
+    .modal-backdrop { position: fixed; inset: 0; z-index: 80; background: rgba(0,0,0,.62); display: grid; place-items: center; padding: 18px; }
+    .modal-backdrop[hidden] { display: none; }
+    .modal { width: min(760px, 100%); max-height: 88vh; overflow: auto; border: 1px solid var(--line2); border-radius: 12px; background: var(--panel); }
+    .modal h3 { margin: 0; font-size: 16px; }
+    .modal-head, .modal-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 13px 15px; border-bottom: 1px solid var(--line); }
+    .modal-foot { border-bottom: 0; border-top: 1px solid var(--line); justify-content: flex-end; }
+    .modal-body { padding: 15px; }
+    .raw-json { min-height: 420px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11px; line-height: 1.45; }
+    @media (max-width: 1050px) {
+      main { grid-template-columns: 280px minmax(520px,1fr); }
+      .two-col, .footprint-wrap { grid-template-columns: 1fr; }
+      .variant-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .variant-grid .variant-remove { grid-column: 2; justify-self: end; }
+      .taxonomy-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 760px) {
+      header { position: static; flex-direction: column; align-items: stretch; }
+      .toolbar { justify-content: flex-start; overflow-x: auto; flex-wrap: nowrap; }
+      main { display: block; }
+      .sidebar { min-height: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+      .asset-list { max-height: 330px; }
+      .grid-form { grid-template-columns: repeat(2,minmax(0,1fr)); }
+      .span-2,.span-3,.span-4,.span-6,.span-8,.span-12 { grid-column: span 2; }
+      .variant-grid, .variant-id, .revision-toolbar, .revision-grid, .inspector { grid-template-columns: 1fr; }
+      .revision-grid .span-2r { grid-column: auto; }
+      .variant-grid .variant-remove { grid-column: auto; justify-self: stretch; }
+      .variant-card-head { grid-template-columns: 1fr; }
+      .variant-head-actions { justify-content: flex-end; }
+      .editor-head { display: grid; }
+      .head-actions { justify-content: flex-start; }
+    }
+
+    .cloud-status { display:flex; align-items:center; gap:7px; padding:6px 9px; border:1px solid var(--line); border-radius:8px; color:var(--muted); font-size:12px; }
+    .cloud-status.connected .dot { background: var(--good); }
+    .cloud-status.dirty { border-color: rgba(255,209,102,.5); }
+    .login-grid { display:grid; gap:10px; }
+    .login-note { color:var(--muted); font-size:11px; line-height:1.5; }
+    .session-email { color:var(--text); font-weight:650; }
+    .revision-shell { margin-top: 10px; border-top: 1px solid var(--line); padding-top: 10px; display: grid; gap: 9px; }
+    .revision-toolbar { display: grid; grid-template-columns: minmax(150px, .7fr) minmax(150px, .7fr) auto auto; gap: 8px; align-items: end; }
+    .revision-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 8px; }
+    .revision-grid .span-2r { grid-column: span 2; }
+    .revision-note { color: var(--muted); font-size: 10px; line-height: 1.45; }
+    .uuid-line { color: var(--muted); font-size: 9px; overflow-wrap: anywhere; margin-top: 5px; }
+    .inspector { margin-top: 9px; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 7px; }
+    .inspect-item { border: 1px solid var(--line); border-radius: 8px; background: var(--panel2); padding: 7px 8px; min-width: 0; }
+    .inspect-item span { display:block; color:var(--muted); font-size:9px; text-transform:uppercase; font-weight:700; letter-spacing:.04em; margin-bottom:2px; }
+    .inspect-item strong { display:block; font-size:11px; overflow-wrap:anywhere; }
+    .inspect-item.good strong { color:var(--good); }
+    .inspect-item.warn strong { color:var(--warn); }
+    .inspect-item.bad strong { color:var(--danger); }
+    .preview-actions { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+    .draft-banner { padding: 9px 12px; border: 1px solid rgba(255,209,102,.45); border-radius: 8px; background: rgba(255,209,102,.06); color: var(--warn); font-size: 11px; line-height: 1.45; }
+
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand"><strong>SKALDIS BUILD</strong><span>Asset Manager v4.3</span></div>
+    <div class="toolbar">
+      <div id="cloudStatus" class="cloud-status"><span class="dot"></span><span>Niet ingelogd</span></div>
+      <button id="loginBtn" type="button">Inloggen</button>
+      <button id="loadCloudBtn" type="button" disabled>Supabase laden</button>
+      <button id="saveCloudBtn" class="primary" type="button" disabled>Opslaan naar Supabase</button>
+      <button id="importBtn" type="button">Import JSON</button>
+      <button id="exportBtn" type="button">Export JSON</button>
+      <input id="importInput" type="file" accept="application/json,.json" hidden />
+    </div>
+  </header>
+
+  <main>
+    <aside class="sidebar">
+      <div class="side-head">
+        <h1>Assetfamilies</h1>
+        <p>Een familie bepaalt footprint en top-down-logica. Varianten wisselen alleen het model binnen dezelfde familie.</p>
+      </div>
+      <div class="stats">
+        <div class="stat"><span>Families</span><strong id="familyCount">0</strong></div>
+        <div class="stat"><span>Varianten</span><strong id="variantCount">0</strong></div>
+        <div class="stat"><span>GLB aanwezig</span><strong id="modelReadyCount">0</strong></div>
+        <div class="stat"><span>GLB ontbreekt</span><strong id="modelMissingCount">0</strong></div>
+        <div class="stat"><span>Gepland</span><strong id="plannedCount">0</strong></div>
+      </div>
+      <div class="filters">
+        <input id="searchInput" type="search" placeholder="Zoek ID, naam, type…" />
+        <select id="packFilter"><option value="">Alle packs</option></select>
+        <select id="statusFilter"><option value="">Alle statussen</option><option value="enabled">Enabled</option><option value="planned">Planned</option><option value="disabled">Disabled</option></select>
+      </div>
+      <div id="assetList" class="asset-list"></div>
+      <div class="side-foot">
+        <button id="newAssetBtn" class="primary" type="button">+ Nieuwe familie</button>
+        <button id="duplicateAssetBtn" type="button" disabled>Dupliceren</button>
+      </div>
+    </aside>
+
+    <section class="editor">
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="asset" type="button">Asset</button>
+        <button class="tab-btn" data-tab="taxonomy" type="button">Packs & types</button>
+        <button class="tab-btn" data-tab="database" type="button">Database</button>
+      </div>
+
+      <div id="assetTab" class="tab-view">
+        <div id="emptyEditor" class="empty-editor"><div><strong>Selecteer een assetfamilie</strong>of maak links een nieuwe familie aan.</div></div>
+        <div id="editorShell" class="editor-shell" hidden>
+          <div class="editor-head">
+            <div><h2 id="editorTitle">Asset</h2><p id="editorSub">—</p></div>
+            <div class="head-actions">
+              <button id="validateBtn" type="button">Valideren</button>
+              <button id="deleteAssetBtn" class="danger" type="button">Familie verwijderen</button>
+            </div>
+          </div>
+
+          <section class="panel">
+            <div class="panel-head"><h3>Identiteit</h3><span>Leesbare IDs zijn de SKALDIS productcodes · UUIDs blijven intern</span></div>
+            <div class="panel-body">
+              <div class="grid-form">
+                <div class="field span-3"><label>Pack</label><select id="assetPack"></select></div>
+                <div class="field span-3"><label>Class</label><select id="assetClass"></select></div>
+                <div class="field span-3"><label>Type</label><select id="assetType"></select></div>
+                <div class="field span-3"><label>Status</label><select id="assetStatus"><option value="enabled">Enabled</option><option value="planned">Planned</option><option value="disabled">Disabled</option></select></div>
+                <div class="field span-2"><label>Breedte</label><input id="assetWidth" type="number" min="1" max="99" step="1" /></div>
+                <div class="field span-2"><label>Diepte</label><input id="assetDepth" type="number" min="1" max="99" step="1" /></div>
+                <div class="field span-4"><label>Anchor type</label><select id="assetAnchor"><option value="cell">Cell</option></select></div>
+                <div class="field span-4"><label>Default variant</label><select id="defaultVariant"></select></div>
+                <div class="field span-6"><label>Familie-ID</label><div class="id-copy-row"><div id="familyIdPreview" class="id-preview mono"></div><button id="copyFamilyIdBtn" type="button">Kopieer</button></div></div>
+                <div class="field span-6"><label>Display name</label><input id="displayName" readonly /></div>
+                <div class="field span-12"><label>Notities</label><textarea id="assetNotes" placeholder="Interne notities, modelstatus, productie-info…"></textarea></div>
+              </div>
+            </div>
+          </section>
+
+          <div class="two-col">
+            <section class="panel">
+              <div class="panel-head"><h3>Footprint & top-down</h3><span>Klik vakken om footprint te wijzigen</span></div>
+              <div class="panel-body">
+                <div class="footprint-wrap">
+                  <div>
+                    <canvas id="footprintCanvas" width="520" height="390"></canvas>
+                    <div class="mini-tools">
+                      <button id="rectFootprintBtn" type="button">Volledige rechthoek</button>
+                      <button id="clearFootprintBtn" type="button">Footprint leeg</button>
+                      <button id="defaultPathBtn" type="button">Standaard pad</button>
+                    </div>
+                    <p class="help">De familieafmetingen bepalen de bounding box. Footprint kan daarbinnen L-vormig of onregelmatig zijn.</p>
+                  </div>
+                  <div>
+                    <div class="field"><label>Footprint cells</label><textarea id="footprintText" class="mono"></textarea></div>
+                    <div class="field" style="margin-top:9px"><label>Paths JSON</label><textarea id="pathsText" class="mono"></textarea></div>
+                    <p class="help">Paths zijn alleen de 2D-muurvorm. Props en pilaren mogen een lege array <code>[]</code> gebruiken.</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head"><h3>Model preview</h3><span>Optioneel · Three.js via CDN</span></div>
+              <div class="panel-body">
+                <div class="field"><label>Variant om te bekijken</label><select id="previewVariant"></select></div>
+                <div class="mini-tools"><button id="previewBtn" type="button">3D preview laden</button><button id="resetPreviewBtn" type="button">Isometrisch</button></div>
+                <div class="preview-actions"><button id="topPreviewBtn" type="button">Top</button><button id="frontPreviewBtn" type="button">Front</button><button id="rightPreviewBtn" type="button">Right</button><button id="gridPreviewBtn" type="button">Grid aan/uit</button><button id="boundsPreviewBtn" type="button">Bounds aan/uit</button></div>
+                <div class="preview3d" style="margin-top:9px"><div id="threePreview"></div><div id="previewMsg" class="preview-msg">Selecteer een variant en laad de actieve revision.</div></div>
+                <div id="modelInspector" class="inspector"><div class="inspect-item"><span>Inspector</span><strong>Nog geen model geladen</strong></div></div>
+              </div>
+            </section>
+          </div>
+
+          <section class="panel">
+            <div class="panel-head"><div><h3>Varianten</h3><span>Bij een disabled/planned familie blokkeren ontbrekende GLBs de opslag niet.</span></div><button id="addVariantBtn" type="button">+ Variant toevoegen</button></div>
+            <div class="panel-body"><div id="variantList" class="variants"></div></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head"><h3>Validatie</h3><span>Controle voor export / configurator</span></div>
+            <div class="panel-body"><div id="validationList" class="validation"></div></div>
+          </section>
+        </div>
+      </div>
+
+      <div id="taxonomyTab" class="tab-view" hidden>
+        <div class="editor-shell">
+          <div class="editor-head"><div><h2>Packs & types</h2><p>Deze codes worden gebruikt om alle IDs automatisch te genereren.</p></div></div>
+          <div class="taxonomy-grid">
+            <section class="panel"><div class="panel-head"><h3>Packs</h3><button data-tax-add="packs" type="button">+ Pack</button></div><div class="panel-body"><div id="packTaxList" class="taxonomy-list"></div></div></section>
+            <section class="panel"><div class="panel-head"><h3>Classes</h3><button data-tax-add="classes" type="button">+ Class</button></div><div class="panel-body"><div id="classTaxList" class="taxonomy-list"></div></div></section>
+            <section class="panel"><div class="panel-head"><h3>Types</h3><button data-tax-add="types" type="button">+ Type</button></div><div class="panel-body"><div id="typeTaxList" class="taxonomy-list"></div></div></section>
+          </div>
+        </div>
+      </div>
+
+      <div id="databaseTab" class="tab-view" hidden>
+        <div class="editor-shell">
+          <div class="editor-head"><div><h2>Database</h2><p>Live werkbuffer van de Supabase assetdatabase. JSON blijft beschikbaar voor backup/import/export.</p></div><div class="head-actions"><button id="formatJsonBtn" type="button">JSON formatteren</button><button id="applyRawJsonBtn" type="button">JSON toepassen</button></div></div>
+          <section class="panel"><div class="panel-head"><h3>Assetdatabase</h3><span id="rawJsonStatus">Live kopie</span></div><div class="panel-body"><textarea id="rawJson" class="raw-json"></textarea></div></section>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+
+<div id="loginModal" class="modal-backdrop" hidden>
+  <div class="modal" style="width:min(460px,100%)">
+    <div class="modal-head"><h3>SKALDIS Asset Manager — Inloggen</h3></div>
+    <div class="modal-body">
+      <div class="login-grid">
+        <div class="field"><label>E-mail</label><input id="loginEmail" type="email" autocomplete="username" /></div>
+        <div class="field"><label>Wachtwoord</label><input id="loginPassword" type="password" autocomplete="current-password" /></div>
+        <div id="loginError" class="login-note"></div>
+        <p class="login-note">Alleen accounts die in <code>app_admins</code> staan krijgen toegang tot de SKALDIS database en private modellen.</p>
+      </div>
+    </div>
+    <div class="modal-foot"><button id="loginCancel" type="button">Sluiten</button><button id="loginSubmit" class="primary" type="button">Inloggen</button></div>
+  </div>
+</div>
+
+<div id="recoveryModal" class="modal-backdrop" hidden>
+  <div class="modal" style="width:min(560px,100%)">
+    <div class="modal-head"><h3>Lokale werkversie gevonden</h3></div>
+    <div class="modal-body"><div id="recoveryText" class="draft-banner"></div><p class="login-note" style="margin-bottom:0">GLB-bestanden die alleen lokaal geselecteerd waren kunnen na een browserrefresh niet automatisch worden hersteld.</p></div>
+    <div class="modal-foot"><button id="recoveryDiscard" type="button">Supabase gebruiken</button><button id="recoveryRestore" class="primary" type="button">Lokale versie herstellen</button></div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+<div id="confirmModal" class="modal-backdrop" hidden>
+  <div class="modal"><div class="modal-head"><h3 id="confirmTitle">Bevestigen</h3></div><div class="modal-body"><p id="confirmText" style="color:var(--muted);line-height:1.55;margin:0"></p></div><div class="modal-foot"><button id="confirmCancel" type="button">Annuleren</button><button id="confirmOk" class="danger" type="button">Verwijderen</button></div></div>
+</div>
+
+<script id="seedData" type="application/json">
+{
+  "schemaVersion": 4,
+  "app": "SKALDIS BUILD Asset Database",
+  "updatedAt": "2026-08-05T00:00:00.000Z",
+  "settings": {
+    "cellSizeMm": 25.4,
+    "modelDirectory": "supabase://skaldis-models/",
+    "naming": {
+      "sizeDigitsPerDimension": 2,
+      "separator": "_"
+    }
+  },
+  "packs": [
+    {
+      "id": "dungeon",
+      "code": "DG",
+      "name": "Dungeon Core",
+      "status": "enabled"
+    },
+    {
+      "id": "castle",
+      "code": "CS",
+      "name": "Castle Core",
+      "status": "enabled"
+    },
+    {
+      "id": "village",
+      "code": "VL",
+      "name": "Village Core",
+      "status": "planned"
+    },
+    {
+      "id": "generic",
+      "code": "GN",
+      "name": "Generic",
+      "status": "enabled"
+    }
+  ],
+  "classes": [
+    {
+      "id": "structure",
+      "code": "STR",
+      "name": "Structure"
+    },
+    {
+      "id": "prop",
+      "code": "PRP",
+      "name": "Prop"
+    }
+  ],
+  "types": [
+    {
+      "id": "wall",
+      "code": "WALL",
+      "name": "Muur Recht",
+      "classId": "structure",
+      "placeholder": "straight"
+    },
+    {
+      "id": "corner",
+      "code": "CORNER",
+      "name": "Hoek",
+      "classId": "structure",
+      "placeholder": "corner"
+    },
+    {
+      "id": "tee",
+      "code": "TEE",
+      "name": "T-stuk",
+      "classId": "structure",
+      "placeholder": "t"
+    },
+    {
+      "id": "cross",
+      "code": "CROSS",
+      "name": "Kruis",
+      "classId": "structure",
+      "placeholder": "cross"
+    },
+    {
+      "id": "pillar",
+      "code": "PILLAR",
+      "name": "Pilaar",
+      "classId": "structure",
+      "placeholder": "pillar"
+    },
+    {
+      "id": "wallend",
+      "code": "WALLEND",
+      "name": "Muureinde",
+      "classId": "structure",
+      "placeholder": "straight"
+    },
+    {
+      "id": "tower_straight",
+      "code": "TWRSTR",
+      "name": "Toren Recht",
+      "classId": "structure",
+      "placeholder": "tower"
+    },
+    {
+      "id": "tower_corner",
+      "code": "TWRCNR",
+      "name": "Toren Hoek",
+      "classId": "structure",
+      "placeholder": "tower"
+    },
+    {
+      "id": "gate",
+      "code": "GATE",
+      "name": "Poort",
+      "classId": "structure",
+      "placeholder": "door"
+    },
+    {
+      "id": "chest",
+      "code": "CHEST",
+      "name": "Kist",
+      "classId": "prop",
+      "placeholder": "chest"
+    },
+    {
+      "id": "campfire",
+      "code": "FIRE",
+      "name": "Kampvuur",
+      "classId": "prop",
+      "placeholder": "campfire"
+    },
+    {
+      "id": "figure",
+      "code": "FIGURE",
+      "name": "Referentiefiguur",
+      "classId": "prop",
+      "placeholder": "miniature"
+    }
+  ],
+  "assets": []
+}
+</script>
+<script>
+(function () {
+  'use strict';
+
+  const STORAGE_KEY = 'skaldis-asset-manager-draft-v4';
+  const LEGACY_STORAGE_KEY = 'skaldis-asset-manager-draft-v3';
+  const SUPABASE_URL = 'https://zrhryfiwxpgivojunsip.supabase.co';
+  const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_mEHFV3R06x0p8S-nbcWTjg_VVCLlGTn';
+  const MODEL_BUCKET = 'skaldis-models';
+  const SCHEMA_VERSION = 4;
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, { auth: { persistSession: true, autoRefreshToken: true } });
+
+  let db = null;
+  let selectedAssetKey = null;
+  let currentUser = null;
+  let isAdminSession = false;
+  let dirty = false;
+  let loadedCloudRevision = null;
+  let lastRemoteModelPaths = new Set();
+  let pendingFiles = new Map(); // revision runtime key -> File
+  let confirmResolver = null;
+  let recoveryResolver = null;
+  let threeState = null;
+  let previewObjectUrl = null;
+  let lastInspection = null;
+
+  const $ = id => document.getElementById(id);
+  const els = {
+    cloudStatus: $('cloudStatus'), loginBtn: $('loginBtn'), loadCloudBtn: $('loadCloudBtn'), saveCloudBtn: $('saveCloudBtn'), loginModal: $('loginModal'), loginEmail: $('loginEmail'), loginPassword: $('loginPassword'), loginError: $('loginError'), loginCancel: $('loginCancel'), loginSubmit: $('loginSubmit'),
+    importBtn: $('importBtn'), exportBtn: $('exportBtn'), importInput: $('importInput'), assetList: $('assetList'), searchInput: $('searchInput'), packFilter: $('packFilter'), statusFilter: $('statusFilter'),
+    familyCount: $('familyCount'), variantCount: $('variantCount'), modelReadyCount: $('modelReadyCount'), modelMissingCount: $('modelMissingCount'), plannedCount: $('plannedCount'), newAssetBtn: $('newAssetBtn'), duplicateAssetBtn: $('duplicateAssetBtn'),
+    emptyEditor: $('emptyEditor'), editorShell: $('editorShell'), editorTitle: $('editorTitle'), editorSub: $('editorSub'), validateBtn: $('validateBtn'), deleteAssetBtn: $('deleteAssetBtn'),
+    assetPack: $('assetPack'), assetClass: $('assetClass'), assetType: $('assetType'), assetStatus: $('assetStatus'), assetWidth: $('assetWidth'), assetDepth: $('assetDepth'), assetAnchor: $('assetAnchor'), defaultVariant: $('defaultVariant'),
+    familyIdPreview: $('familyIdPreview'), copyFamilyIdBtn: $('copyFamilyIdBtn'), displayName: $('displayName'), assetNotes: $('assetNotes'), footprintCanvas: $('footprintCanvas'), footprintText: $('footprintText'), pathsText: $('pathsText'),
+    rectFootprintBtn: $('rectFootprintBtn'), clearFootprintBtn: $('clearFootprintBtn'), defaultPathBtn: $('defaultPathBtn'), previewVariant: $('previewVariant'), previewBtn: $('previewBtn'), resetPreviewBtn: $('resetPreviewBtn'), topPreviewBtn: $('topPreviewBtn'), frontPreviewBtn: $('frontPreviewBtn'), rightPreviewBtn: $('rightPreviewBtn'), gridPreviewBtn: $('gridPreviewBtn'), boundsPreviewBtn: $('boundsPreviewBtn'), threePreview: $('threePreview'), previewMsg: $('previewMsg'), modelInspector: $('modelInspector'),
+    variantList: $('variantList'), addVariantBtn: $('addVariantBtn'), validationList: $('validationList'), packTaxList: $('packTaxList'), classTaxList: $('classTaxList'), typeTaxList: $('typeTaxList'),
+    rawJson: $('rawJson'), rawJsonStatus: $('rawJsonStatus'), formatJsonBtn: $('formatJsonBtn'), applyRawJsonBtn: $('applyRawJsonBtn'), toast: $('toast'), confirmModal: $('confirmModal'), confirmTitle: $('confirmTitle'), confirmText: $('confirmText'), confirmCancel: $('confirmCancel'), confirmOk: $('confirmOk'),
+    recoveryModal: $('recoveryModal'), recoveryText: $('recoveryText'), recoveryDiscard: $('recoveryDiscard'), recoveryRestore: $('recoveryRestore')
+  };
+
+  function deepClone(value) { return JSON.parse(JSON.stringify(value)); }
+  function runtimeKey() { return crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now().toString(36); }
+  function stableUuid() {
+    if (crypto.randomUUID) return crypto.randomUUID();
+    const bytes = new Uint8Array(16); crypto.getRandomValues(bytes);
+    bytes[6] = (bytes[6] & 0x0f) | 0x40; bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    const hex = [...bytes].map(b => b.toString(16).padStart(2, '0')).join('');
+    return `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20)}`;
+  }
+  function cleanForExport(value) {
+    if (Array.isArray(value)) return value.map(cleanForExport);
+    if (value && typeof value === 'object') {
+      const result = {};
+      Object.entries(value).forEach(([k, v]) => { if (!k.startsWith('_')) result[k] = cleanForExport(v); });
+      return result;
+    }
+    return value;
+  }
+  function serializeDB(pretty = true) { return JSON.stringify(cleanForExport(db), null, pretty ? 2 : 0); }
+  function toast(message, type = '') {
+    els.toast.textContent = message;
+    els.toast.className = `toast ${type} show`;
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(() => els.toast.classList.remove('show'), 3200);
+  }
+  function askConfirm(title, text, okText = 'Verwijderen') {
+    els.confirmTitle.textContent = title; els.confirmText.textContent = text; els.confirmOk.textContent = okText; els.confirmModal.hidden = false;
+    return new Promise(resolve => { confirmResolver = resolve; });
+  }
+  els.confirmCancel.addEventListener('click', () => { els.confirmModal.hidden = true; confirmResolver?.(false); confirmResolver = null; });
+  els.confirmOk.addEventListener('click', () => { els.confirmModal.hidden = true; confirmResolver?.(true); confirmResolver = null; });
+
+  function askRecovery(draft) {
+    const when = draft.savedAt ? new Date(draft.savedAt).toLocaleString('nl-BE') : 'onbekend tijdstip';
+    els.recoveryText.textContent = `Er staat een niet-opgeslagen lokale werkversie van ${when}. Herstel die versie, of vervang ze door de huidige Supabase-database.`;
+    els.recoveryModal.hidden = false;
+    return new Promise(resolve => { recoveryResolver = resolve; });
+  }
+  els.recoveryRestore.addEventListener('click', () => { els.recoveryModal.hidden = true; recoveryResolver?.(true); recoveryResolver = null; });
+  els.recoveryDiscard.addEventListener('click', () => { els.recoveryModal.hidden = true; recoveryResolver?.(false); recoveryResolver = null; });
+
+  function normalizeCode(value) { return String(value || '').trim().toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, ''); }
+  function normalizeId(value) { return String(value || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, ''); }
+  function padSize(n) { return String(Math.max(1, Math.min(99, Number(n) || 1))).padStart(2, '0'); }
+  function padRevision(n) { return String(Math.max(1, Number(n) || 1)).padStart(2, '0'); }
+  function packById(id) { return db.packs.find(x => x.id === id); }
+  function classById(id) { return db.classes.find(x => x.id === id); }
+  function typeById(id) { return db.types.find(x => x.id === id); }
+  function assetByKey(key) { return db.assets.find(x => x._key === key); }
+  function selectedAsset() { return assetByKey(selectedAssetKey); }
+  function familyIdFor(asset) {
+    const p = packById(asset.packId), c = classById(asset.classId), t = typeById(asset.typeId);
+    if (!p || !c || !t) return 'INVALID_ID';
+    return `${normalizeCode(p.code)}_${normalizeCode(c.code)}_${normalizeCode(t.code)}_${padSize(asset.width)}${padSize(asset.depth)}`;
+  }
+  function displayNameFor(asset) {
+    const t = typeById(asset.typeId);
+    return `${t?.name || 'Asset'} ${Number(asset.width) || 1} × ${Number(asset.depth) || 1}`;
+  }
+  function variantIdFor(asset, variant) { return `${familyIdFor(asset)}_${normalizeCode(variant.code || 'VARIANT')}`; }
+  function variantDisplayFor(asset, variant) { return normalizeCode(variant.code) === 'BASIC' ? displayNameFor(asset) : `${displayNameFor(asset)} — ${variant.name || normalizeCode(variant.code)}`; }
+  function revisionModelFileFor(asset, variant, revision) { return `${variantIdFor(asset, variant).toLowerCase()}_r${padRevision(revision.revision)}.glb`; }
+  function activeRevisionFor(variant) { return (variant.revisions || []).find(r => r.revisionUuid === variant.activeRevisionUuid) || variant.revisions?.[0] || null; }
+  function latestRevisionFor(variant) { return [...(variant.revisions || [])].sort((a, b) => Number(b.revision) - Number(a.revision))[0] || null; }
+
+  function upgradeDatabase(source) {
+    const next = deepClone(source);
+    next.schemaVersion = SCHEMA_VERSION;
+    next.settings ||= {};
+    next.settings.cellSizeMm = Number(next.settings.cellSizeMm) || 25.4;
+    next.settings.modelDirectory ||= 'supabase://skaldis-models/';
+    next.settings.naming ||= { sizeDigitsPerDimension: 2, separator: '_' };
+    next.packs ||= []; next.classes ||= []; next.types ||= []; next.assets ||= [];
+    next.assets.forEach(asset => {
+      asset.familyUuid ||= stableUuid();
+      asset.variants ||= [];
+      delete asset.legacyPartIds;
+      asset.variants.forEach(variant => {
+        variant.variantUuid ||= stableUuid();
+        if (!Array.isArray(variant.revisions) || !variant.revisions.length) {
+          variant.revisions = [{
+            revisionUuid: stableUuid(), revision: 1,
+            modelPath: variant.modelPath || '', modelFile: variant.modelFile || '',
+            weightG: null, material: '', printTimeMinutes: null,
+            estimatedCostEur: variant.estimatedCostEur ?? variant.costEur ?? null, notes: ''
+          }];
+        }
+        variant.revisions.forEach((revision, index) => {
+          revision.revisionUuid ||= stableUuid();
+          revision.revision = Math.max(1, Number(revision.revision) || index + 1);
+          revision.modelPath ||= '';
+          revision.modelFile ||= '';
+          revision.material ||= '';
+          revision.notes ||= '';
+          if (revision.weightG === undefined) revision.weightG = null;
+          if (revision.printTimeMinutes === undefined) revision.printTimeMinutes = null;
+          if (revision.estimatedCostEur === undefined) revision.estimatedCostEur = revision.costEur ?? null;
+          delete revision.costEur;
+          delete revision.legacyModelFile;
+        });
+        variant.revisions.sort((a, b) => a.revision - b.revision);
+        // v3 local drafts stored a numeric activeRevision. Convert that once to the stable revision UUID.
+        if (!variant.activeRevisionUuid) {
+          const oldNo = Number(variant.activeRevision) || 1;
+          variant.activeRevisionUuid = variant.revisions.find(r => Number(r.revision) === oldNo)?.revisionUuid || variant.revisions[0]?.revisionUuid || null;
+        }
+        if (!variant.revisions.some(r => r.revisionUuid === variant.activeRevisionUuid)) variant.activeRevisionUuid = variant.revisions[0]?.revisionUuid || null;
+        delete variant.activeRevision;
+        delete variant.legacyVariantIds;
+        delete variant.modelPath; delete variant.modelFile; delete variant.legacyModelFile; delete variant.isDefault;
+      });
+    });
+    return next;
+  }
+
+  function ensureRuntimeKeys() {
+    (db.assets || []).forEach(asset => {
+      if (!asset._key) asset._key = runtimeKey();
+      (asset.variants || []).forEach(v => {
+        if (!v._key) v._key = runtimeKey();
+        (v.revisions || []).forEach(r => { if (!r._key) r._key = runtimeKey(); });
+      });
+    });
+  }
+
+  function refreshDerived(asset) {
+    if (!asset) return;
+    asset.id = familyIdFor(asset);
+    asset.displayName = displayNameFor(asset);
+    (asset.variants || []).forEach(v => {
+      v.code = normalizeCode(v.code || 'VARIANT');
+      v.id = variantIdFor(asset, v);
+      v.displayName = variantDisplayFor(asset, v);
+      (v.revisions || []).forEach(r => {
+        // Once a revision has a stored GLB, keep the real stored filename immutable.
+        // Only revisions without a stored model derive their future filename from the current human-readable ID.
+        r.modelFile = r.modelPath ? (r.modelPath.split('/').pop() || r.modelFile || revisionModelFileFor(asset, v, r)) : revisionModelFileFor(asset, v, r);
+      });
+    });
+  }
+  function refreshAllDerived() { db.assets.forEach(refreshDerived); }
+
+  function saveLocal() {
+    if (!db) return;
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        schemaVersion: SCHEMA_VERSION,
+        savedAt: new Date().toISOString(),
+        dirty,
+        loadedCloudRevision,
+        lastRemoteModelPaths: [...lastRemoteModelPaths],
+        db: cleanForExport(db)
+      }));
+    } catch (error) { console.warn(error); }
+  }
+  function readLocalDraft() {
+    for (const key of [STORAGE_KEY, LEGACY_STORAGE_KEY]) {
+      try {
+        const raw = localStorage.getItem(key); if (!raw) continue;
+        const parsed = JSON.parse(raw);
+        if (parsed?.db && Array.isArray(parsed.db.assets)) return parsed;
+        if (Array.isArray(parsed?.assets)) return { savedAt: parsed.updatedAt || null, dirty: parsed.assets.length > 0, loadedCloudRevision: null, db: parsed };
+      } catch (error) { console.warn(error); }
+    }
+    return null;
+  }
+  function databaseChanged(message) {
+    refreshAllDerived();
+    db.updatedAt = new Date().toISOString();
+    dirty = true;
+    syncCloudStatus();
+    saveLocal();
+    renderAll();
+    if (message) toast(message, 'good');
+  }
+
+  function setDatabase(next, notify = true, persist = true) {
+    if (!next || !Array.isArray(next.assets) || !Array.isArray(next.packs) || !Array.isArray(next.classes) || !Array.isArray(next.types)) throw new Error('Ongeldige SKALDIS assetdatabase.');
+    db = upgradeDatabase(next);
+    ensureRuntimeKeys();
+    refreshAllDerived();
+    selectedAssetKey = db.assets[0]?._key || null;
+    pendingFiles.clear();
+    renderAll();
+    if (persist) saveLocal();
+    if (notify) toast('Assetdatabase geladen.', 'good');
+  }
+
+  async function loadInitial() {
+    let seed = null;
+    try { seed = JSON.parse(document.getElementById('seedData')?.textContent || 'null'); }
+    catch (error) { console.warn('Veilige startdatabase kon niet worden geladen.', error); }
+    if (!seed) seed = { schemaVersion: SCHEMA_VERSION, app: 'SKALDIS BUILD Asset Database', updatedAt: new Date().toISOString(), settings: { cellSizeMm: 25.4, modelDirectory: 'supabase://skaldis-models/' }, packs: [], classes: [], types: [], assets: [] };
+    const draft = readLocalDraft();
+    setDatabase(seed, false, false);
+    dirty = false;
+    await syncSession(false);
+
+    if (draft?.dirty) {
+      const restore = await askRecovery(draft);
+      if (restore) {
+        setDatabase(draft.db, false, false);
+        dirty = true;
+        loadedCloudRevision = draft.loadedCloudRevision ?? null;
+        lastRemoteModelPaths = new Set(draft.lastRemoteModelPaths || []);
+        saveLocal(); syncCloudStatus();
+        toast('Lokale werkversie hersteld.', 'good');
+        return;
+      }
+    }
+    if (isAdminSession) {
+      await loadFromSupabase(false);
+    } else if (draft?.db) {
+      setDatabase(draft.db, false, false);
+      dirty = Boolean(draft.dirty);
+      loadedCloudRevision = draft.loadedCloudRevision ?? null;
+      lastRemoteModelPaths = new Set(draft.lastRemoteModelPaths || []);
+      saveLocal(); syncCloudStatus();
+    } else {
+      saveLocal(); syncCloudStatus();
+    }
+  }
+
+  function renderAll() {
+    if (!db) return;
+    renderStats(); renderFilters(); renderAssetList(); renderEditor(); renderTaxonomy(); syncRawJson();
+  }
+  function variantHasActiveModel(variant) {
+    const rev = activeRevisionFor(variant);
+    return Boolean(rev && (rev.modelPath || pendingFiles.has(rev._key)));
+  }
+  function renderStats() {
+    const variants = db.assets.flatMap(a => a.variants || []);
+    const modelsReady = variants.filter(variantHasActiveModel).length;
+    els.familyCount.textContent = db.assets.length;
+    els.variantCount.textContent = variants.length;
+    els.modelReadyCount.textContent = modelsReady;
+    els.modelMissingCount.textContent = Math.max(0, variants.length - modelsReady);
+    els.plannedCount.textContent = variants.filter(v => v.status === 'planned').length;
+  }
+  function fillSelect(select, items, value, labelFn = item => item.name) {
+    const current = value;
+    select.innerHTML = '';
+    items.forEach(item => { const option = document.createElement('option'); option.value = item.id; option.textContent = labelFn(item); select.appendChild(option); });
+    if (items.some(x => x.id === current)) select.value = current;
+  }
+  function renderFilters() {
+    const current = els.packFilter.value;
+    els.packFilter.innerHTML = '<option value="">Alle packs</option>' + db.packs.map(p => `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}</option>`).join('');
+    els.packFilter.value = db.packs.some(p => p.id === current) ? current : '';
+  }
+  function filteredAssets() {
+    const q = els.searchInput.value.trim().toLowerCase(), pack = els.packFilter.value, status = els.statusFilter.value;
+    return db.assets.filter(a => {
+      if (pack && a.packId !== pack) return false;
+      if (status && a.status !== status) return false;
+      if (!q) return true;
+      const hay = [a.id, a.familyUuid, a.displayName, packById(a.packId)?.name, typeById(a.typeId)?.name, ...(a.variants || []).flatMap(v => [v.id, v.variantUuid, v.name, ...(v.revisions || []).map(r => r.modelFile)])].join(' ').toLowerCase();
+      return hay.includes(q);
+    }).sort((a, b) => (packById(a.packId)?.name || '').localeCompare(packById(b.packId)?.name || '') || a.displayName.localeCompare(b.displayName, 'nl'));
+  }
+  function renderAssetList() {
+    const list = filteredAssets();
+    els.assetList.innerHTML = '';
+    if (!list.length) { els.assetList.innerHTML = '<div style="color:var(--muted);font-size:11px;padding:10px">Geen assets gevonden.</div>'; return; }
+    list.forEach(asset => {
+      const button = document.createElement('button'); button.type = 'button'; button.className = 'asset-card' + (asset._key === selectedAssetKey ? ' active' : '');
+      const modelReady = (asset.variants || []).filter(variantHasActiveModel).length;
+      button.innerHTML = `<div class="asset-card-top"><strong>${escapeHtml(asset.displayName)}</strong><span class="chip ${escapeHtml(asset.status)}">${escapeHtml(asset.status)}</span></div><small class="mono">${escapeHtml(asset.id)}</small><small>${escapeHtml(packById(asset.packId)?.name || asset.packId)} · ${(asset.variants || []).length} varianten · ${modelReady}/${(asset.variants || []).length} actief GLB</small>`;
+      button.addEventListener('click', () => { selectedAssetKey = asset._key; renderAssetList(); renderEditor(); });
+      els.assetList.appendChild(button);
+    });
+    els.duplicateAssetBtn.disabled = !selectedAsset();
+  }
+
+  function renderEditor() {
+    const asset = selectedAsset();
+    els.emptyEditor.hidden = Boolean(asset);
+    els.editorShell.hidden = !asset;
+    els.emptyEditor.style.display = asset ? 'none' : 'grid';
+    els.editorShell.style.display = asset ? 'grid' : 'none';
+    els.duplicateAssetBtn.disabled = !asset;
+    if (!asset) return;
+    refreshDerived(asset);
+    els.editorTitle.textContent = asset.displayName; els.editorSub.textContent = asset.id;
+    fillSelect(els.assetPack, db.packs, asset.packId); fillSelect(els.assetClass, db.classes, asset.classId);
+    const types = db.types.filter(t => !asset.classId || t.classId === asset.classId || !t.classId);
+    fillSelect(els.assetType, types.length ? types : db.types, asset.typeId);
+    els.assetStatus.value = asset.status || 'enabled'; els.assetWidth.value = asset.width; els.assetDepth.value = asset.depth; els.assetAnchor.value = asset.anchorType || 'cell';
+    els.familyIdPreview.textContent = asset.id; els.displayName.value = asset.displayName; els.assetNotes.value = asset.notes || '';
+    renderDefaultVariant(asset); renderVariantList(asset); renderFootprint(asset); renderPreviewOptions(asset); renderValidation(asset);
+  }
+  function renderDefaultVariant(asset) {
+    els.defaultVariant.innerHTML = (asset.variants || []).map(v => `<option value="${escapeHtml(v.code)}">${escapeHtml(v.code)} — ${escapeHtml(v.name)}</option>`).join('');
+    if (asset.variants?.some(v => v.code === asset.defaultVariant)) els.defaultVariant.value = asset.defaultVariant;
+    else if (asset.variants?.length) { asset.defaultVariant = asset.variants[0].code; els.defaultVariant.value = asset.defaultVariant; }
+  }
+
+  function normalizeVariantOrder(asset) {
+    (asset.variants || []).forEach((variant, index) => { variant.sortOrder = index * 10; });
+  }
+
+  function moveVariant(asset, variantKey, direction) {
+    const variants = asset.variants || [];
+    const index = variants.findIndex(v => v._key === variantKey);
+    const target = index + direction;
+    if (index < 0 || target < 0 || target >= variants.length) return;
+    [variants[index], variants[target]] = [variants[target], variants[index]];
+    normalizeVariantOrder(asset);
+    databaseChanged(direction < 0 ? 'Variant omhoog verplaatst.' : 'Variant omlaag verplaatst.');
+  }
+
+  function renderVariantList(asset) {
+    els.variantList.innerHTML = '';
+    const variants = asset.variants || [];
+    variants.forEach((variant, index) => {
+      if (typeof variant._expanded !== 'boolean') variant._expanded = variant.code === asset.defaultVariant;
+      const active = activeRevisionFor(variant);
+      const latest = latestRevisionFor(variant);
+      const pending = active ? pendingFiles.get(active._key) : null;
+      const isDefault = variant.code === asset.defaultVariant;
+      const expanded = Boolean(variant._expanded);
+      const card = document.createElement('div');
+      card.className = `variant-card${expanded ? ' expanded' : ''}${isDefault ? ' default-variant' : ''}`;
+      card.dataset.key = variant._key;
+      const revisionOptions = (variant.revisions || []).map(r => `<option value="${escapeAttr(r.revisionUuid)}">R${padRevision(r.revision)}${r.modelPath ? ' · GLB' : pendingFiles.has(r._key) ? ' · upload klaar' : ''}</option>`).join('');
+      const canRemoveLatest = (variant.revisions || []).length > 1;
+      const geometryLocked = Boolean(active?.modelPath);
+      const activeState = active?.modelPath ? 'GLB' : pending ? 'upload klaar' : 'geen GLB';
+      card.innerHTML = `
+        <div class="variant-card-head">
+          <div class="variant-summary">
+            <button class="variant-toggle" data-variant-toggle type="button" aria-expanded="${expanded ? 'true' : 'false'}">
+              <span class="variant-chevron">▶</span>
+              <span class="variant-summary-text">
+                <span class="variant-summary-title"><strong>${escapeHtml(variant.name || variant.code)}</strong>${isDefault ? '<span class="default-chip">Standaard</span>' : ''}<span class="chip ${escapeHtml(variant.status || 'planned')}">${escapeHtml(variant.status || 'planned')}</span></span>
+                <span class="variant-summary-meta">${escapeHtml(variant.id)} · R${padRevision(active?.revision || 1)} · ${escapeHtml(activeState)}</span>
+              </span>
+            </button>
+          </div>
+          <div class="variant-head-actions">
+            <button data-move-up type="button" title="Variant omhoog verplaatsen" aria-label="Variant omhoog verplaatsen" ${index === 0 ? 'disabled' : ''}>↑</button>
+            <button data-move-down type="button" title="Variant omlaag verplaatsen" aria-label="Variant omlaag verplaatsen" ${index === variants.length - 1 ? 'disabled' : ''}>↓</button>
+          </div>
+        </div>
+        <div class="variant-card-body" ${expanded ? '' : 'hidden'}>
+          <div class="variant-grid">
+            <div class="field"><label>Code</label><input data-v="code" value="${escapeAttr(variant.code)}" /></div>
+            <div class="field"><label>Naam</label><input data-v="name" value="${escapeAttr(variant.name || '')}" /></div>
+            <div class="field"><label>Status</label><select data-v="status"><option value="enabled">Enabled</option><option value="planned">Planned</option><option value="disabled">Disabled</option></select></div>
+            <div class="field"><label>Actieve revision</label><select data-active-revision>${revisionOptions}</select></div>
+            <div class="field"><label>Revisionbeheer</label><button data-add-revision type="button">+ Nieuwe revision</button></div>
+            <button class="danger variant-remove" data-v-remove type="button" ${asset.variants.length <= 1 || variant.code === asset.defaultVariant ? 'disabled' : ''}>Variant verwijderen</button>
+          </div>
+          <div class="variant-id"><div><div class="product-id-head"><span>Product-ID / SKU</span><button data-copy-product-id type="button">Kopieer</button></div><strong class="mono">${escapeHtml(variant.id)}</strong></div><div>Actief model: <strong class="mono">${escapeHtml(active?.modelFile || '—')}</strong></div></div>
+          <div class="revision-shell">
+            <div class="revision-toolbar">
+              <div class="field"><label>Revision</label><input value="R${padRevision(active?.revision || 1)}" readonly /></div>
+              <div class="field"><label>Geometrie</label><input value="${geometryLocked ? 'Vastgelegd' : pending ? 'Upload klaar' : 'Nog geen GLB'}" readonly /></div>
+              <button data-add-revision type="button">+ R${padRevision((latest?.revision || 0) + 1)}</button>
+              <button data-remove-latest class="danger" type="button" ${canRemoveLatest ? '' : 'disabled'}>Verwijder R${padRevision(latest?.revision || 1)}</button>
+            </div>
+            <div class="revision-grid">
+              <div class="field"><label>Materiaal</label><input data-r="material" value="${escapeAttr(active?.material || '')}" placeholder="PLA, PETG…" /></div>
+              <div class="field"><label>Gewicht (g)</label><input data-r="weightG" type="number" min="0" step="0.01" value="${active?.weightG ?? ''}" /></div>
+              <div class="field"><label>Printtijd (min)</label><input data-r="printTimeMinutes" type="number" min="0" step="1" value="${active?.printTimeMinutes ?? ''}" /></div>
+              <div class="field"><label>Geschatte kostprijs (€)</label><input data-r="estimatedCostEur" type="number" min="0" step="0.01" value="${active?.estimatedCostEur ?? ''}" /></div>
+              <div class="field span-2r"><label>GLB</label><button class="file-button ${pending ? 'queued' : ''}" type="button" ${geometryLocked ? 'disabled' : ''}>${geometryLocked ? 'GLB vastgelegd' : pending ? '✓ ' + escapeHtml(pending.name) : 'Kies GLB'}${geometryLocked ? '' : '<input data-r-file type="file" accept=".glb,model/gltf-binary" />'}</button></div>
+              <div class="field span-2r"><label>Revision notities</label><textarea data-r="notes" placeholder="Wat veranderde in deze revision?">${escapeHtml(active?.notes || '')}</textarea></div>
+              <div class="field span-2r"><label>Model path</label><input class="mono" value="${escapeAttr(active?.modelPath || '')}" readonly /></div>
+            </div>
+            <div class="revision-note">Alleen de laatste revision kan worden verwijderd. Een opgeslagen GLB wordt niet overschreven: voor gewijzigde geometrie maak je een nieuwe revision. Je kunt wel eender welke bestaande revision opnieuw actief maken.</div>
+          </div>
+          <div class="variant-model-state">
+            <span class="model-state ${active?.modelPath ? 'ready' : pending ? 'queued' : ''}">${active?.modelPath ? `R${padRevision(active.revision)} aanwezig` : pending ? `R${padRevision(active?.revision)} klaar voor upload` : `R${padRevision(active?.revision)} zonder GLB`}</span>
+            ${active?.modelPath ? `<span class="model-path">${escapeHtml(active.modelPath)}</span>` : ''}
+          </div>
+        </div>`;
+
+      card.querySelector('[data-variant-toggle]').addEventListener('click', () => {
+        variant._expanded = !variant._expanded;
+        renderVariantList(asset);
+      });
+      card.querySelector('[data-move-up]').addEventListener('click', () => moveVariant(asset, variant._key, -1));
+      card.querySelector('[data-move-down]').addEventListener('click', () => moveVariant(asset, variant._key, 1));
+
+      card.querySelector('[data-v="status"]').value = variant.status || 'planned';
+      card.querySelector('[data-active-revision]').value = variant.activeRevisionUuid || '';
+      card.querySelector('[data-copy-product-id]')?.addEventListener('click', () => copyText(variant.id, `Product-ID ${variant.id} gekopieerd.`));
+
+      card.querySelectorAll('[data-v]').forEach(input => input.addEventListener('change', () => {
+        const prop = input.dataset.v; let value = input.value;
+        const oldCode = variant.code;
+        if (prop === 'code') value = normalizeCode(value || 'VARIANT');
+        variant[prop] = value;
+        if (prop === 'code' && asset.defaultVariant === oldCode) asset.defaultVariant = value;
+        refreshDerived(asset);
+        databaseChanged();
+      }));
+
+      card.querySelector('[data-active-revision]').addEventListener('change', event => {
+        variant.activeRevisionUuid = event.target.value;
+        const selectedRevision = activeRevisionFor(variant);
+        databaseChanged(`R${padRevision(selectedRevision?.revision || 1)} is nu actief voor ${variant.code}.`);
+      });
+
+      const addRevision = () => {
+        const latestRev = latestRevisionFor(variant);
+        const nextNo = (latestRev?.revision || 0) + 1;
+        const newRevision = { _key: runtimeKey(), revisionUuid: stableUuid(), revision: nextNo, modelPath: '', modelFile: '', weightG: null, material: latestRev?.material || '', printTimeMinutes: null, estimatedCostEur: null, notes: '' };
+        variant.revisions.push(newRevision);
+        variant.activeRevisionUuid = newRevision.revisionUuid;
+        variant._expanded = true;
+        refreshDerived(asset);
+        databaseChanged(`Revision R${padRevision(nextNo)} toegevoegd en actief gemaakt.`);
+      };
+      card.querySelectorAll('[data-add-revision]').forEach(btn => btn.addEventListener('click', addRevision));
+
+      const removeLatest = card.querySelector('[data-remove-latest]');
+      if (removeLatest) removeLatest.addEventListener('click', async () => {
+        const last = latestRevisionFor(variant); if (!last || variant.revisions.length <= 1) return;
+        if (!(await askConfirm('Laatste revision verwijderen', `Alleen de laatste revision mag verwijderd worden. R${padRevision(last.revision)} van ${variant.id} verwijderen?`, `R${padRevision(last.revision)} verwijderen`))) return;
+        pendingFiles.delete(last._key);
+        variant.revisions = variant.revisions.filter(r => r !== last);
+        if (variant.activeRevisionUuid === last.revisionUuid) variant.activeRevisionUuid = latestRevisionFor(variant).revisionUuid;
+        databaseChanged(`R${padRevision(last.revision)} verwijderd.`);
+      });
+
+      card.querySelectorAll('[data-r]').forEach(input => input.addEventListener('change', () => {
+        const revision = activeRevisionFor(variant); if (!revision) return;
+        const prop = input.dataset.r;
+        let value = input.value;
+        if (['weightG', 'printTimeMinutes', 'estimatedCostEur'].includes(prop)) value = value === '' ? null : Math.max(0, Number(value) || 0);
+        revision[prop] = value;
+        databaseChanged();
+      }));
+
+      const fileInput = card.querySelector('[data-r-file]');
+      if (fileInput) fileInput.addEventListener('change', event => {
+        const revision = activeRevisionFor(variant), file = event.target.files?.[0]; if (!revision || !file) return;
+        if (!file.name.toLowerCase().endsWith('.glb')) { toast('Selecteer een .glb-bestand.', 'bad'); return; }
+        if (revision.modelPath) { toast('Deze revision heeft al een vastgelegd GLB. Maak een nieuwe revision.', 'bad'); return; }
+        pendingFiles.set(revision._key, file);
+        variant._expanded = true;
+        databaseChanged(`${file.name} staat klaar voor R${padRevision(revision.revision)}.`);
+      });
+
+      const remove = card.querySelector('[data-v-remove]');
+      if (remove) remove.addEventListener('click', async () => {
+        if (!(await askConfirm('Variant verwijderen', `${variant.id} en alle revisions verwijderen?`))) return;
+        variant.revisions.forEach(r => pendingFiles.delete(r._key));
+        asset.variants = asset.variants.filter(v => v._key !== variant._key);
+        normalizeVariantOrder(asset);
+        if (!asset.variants.some(v => v.code === asset.defaultVariant)) asset.defaultVariant = asset.variants[0]?.code || '';
+        databaseChanged('Variant verwijderd. De bijhorende GLB-bestanden worden bij de volgende Supabase-sync opgeruimd.');
+      });
+      els.variantList.appendChild(card);
+    });
+  }
+
+  function renderPreviewOptions(asset) {
+    const current = els.previewVariant.value;
+    els.previewVariant.innerHTML = (asset.variants || []).map(v => `<option value="${escapeAttr(v._key)}">${escapeHtml(v.code)} — R${padRevision(activeRevisionFor(v)?.revision || 1)} · ${escapeHtml(v.name)}</option>`).join('');
+    if (asset.variants.some(v => v._key === current)) els.previewVariant.value = current;
+  }
+
+  function renderFootprint(asset) {
+    els.footprintText.value = (asset.footprintCells || []).join(', ');
+    els.pathsText.value = JSON.stringify(asset.paths || []);
+    drawFootprint(asset);
+  }
+  function drawFootprint(asset) {
+    const canvas = els.footprintCanvas, ctx = canvas.getContext('2d'); const w = Math.max(1, Number(asset.width) || 1), d = Math.max(1, Number(asset.depth) || 1);
+    const pad = 28, cell = Math.min((canvas.width - pad * 2) / w, (canvas.height - pad * 2) / d, 68); const gridW = w * cell, gridH = d * cell; const ox = (canvas.width - gridW) / 2, oy = (canvas.height - gridH) / 2;
+    canvas._layout = { ox, oy, cell, w, d };
+    ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.fillStyle = '#101317'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    const occupied = new Set(asset.footprintCells || []);
+    for (let y = 0; y < d; y++) for (let x = 0; x < w; x++) { const key = `${x}:${y}`; ctx.fillStyle = occupied.has(key) ? 'rgba(215,255,63,.14)' : '#15191d'; ctx.fillRect(ox + x * cell + 1, oy + y * cell + 1, cell - 2, cell - 2); }
+    ctx.strokeStyle = '#46505b'; ctx.lineWidth = 1;
+    for (let x = 0; x <= w; x++) { ctx.beginPath(); ctx.moveTo(ox + x * cell, oy); ctx.lineTo(ox + x * cell, oy + gridH); ctx.stroke(); }
+    for (let y = 0; y <= d; y++) { ctx.beginPath(); ctx.moveTo(ox, oy + y * cell); ctx.lineTo(ox + gridW, oy + y * cell); ctx.stroke(); }
+    ctx.strokeStyle = '#d7ff3f'; ctx.lineWidth = Math.max(3, Math.min(8, cell * .12)); ctx.lineCap = 'square'; ctx.lineJoin = 'miter';
+    (asset.paths || []).forEach(path => { if (path.length < 2) return; ctx.beginPath(); ctx.moveTo(ox + path[0][0] * cell, oy + path[0][1] * cell); path.slice(1).forEach(([x, y]) => ctx.lineTo(ox + x * cell, oy + y * cell)); ctx.stroke(); });
+  }
+  els.footprintCanvas.addEventListener('pointerdown', event => {
+    const asset = selectedAsset(), l = els.footprintCanvas._layout; if (!asset || !l) return;
+    const r = els.footprintCanvas.getBoundingClientRect(), px = (event.clientX - r.left) * els.footprintCanvas.width / r.width, py = (event.clientY - r.top) * els.footprintCanvas.height / r.height;
+    const x = Math.floor((px - l.ox) / l.cell), y = Math.floor((py - l.oy) / l.cell); if (x < 0 || x >= l.w || y < 0 || y >= l.d) return;
+    const key = `${x}:${y}`, set = new Set(asset.footprintCells || []); set.has(key) ? set.delete(key) : set.add(key); asset.footprintCells = [...set].sort(cellSort); databaseChanged();
+  });
+  function cellSort(a, b) { const [ax, ay] = a.split(':').map(Number), [bx, by] = b.split(':').map(Number); return ay - by || ax - bx; }
+  function parseFootprintText(text) { return [...new Set(String(text).split(/[,;\n]+/).map(x => x.trim()).filter(Boolean))].sort(cellSort); }
+  function rectFootprint(asset) { const cells = []; for (let y = 0; y < asset.depth; y++) for (let x = 0; x < asset.width; x++) cells.push(`${x}:${y}`); return cells; }
+  function defaultPaths(asset) {
+    const w = Number(asset.width) || 1, d = Number(asset.depth) || 1, type = asset.typeId;
+    if (type === 'wall' || type === 'gate' || type === 'tower_straight') return [[[0, d / 2], [w, d / 2]]];
+    if (type === 'corner' || type === 'tower_corner') return [[[w, 0.5], [0.5, 0.5], [0.5, d]]];
+    if (type === 'tee') return [[[0, 0.5], [w, 0.5]], [[w / 2, 0.5], [w / 2, d]]];
+    if (type === 'cross') return [[[0, d / 2], [w, d / 2]], [[w / 2, 0], [w / 2, d]]];
+    if (type === 'wallend') return [[[0, d / 2], [w / 2, d / 2]]];
+    return [];
+  }
+
+  function validPathData(paths) {
+    if (!Array.isArray(paths)) return false;
+    return paths.every(path => Array.isArray(path) && path.every(point => Array.isArray(point) && point.length >= 2 && Number.isFinite(Number(point[0])) && Number.isFinite(Number(point[1]))));
+  }
+  function validateAsset(asset) {
+    const rows = []; const add = (type, text) => rows.push({ type, text });
+    const duplicates = db.assets.filter(a => a !== asset && familyIdFor(a) === familyIdFor(asset));
+    if (duplicates.length) add('bad', `Familie-ID ${asset.id} bestaat al.`); else add('good', 'Familie-ID is uniek.');
+    const uuidDuplicates = db.assets.filter(a => a !== asset && a.familyUuid === asset.familyUuid);
+    if (uuidDuplicates.length) add('bad', 'Stable family UUID is dubbel.'); else add('good', 'Stable family UUID is uniek.');
+    const pack = packById(asset.packId), cls = classById(asset.classId), type = typeById(asset.typeId);
+    if (!pack || !cls || !type) add('bad', 'Pack, class of type is ongeldig.');
+    else if (type.classId && type.classId !== asset.classId) add('bad', `${type.name} hoort bij class ${classById(type.classId)?.name || type.classId}, niet bij ${cls.name}.`);
+    if (asset.width < 1 || asset.width > 99 || asset.depth < 1 || asset.depth > 99) add('bad', 'Afmetingen moeten tussen 1 en 99 liggen.');
+    const badCells = (asset.footprintCells || []).filter(raw => { const [x, y] = raw.split(':').map(Number); return !Number.isInteger(x) || !Number.isInteger(y) || x < 0 || y < 0 || x >= asset.width || y >= asset.depth; });
+    if (badCells.length) add('bad', `Footprint bevat ongeldige cellen: ${badCells.join(', ')}`); else if (!(asset.footprintCells || []).length) add('warn', 'Footprint is leeg.'); else add('good', `Footprint bevat ${asset.footprintCells.length} geldige cellen.`);
+    if (!validPathData(asset.paths || [])) add('bad', 'Paths bevatten ongeldige 2D-coördinaten.');
+    const codes = new Set(), variantUuids = new Set();
+    (asset.variants || []).forEach(v => {
+      const c = normalizeCode(v.code);
+      if (codes.has(c)) add('bad', `Variantcode ${c} komt dubbel voor.`); codes.add(c);
+      if (!c) add('bad', 'Een variant heeft geen code.');
+      if (!v.name) add('warn', `${c || 'Variant'} heeft geen naam.`);
+      if (!v.variantUuid || variantUuids.has(v.variantUuid)) add('bad', `${c || 'Variant'} heeft geen unieke stable UUID.`); variantUuids.add(v.variantUuid);
+      const revisions = [...(v.revisions || [])].sort((a, b) => a.revision - b.revision);
+      if (!revisions.length) add('bad', `${c}: minstens R01 is verplicht.`);
+      else {
+        const contiguous = revisions.every((r, i) => Number(r.revision) === i + 1);
+        if (!contiguous) add('bad', `${c}: revisions moeten ononderbroken R01, R02, … zijn. Alleen de laatste revision mag verwijderd worden.`);
+        const revUuids = new Set();
+        revisions.forEach(r => {
+          if (!r.revisionUuid || revUuids.has(r.revisionUuid)) add('bad', `${c} R${padRevision(r.revision)} heeft geen unieke revision UUID.`); revUuids.add(r.revisionUuid);
+          if (r.weightG != null && Number(r.weightG) < 0) add('bad', `${c} R${padRevision(r.revision)}: gewicht kan niet negatief zijn.`);
+          if (r.printTimeMinutes != null && Number(r.printTimeMinutes) < 0) add('bad', `${c} R${padRevision(r.revision)}: printtijd kan niet negatief zijn.`);
+          if (r.estimatedCostEur != null && Number(r.estimatedCostEur) < 0) add('bad', `${c} R${padRevision(r.revision)}: geschatte kostprijs kan niet negatief zijn.`);
+        });
+        if (!revisions.some(r => r.revisionUuid === v.activeRevisionUuid)) add('bad', `${c}: actieve revision UUID bestaat niet binnen deze variant.`);
+      }
+      if (asset.status === 'enabled' && v.status === 'enabled' && !variantHasActiveModel(v)) add('bad', `${v.id}: enabled maar de actieve revision heeft geen GLB.`);
+    });
+    if (!(asset.variants || []).length) add('bad', 'Familie heeft geen varianten.');
+    const defaultVariant = asset.variants.find(v => v.code === asset.defaultVariant);
+    if (!defaultVariant) add('bad', 'Default variant bestaat niet.');
+    else {
+      add('good', `Default variant: ${asset.defaultVariant} · R${padRevision(activeRevisionFor(defaultVariant)?.revision || 1)}.`);
+      if (asset.status === 'enabled' && defaultVariant.status !== 'enabled') add('bad', 'Een enabled familie vereist een enabled default variant.');
+      if (asset.status === 'enabled' && !variantHasActiveModel(defaultVariant)) add('bad', 'Een enabled familie vereist een GLB op de actieve revision van de default variant.');
+    }
+    return rows;
+  }
+  function renderValidation(asset) {
+    const rows = validateAsset(asset); els.validationList.innerHTML = rows.map(r => `<div class="validation-row ${r.type}"><span>${r.type === 'good' ? '✓' : r.type === 'bad' ? '✕' : '!'}</span><span>${escapeHtml(r.text)}</span></div>`).join('');
+  }
+  function validateTaxonomy() {
+    const errors = [];
+    const check = (items, label) => {
+      const codes = new Set();
+      items.forEach(item => {
+        const code = normalizeCode(item.code);
+        if (!code) errors.push(`${label}: lege code.`);
+        if (codes.has(code)) errors.push(`${label}: dubbele code ${code}.`);
+        codes.add(code);
+        if (!String(item.name || '').trim()) errors.push(`${label} ${code || '?'}: lege naam.`);
+      });
+    };
+    check(db.packs, 'Pack'); check(db.classes, 'Class'); check(db.types, 'Type');
+    db.classes.forEach(c => {
+      const code = normalizeCode(c.code);
+      if (code && !/^[A-Z]{3}$/.test(code)) errors.push(`Class ${code}: code moet exact 3 letters bevatten (bv. STR of PRP).`);
+    });
+    db.types.forEach(t => {
+      const code = normalizeCode(t.code);
+      if (code && !/^[A-Z0-9]+$/.test(code)) errors.push(`Type ${code}: code mag alleen hoofdletters en cijfers bevatten.`);
+      if (!classById(t.classId)) errors.push(`Type ${t.code}: ongeldige class.`);
+      if (!String(t.placeholder || '').trim()) errors.push(`Type ${code || '?'}: placeholder ontbreekt.`);
+    });
+    return errors;
+  }
+  function validateDatabase() {
+    const errors = validateTaxonomy();
+    const globalVariantUuids = new Set(), globalRevisionUuids = new Set();
+    db.assets.forEach(asset => {
+      validateAsset(asset).filter(r => r.type === 'bad').forEach(r => errors.push(`${asset.id}: ${r.text}`));
+      asset.variants.forEach(v => {
+        if (globalVariantUuids.has(v.variantUuid)) errors.push(`Variant UUID ${v.variantUuid} komt dubbel voor in de database.`); globalVariantUuids.add(v.variantUuid);
+        v.revisions.forEach(r => { if (globalRevisionUuids.has(r.revisionUuid)) errors.push(`Revision UUID ${r.revisionUuid} komt dubbel voor.`); globalRevisionUuids.add(r.revisionUuid); });
+      });
+    });
+    return errors;
+  }
+
+  function renderTaxonomy() {
+    renderTaxList('packs', els.packTaxList, db.packs); renderTaxList('classes', els.classTaxList, db.classes); renderTaxList('types', els.typeTaxList, db.types);
+  }
+  function renderTaxList(kind, host, items) {
+    host.innerHTML = '';
+    items.forEach(item => {
+      const row = document.createElement('div'); row.className = 'taxonomy-row';
+      if (kind === 'packs') {
+        row.style.gridTemplateColumns = '1fr 86px 110px auto';
+        row.innerHTML = `<input data-t="name" value="${escapeAttr(item.name)}"><input data-t="code" class="mono" value="${escapeAttr(item.code)}"><select data-t="status"><option value="enabled">Enabled</option><option value="planned">Planned</option><option value="disabled">Disabled</option></select><button data-t-del class="danger" type="button">×</button>`;
+        row.querySelector('[data-t="status"]').value = item.status || 'enabled';
+      } else if (kind === 'types') {
+        row.style.gridTemplateColumns = '1fr 82px 105px 100px auto';
+        row.innerHTML = `<input data-t="name" value="${escapeAttr(item.name)}"><input data-t="code" class="mono" value="${escapeAttr(item.code)}"><select data-t="classId"></select><input data-t="placeholder" value="${escapeAttr(item.placeholder || 'straight')}" placeholder="placeholder"><button data-t-del class="danger" type="button">×</button>`;
+        fillSelect(row.querySelector('[data-t="classId"]'), db.classes, item.classId);
+      } else {
+        row.innerHTML = `<input data-t="name" value="${escapeAttr(item.name)}"><input data-t="code" class="mono" value="${escapeAttr(item.code)}"><button data-t-del class="danger" type="button">×</button>`;
+      }
+      row.querySelectorAll('[data-t]').forEach(input => input.addEventListener('change', () => {
+        const prop = input.dataset.t;
+        item[prop] = prop === 'code' ? normalizeCode(input.value) : input.value;
+        databaseChanged();
+      }));
+      row.querySelector('[data-t-del]').addEventListener('click', async () => {
+        const used = kind === 'packs' ? db.assets.some(a => a.packId === item.id) : kind === 'classes' ? db.assets.some(a => a.classId === item.id) || db.types.some(t => t.classId === item.id) : db.assets.some(a => a.typeId === item.id);
+        if (used) { toast(`${item.name} wordt nog gebruikt en kan niet verwijderd worden.`, 'bad'); return; }
+        if (!(await askConfirm(`${item.name} verwijderen`, 'Deze taxonomiewaarde wordt definitief uit de werkdatabase verwijderd.'))) return;
+        db[kind] = db[kind].filter(x => x !== item); databaseChanged(`${item.name} verwijderd.`);
+      });
+      host.appendChild(row);
+    });
+  }
+
+  function syncRawJson() {
+    if (!db) return;
+    els.rawJson.value = serializeDB(true);
+    const revisions = db.assets.reduce((s, a) => s + a.variants.reduce((x, v) => x + v.revisions.length, 0), 0);
+    els.rawJsonStatus.textContent = `${db.assets.length} families · ${db.assets.reduce((s, a) => s + a.variants.length, 0)} varianten · ${revisions} revisions`;
+  }
+
+  function newRevisionOne() { return { _key: runtimeKey(), revisionUuid: stableUuid(), revision: 1, modelPath: '', modelFile: '', weightG: null, material: '', printTimeMinutes: null, estimatedCostEur: null, notes: '' }; }
+  function newAsset() {
+    const pack = db.packs[0], cls = db.classes[0], type = db.types.find(t => t.classId === cls?.id) || db.types[0];
+    if (!pack || !cls || !type) { toast('Maak eerst minstens één pack, class en type aan.', 'bad'); return; }
+    const r1 = newRevisionOne();
+    const asset = { _key: runtimeKey(), familyUuid: stableUuid(), id: '', displayName: '', packId: pack.id, classId: cls.id, typeId: type.id, width: 1, depth: 1, status: 'planned', anchorType: 'cell', footprintCells: ['0:0'], paths: defaultPaths({ typeId: type.id, width: 1, depth: 1 }), defaultVariant: 'BASIC', variants: [{ _key: runtimeKey(), variantUuid: stableUuid(), code: 'BASIC', name: 'Standaard', status: 'planned', activeRevisionUuid: r1.revisionUuid, revisions: [r1] }], notes: '' };
+    refreshDerived(asset);
+    if (db.assets.some(a => a.id === asset.id)) {
+      const freeType = db.types.find(t => !db.assets.some(a => a.id === `${normalizeCode(pack.code)}_${normalizeCode(cls.code)}_${normalizeCode(t.code)}_0101`));
+      if (freeType) { asset.typeId = freeType.id; refreshDerived(asset); }
+    }
+    db.assets.push(asset); selectedAssetKey = asset._key; databaseChanged('Nieuwe assetfamilie aangemaakt met R01.');
+  }
+  function duplicateAsset() {
+    const original = selectedAsset(); if (!original) return;
+    const copy = deepClone(original); copy._key = runtimeKey(); copy.familyUuid = stableUuid(); copy.status = 'planned'; copy.notes = (copy.notes ? copy.notes + '\n' : '') + 'Duplicaat — controleer identiteit en afmetingen.';
+    copy.variants.forEach(v => {
+      v._key = runtimeKey(); v.variantUuid = stableUuid(); v.status = 'planned';
+      const r1 = newRevisionOne();
+      const sourceR1 = v.revisions?.[0]; if (sourceR1?.material) r1.material = sourceR1.material;
+      v.revisions = [r1]; v.activeRevisionUuid = r1.revisionUuid; v._expanded = v.code === copy.defaultVariant;
+    });
+    normalizeVariantOrder(copy);
+    let guard = 0; refreshDerived(copy);
+    while (db.assets.some(a => a.id === copy.id) && guard < 99) {
+      copy.width = copy.width < 99 ? copy.width + 1 : 1;
+      if (copy.width === 1) copy.depth = copy.depth < 99 ? copy.depth + 1 : 1;
+      copy.footprintCells = rectFootprint(copy); copy.paths = defaultPaths(copy); refreshDerived(copy); guard++;
+    }
+    db.assets.push(copy); selectedAssetKey = copy._key; ensureRuntimeKeys(); databaseChanged('Duplicaat aangemaakt met nieuwe UUIDs en alleen R01; GLB-koppelingen zijn bewust niet overgenomen.');
+  }
+  async function deleteAsset() {
+    const asset = selectedAsset(); if (!asset) return;
+    if (!(await askConfirm('Assetfamilie verwijderen', `${asset.displayName} en alle ${asset.variants.reduce((s, v) => s + v.revisions.length, 0)} revisions verwijderen?`))) return;
+    asset.variants.forEach(v => v.revisions.forEach(r => pendingFiles.delete(r._key)));
+    db.assets = db.assets.filter(a => a !== asset); selectedAssetKey = db.assets[0]?._key || null; databaseChanged('Assetfamilie verwijderd. Remote modellen worden bij de volgende sync opgeruimd.');
+  }
+
+  function bindEditorFields() {
+    const bindings = [[els.assetPack, 'packId'], [els.assetClass, 'classId'], [els.assetType, 'typeId'], [els.assetStatus, 'status'], [els.assetWidth, 'width'], [els.assetDepth, 'depth'], [els.assetAnchor, 'anchorType'], [els.defaultVariant, 'defaultVariant'], [els.assetNotes, 'notes']];
+    bindings.forEach(([el, prop]) => el.addEventListener('change', () => {
+      const asset = selectedAsset(); if (!asset) return;
+      let value = el.value; if (prop === 'width' || prop === 'depth') value = Math.max(1, Math.min(99, Number(value) || 1)); asset[prop] = value;
+      if (prop === 'defaultVariant') (asset.variants || []).forEach(v => { v._expanded = v.code === value; });
+      if (prop === 'classId') { const allowed = db.types.filter(t => t.classId === value); if (allowed.length && !allowed.some(t => t.id === asset.typeId)) asset.typeId = allowed[0].id; }
+      if (prop === 'width' || prop === 'depth') {
+        asset.footprintCells = (asset.footprintCells || []).filter(raw => { const [x, y] = raw.split(':').map(Number); return x >= 0 && y >= 0 && x < asset.width && y < asset.depth; });
+        if (!asset.footprintCells.length) asset.footprintCells = rectFootprint(asset);
+      }
+      refreshDerived(asset);
+      databaseChanged();
+    }));
+    els.footprintText.addEventListener('change', () => { const a = selectedAsset(); if (!a) return; a.footprintCells = parseFootprintText(els.footprintText.value); databaseChanged(); });
+    els.pathsText.addEventListener('change', () => { const a = selectedAsset(); if (!a) return; try { const paths = JSON.parse(els.pathsText.value || '[]'); if (!Array.isArray(paths)) throw new Error('Paths moet een array zijn.'); a.paths = paths; databaseChanged('Paths bijgewerkt.'); } catch (e) { toast(`Ongeldige Paths JSON: ${e.message}`, 'bad'); } });
+  }
+
+  els.rectFootprintBtn.addEventListener('click', () => { const a = selectedAsset(); if (!a) return; a.footprintCells = rectFootprint(a); databaseChanged(); });
+  els.clearFootprintBtn.addEventListener('click', () => { const a = selectedAsset(); if (!a) return; a.footprintCells = []; databaseChanged(); });
+  els.defaultPathBtn.addEventListener('click', () => { const a = selectedAsset(); if (!a) return; a.paths = defaultPaths(a); databaseChanged(); });
+  els.addVariantBtn.addEventListener('click', () => { const a = selectedAsset(); if (!a) return; let n = 1, code = 'VARIANT'; while (a.variants.some(v => v.code === code)) { n++; code = `VARIANT${n}`; } const r1 = newRevisionOne(); a.variants.push({ _key: runtimeKey(), variantUuid: stableUuid(), code, name: 'Nieuwe variant', status: 'planned', activeRevisionUuid: r1.revisionUuid, revisions: [r1], sortOrder: a.variants.length * 10, _expanded: false }); normalizeVariantOrder(a); refreshDerived(a); databaseChanged('Variant toegevoegd met R01.'); });
+  els.newAssetBtn.addEventListener('click', newAsset); els.duplicateAssetBtn.addEventListener('click', duplicateAsset); els.deleteAssetBtn.addEventListener('click', deleteAsset);
+  els.copyFamilyIdBtn.addEventListener('click', () => { const a = selectedAsset(); if (a) copyText(a.id, `Familie-ID ${a.id} gekopieerd.`); });
+  els.validateBtn.addEventListener('click', () => { const errors = validateDatabase(); if (errors.length) toast(`${errors.length} validatiefout(en) gevonden.`, 'bad'); else toast('Database is geldig voor Supabase-sync.', 'good'); renderValidation(selectedAsset()); });
+  els.searchInput.addEventListener('input', renderAssetList); els.packFilter.addEventListener('change', renderAssetList); els.statusFilter.addEventListener('change', renderAssetList);
+
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b === btn));
+    const tab = btn.dataset.tab; $('assetTab').hidden = tab !== 'asset'; $('taxonomyTab').hidden = tab !== 'taxonomy'; $('databaseTab').hidden = tab !== 'database'; if (tab === 'database') syncRawJson();
+  }));
+  document.querySelectorAll('[data-tax-add]').forEach(btn => btn.addEventListener('click', () => {
+    const kind = btn.dataset.taxAdd;
+    if (kind === 'packs') db.packs.push({ id: `pack_${runtimeKey().slice(0, 5)}`, code: 'PK', name: 'Nieuw pack', status: 'enabled' });
+    else if (kind === 'classes') db.classes.push({ id: `class_${runtimeKey().slice(0, 5)}`, code: 'CLS', name: 'Nieuwe class' });
+    else db.types.push({ id: `type_${runtimeKey().slice(0, 5)}`, code: 'TYPE', name: 'Nieuw type', classId: db.classes[0]?.id || '', placeholder: 'straight' });
+    databaseChanged();
+  }));
+
+  els.formatJsonBtn.addEventListener('click', () => { try { els.rawJson.value = JSON.stringify(JSON.parse(els.rawJson.value), null, 2); toast('JSON geformatteerd.', 'good'); } catch (e) { toast(`Ongeldige JSON: ${e.message}`, 'bad'); } });
+  els.applyRawJsonBtn.addEventListener('click', () => { try { setDatabase(JSON.parse(els.rawJson.value), false, false); dirty = true; databaseChanged('JSON toegepast.'); } catch (e) { toast(e.message, 'bad'); } });
+  els.importBtn.addEventListener('click', () => els.importInput.click());
+  els.importInput.addEventListener('change', async e => { const f = e.target.files?.[0]; if (!f) return; try { setDatabase(JSON.parse(await f.text()), false, false); loadedCloudRevision = null; lastRemoteModelPaths = new Set(); dirty = true; databaseChanged('JSON geïmporteerd en naar schema v4 gemigreerd. Laad Supabase opnieuw voordat je deze import naar de cloud schrijft.'); } catch (err) { toast(`Import mislukt: ${err.message}`, 'bad'); } finally { e.target.value = ''; } });
+  els.exportBtn.addEventListener('click', () => {
+    const errors = validateDatabase(); if (errors.length && !confirm(`De database heeft ${errors.length} validatiefout(en). Toch exporteren?`)) return;
+    const blob = new Blob([serializeDB(true)], { type: 'application/json' }), url = URL.createObjectURL(blob), a = document.createElement('a'); a.href = url; a.download = 'assets-v4.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); toast('assets-v4.json geëxporteerd.', 'good');
+  });
+
+  function syncCloudStatus() {
+    const connected = Boolean(currentUser && isAdminSession);
+    els.cloudStatus.classList.toggle('connected', connected);
+    els.cloudStatus.classList.toggle('dirty', connected && dirty);
+    const label = els.cloudStatus.querySelector('span:last-child');
+    if (!currentUser) label.textContent = dirty ? 'Niet ingelogd · lokale wijzigingen' : 'Niet ingelogd';
+    else if (!isAdminSession) label.textContent = 'Ingelogd · geen adminrechten';
+    else label.innerHTML = `<span class="session-email">${escapeHtml(currentUser.email || 'Admin')}</span>${dirty ? ' · niet opgeslagen' : ' · gesynchroniseerd'}${loadedCloudRevision != null ? ` · DB r${loadedCloudRevision}` : ''}`;
+    els.loadCloudBtn.disabled = !connected; els.saveCloudBtn.disabled = !connected; els.loginBtn.textContent = currentUser ? 'Uitloggen' : 'Inloggen';
+  }
+  async function verifyAdmin() { if (!currentUser) return false; const { data, error } = await sb.rpc('is_app_admin'); if (error) throw error; return data === true; }
+  async function getCloudRevision() {
+    const { data, error } = await sb.rpc('get_asset_database_revision');
+    if (error) throw new Error(`Asset Manager v4 databasefuncties ontbreken of zijn niet bereikbaar. Voer eerst de meegeleverde Supabase-migratie uit. ${error.message}`);
+    return Number(data);
+  }
+  async function syncSession(autoLoad = true) {
+    const { data: { session } } = await sb.auth.getSession();
+    currentUser = session?.user || null; isAdminSession = false;
+    if (currentUser) {
+      try { isAdminSession = await verifyAdmin(); if (isAdminSession && autoLoad) await loadFromSupabase(false); }
+      catch (error) { console.warn(error); toast(`Supabase sessie kon niet worden gevalideerd: ${error.message}`, 'bad'); }
+    }
+    syncCloudStatus();
+  }
+  function openLoginModal() { els.loginError.textContent = ''; els.loginPassword.value = ''; els.loginModal.hidden = false; setTimeout(() => (els.loginEmail.value ? els.loginPassword : els.loginEmail).focus(), 0); }
+  function closeLoginModal() { els.loginModal.hidden = true; }
+  els.loginBtn.addEventListener('click', async () => {
+    if (currentUser) {
+      await sb.auth.signOut(); currentUser = null; isAdminSession = false;
+      syncCloudStatus(); saveLocal(); toast(dirty ? 'Uitgelogd. Lokale wijzigingen blijven bewaard.' : 'Uitgelogd.', 'good'); return;
+    }
+    openLoginModal();
+  });
+  els.loginCancel.addEventListener('click', closeLoginModal);
+  els.loginSubmit.addEventListener('click', async () => {
+    els.loginError.textContent = 'Inloggen…'; els.loginSubmit.disabled = true;
+    try {
+      const { data, error } = await sb.auth.signInWithPassword({ email: els.loginEmail.value.trim(), password: els.loginPassword.value }); if (error) throw error;
+      currentUser = data.user; isAdminSession = await verifyAdmin();
+      if (!isAdminSession) { await sb.auth.signOut(); currentUser = null; throw new Error('Dit account heeft geen SKALDIS adminrechten.'); }
+      closeLoginModal();
+      if (dirty) {
+        const cloudRevision = await getCloudRevision();
+        const keep = await askConfirm('Lokale wijzigingen behouden', 'Er staan lokale wijzigingen in de Asset Manager. Behouden om verder te werken? Kies Annuleren om Supabase te laden.', 'Lokale versie behouden');
+        if (!keep) await loadFromSupabase(true); else { syncCloudStatus(); saveLocal(); }
+      } else await loadFromSupabase(true);
+    } catch (error) { els.loginError.textContent = error.message; if (els.loginModal.hidden) toast(error.message, 'bad'); }
+    finally { els.loginSubmit.disabled = false; }
+  });
+  els.loginPassword.addEventListener('keydown', event => { if (event.key === 'Enter') els.loginSubmit.click(); });
+
+  function packLocalId(code) { return normalizeId(code); }
+  function classLocalId(code) { return normalizeId(code); }
+  function typeLocalId(code) { return normalizeId(code); }
+
+  async function loadFromSupabase(notify = true) {
+    if (!isAdminSession) throw new Error('Geen adminsessie.');
+    const { data, error } = await sb.rpc('get_asset_database_v4');
+    if (error) throw new Error(`Asset Manager v4 kan de database niet laden. Voer de meegeleverde Supabase-migratie uit. ${error.message}`);
+    const payload = typeof data === 'string' ? JSON.parse(data) : data;
+    const packs = (payload.packs || []).map(row => ({ id: packLocalId(row.code), code: row.code, name: row.name, status: row.status, sortOrder: row.sort_order || 0 }));
+    const classes = (payload.classes || []).map(row => ({ id: classLocalId(row.code), code: row.code, name: row.name, sortOrder: row.sort_order || 0 }));
+    const types = (payload.types || []).map(row => ({ id: typeLocalId(row.code), code: row.code, name: row.name, classId: classLocalId(row.class_code), placeholder: row.placeholder || 'straight', sortOrder: row.sort_order || 0 }));
+    const revisionsByVariant = new Map();
+    for (const row of payload.revisions || []) {
+      const list = revisionsByVariant.get(row.variant_uuid) || [];
+      list.push({ revisionUuid: row.revision_uuid, revision: Number(row.revision), modelPath: row.model_path || '', modelFile: row.model_file || '', weightG: row.weight_g == null ? null : Number(row.weight_g), material: row.material || '', printTimeMinutes: row.print_time_minutes == null ? null : Number(row.print_time_minutes), estimatedCostEur: row.estimated_cost_eur == null ? null : Number(row.estimated_cost_eur), notes: row.notes || '' });
+      revisionsByVariant.set(row.variant_uuid, list);
+    }
+    const variantsByFamily = new Map();
+    for (const row of payload.variants || []) {
+      const list = variantsByFamily.get(row.family_uuid) || [];
+      const revisions = (revisionsByVariant.get(row.variant_uuid) || []).sort((a, b) => a.revision - b.revision);
+      const fallbackRevision = revisions[0] || newRevisionOne();
+      list.push({ variantUuid: row.variant_uuid, code: row.variant_code, name: row.display_name?.includes(' — ') ? row.display_name.split(' — ').slice(1).join(' — ') : (row.variant_code === 'BASIC' ? 'Standaard' : row.variant_code), status: row.status, activeRevisionUuid: row.active_revision_uuid || fallbackRevision.revisionUuid, id: row.id, displayName: row.display_name, sortOrder: row.sort_order || 0, revisions: revisions.length ? revisions : [fallbackRevision] });
+      variantsByFamily.set(row.family_uuid, list);
+    }
+    const assets = (payload.families || []).map(row => {
+      const variants = (variantsByFamily.get(row.family_uuid) || []).sort((a, b) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0));
+      const defaultVariant = variants.find(v => v.id === row.default_variant_id)?.code || variants.find(v => v.isDefault)?.code || row.default_variant_code || variants[0]?.code || 'BASIC';
+      return { familyUuid: row.family_uuid, id: row.id, displayName: row.display_name, packId: packLocalId(row.pack_code), classId: classLocalId(row.class_code), typeId: typeLocalId(row.type_code), width: row.width, depth: row.depth, status: row.status, anchorType: row.anchor_type || 'cell', footprintCells: row.footprint_cells || ['0:0'], paths: row.paths || [], defaultVariant, variants, notes: row.notes || '', sortOrder: row.sort_order || 0 };
+    });
+    const next = { schemaVersion: SCHEMA_VERSION, app: 'SKALDIS BUILD Asset Database', updatedAt: new Date().toISOString(), settings: { cellSizeMm: 25.4, modelDirectory: 'supabase://skaldis-models/', naming: { sizeDigitsPerDimension: 2, separator: '_' } }, packs, classes, types, assets };
+    setDatabase(next, false, false);
+    loadedCloudRevision = Number(payload.database_revision || 0);
+    lastRemoteModelPaths = new Set((payload.revisions || []).map(r => r.model_path).filter(Boolean));
+    dirty = false; saveLocal(); syncCloudStatus();
+    if (notify) toast(`Supabase geladen: ${assets.length} families · DB revision ${loadedCloudRevision}.`, 'good');
+  }
+
+  function rowsForCloud() {
+    refreshAllDerived();
+    const packs = db.packs.map((p, i) => ({ code: normalizeCode(p.code), name: p.name, status: p.status || 'enabled', sort_order: Number(p.sortOrder ?? i * 10) }));
+    const classes = db.classes.map((c, i) => ({ code: normalizeCode(c.code), name: c.name, sort_order: Number(c.sortOrder ?? i * 10) }));
+    const types = db.types.map((t, i) => ({ code: normalizeCode(t.code), name: t.name, class_code: normalizeCode(classById(t.classId)?.code), placeholder: t.placeholder || 'straight', sort_order: Number(t.sortOrder ?? i * 10) }));
+    const families = db.assets.map((a, i) => ({ family_uuid: a.familyUuid, id: a.id, pack_code: normalizeCode(packById(a.packId)?.code), class_code: normalizeCode(classById(a.classId)?.code), type_code: normalizeCode(typeById(a.typeId)?.code), width: Number(a.width), depth: Number(a.depth), display_name: a.displayName, category: normalizeCode(classById(a.classId)?.code) === 'PRP' ? 'prop' : 'structure', anchor_type: a.anchorType || 'cell', footprint_cells: a.footprintCells || [], paths: a.paths || [], status: a.status || 'planned', sort_order: Number(a.sortOrder ?? i * 10), notes: a.notes || '', default_variant_code: a.defaultVariant }));
+    const variants = [], revisions = [];
+    db.assets.forEach((a, ai) => (a.variants || []).forEach((v, vi) => {
+      const active = activeRevisionFor(v);
+      variants.push({ variant_uuid: v.variantUuid, family_uuid: a.familyUuid, id: v.id, family_id: a.id, variant_code: normalizeCode(v.code), display_name: v.displayName, model_path: active?.modelPath || null, status: v.status || 'planned', is_default: v.code === a.defaultVariant, active_revision_uuid: v.activeRevisionUuid, sort_order: Number(v.sortOrder ?? vi * 10) });
+      (v.revisions || []).forEach(r => revisions.push({ revision_uuid: r.revisionUuid, variant_uuid: v.variantUuid, revision: Number(r.revision), model_path: r.modelPath || null, model_file: r.modelFile || revisionModelFileFor(a, v, r), weight_g: r.weightG == null ? null : Number(r.weightG), material: r.material || null, print_time_minutes: r.printTimeMinutes == null ? null : Number(r.printTimeMinutes), estimated_cost_eur: r.estimatedCostEur == null ? null : Number(r.estimatedCostEur), notes: r.notes || '' }));
+    }));
+    return { packs, classes, types, families, variants, revisions };
+  }
+
+  async function uploadPendingModels(uploadedPaths = []) {
+    for (const asset of db.assets) for (const variant of asset.variants || []) for (const revision of variant.revisions || []) {
+      const file = pendingFiles.get(revision._key); if (!file) continue;
+      if (revision.modelPath) throw new Error(`${variant.id} R${padRevision(revision.revision)} heeft al een vastgelegd GLB. Maak een nieuwe revision.`);
+      const packCode = packById(asset.packId)?.code?.toLowerCase() || 'generic';
+      const path = `${packCode}/${revision.modelFile}`;
+      const { error } = await sb.storage.from(MODEL_BUCKET).upload(path, file, { upsert: false, contentType: file.type || 'model/gltf-binary', cacheControl: '3600' });
+      if (error) throw new Error(`${variant.id} R${padRevision(revision.revision)}: ${error.message}`);
+      revision.modelPath = path; uploadedPaths.push(path);
+    }
+    return uploadedPaths;
+  }
+  async function removeStoragePaths(paths) {
+    const unique = [...new Set(paths)].filter(Boolean); if (!unique.length) return;
+    for (let i = 0; i < unique.length; i += 100) {
+      const { error } = await sb.storage.from(MODEL_BUCKET).remove(unique.slice(i, i + 100)); if (error) throw error;
+    }
+  }
+
+  async function saveToSupabase() {
+    if (!isAdminSession) throw new Error('Geen adminsessie.');
+    const errors = validateDatabase(); if (errors.length) throw new Error(`Opslaan geblokkeerd: ${errors.length} validatiefout(en).`);
+    const remoteRevision = await getCloudRevision();
+    if (loadedCloudRevision == null) throw new Error('Geen geldige Supabase-basisrevision bekend. Laad eerst Supabase.');
+    if (remoteRevision !== loadedCloudRevision) throw new Error(`Conflict: Supabase staat op DB revision ${remoteRevision}, jouw werkbuffer vertrok van revision ${loadedCloudRevision}. Herlaad Supabase voor je opslaat; er wordt niets overschreven.`);
+
+    let uploadedPaths = [];
+    try {
+      await uploadPendingModels(uploadedPaths);
+      refreshAllDerived();
+      const rows = rowsForCloud();
+      const { data, error } = await sb.rpc('sync_asset_database_v4', { p_payload: rows, p_expected_revision: loadedCloudRevision });
+      if (error) throw error;
+      const newRevision = Number(data);
+      const currentPaths = new Set(rows.revisions.map(r => r.model_path).filter(Boolean));
+      const stalePaths = [...lastRemoteModelPaths].filter(path => !currentPaths.has(path));
+      let cleanupWarning = '';
+      try { await removeStoragePaths(stalePaths); }
+      catch (cleanupError) { cleanupWarning = ` Database is wel opgeslagen, maar ${stalePaths.length} oud(e) storagebestand(en) konden niet automatisch worden verwijderd: ${cleanupError.message}`; }
+      pendingFiles.clear(); loadedCloudRevision = newRevision; lastRemoteModelPaths = currentPaths; dirty = false; db.updatedAt = new Date().toISOString(); saveLocal(); renderAll(); syncCloudStatus();
+      toast(`Supabase atomair opgeslagen · DB revision ${newRevision}${uploadedPaths.length ? ` · ${uploadedPaths.length} GLB upload(s)` : ''}.${cleanupWarning}`, cleanupWarning ? 'bad' : 'good');
+    } catch (error) {
+      if (uploadedPaths.length) { try { await removeStoragePaths(uploadedPaths); db.assets.forEach(a => a.variants.forEach(v => v.revisions.forEach(r => { if (uploadedPaths.includes(r.modelPath)) r.modelPath = ''; }))); } catch (cleanupError) { console.warn('Rollback storage cleanup failed', cleanupError); } }
+      throw error;
+    }
+  }
+
+  els.loadCloudBtn.addEventListener('click', async () => { try { if (dirty && !(await askConfirm('Niet-opgeslagen wijzigingen', 'Supabase opnieuw laden vervangt je lokale werkbuffer. Doorgaan?', 'Opnieuw laden'))) return; await loadFromSupabase(true); } catch (error) { toast(`Laden mislukt: ${error.message}`, 'bad'); } });
+  els.saveCloudBtn.addEventListener('click', async () => { els.saveCloudBtn.disabled = true; try { await saveToSupabase(); } catch (error) { toast(`Opslaan mislukt: ${error.message}`, 'bad'); } finally { syncCloudStatus(); } });
+  sb.auth.onAuthStateChange((_event, session) => { currentUser = session?.user || null; if (!currentUser) { isAdminSession = false; syncCloudStatus(); } });
+
+  async function modelBlobFor(asset, variant) {
+    const revision = activeRevisionFor(variant); if (!revision) return null;
+    const pending = pendingFiles.get(revision._key); if (pending) return pending;
+    if (revision.modelPath && isAdminSession) { const { data, error } = await sb.storage.from(MODEL_BUCKET).download(revision.modelPath); if (!error && data) return data; }
+    return null;
+  }
+  async function ensureThree() {
+    if (threeState) return threeState;
+    const THREE = await import('three'), modControls = await import('three/addons/controls/OrbitControls.js'), modLoader = await import('three/addons/loaders/GLTFLoader.js');
+    const host = els.threePreview, scene = new THREE.Scene(); scene.background = new THREE.Color(0x101317); const camera = new THREE.PerspectiveCamera(40, 1, .001, 500); camera.position.set(.08, .06, .1); const renderer = new THREE.WebGLRenderer({ antialias: true }); renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); host.innerHTML = ''; host.appendChild(renderer.domElement); const controls = new modControls.OrbitControls(camera, renderer.domElement); controls.enableDamping = true; scene.add(new THREE.HemisphereLight(0xffffff, 0x29241d, 1.5)); const light = new THREE.DirectionalLight(0xffffff, 2); light.position.set(4, 7, 5); scene.add(light); let grid = new THREE.GridHelper(.2, 20, 0x46515d, 0x343a43); scene.add(grid); const modelGroup = new THREE.Group(); scene.add(modelGroup);
+    const resize = () => { const w = Math.max(1, host.clientWidth), h = Math.max(1, host.clientHeight); renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }; new ResizeObserver(resize).observe(host); resize(); (function animate() { controls.update(); renderer.render(scene, camera); requestAnimationFrame(animate); })();
+    threeState = { THREE, camera, renderer, controls, loader: new modLoader.GLTFLoader(), modelGroup, scene, grid, boundsHelper: null, currentBox: null, currentRoot: null };
+    return threeState;
+  }
+  function clearThreeModel() {
+    if (!threeState) return;
+    threeState.modelGroup.traverse(o => { if (o.isMesh) { o.geometry?.dispose?.(); if (Array.isArray(o.material)) o.material.forEach(m => m.dispose?.()); else o.material?.dispose?.(); } });
+    threeState.modelGroup.clear();
+    if (threeState.boundsHelper) { threeState.scene.remove(threeState.boundsHelper); threeState.boundsHelper.geometry?.dispose?.(); threeState.boundsHelper.material?.dispose?.(); threeState.boundsHelper = null; }
+    if (previewObjectUrl) { URL.revokeObjectURL(previewObjectUrl); previewObjectUrl = null; }
+    lastInspection = null;
+  }
+  function fitPreviewCamera(state, root, view = 'iso') {
+    const { THREE, camera, controls } = state; const box = new THREE.Box3().setFromObject(root); if (box.isEmpty()) return; state.currentBox = box; state.currentRoot = root;
+    const size = box.getSize(new THREE.Vector3()), center = box.getCenter(new THREE.Vector3()), span = Math.max(size.x, size.y, size.z, .01); const distance = span * 2.8;
+    controls.target.copy(center);
+    if (view === 'top') camera.position.set(center.x, center.y + distance, center.z + .0001);
+    else if (view === 'front') camera.position.set(center.x, center.y + span * .15, center.z + distance);
+    else if (view === 'right') camera.position.set(center.x + distance, center.y + span * .15, center.z);
+    else camera.position.set(center.x + distance * .75, center.y + distance * .55, center.z + distance);
+    camera.near = Math.max(.0001, span / 1000); camera.far = Math.max(10, span * 100); camera.updateProjectionMatrix(); controls.update();
+  }
+  function updatePreviewGrid(state, span) {
+    const visible = state.grid?.visible ?? true; if (state.grid) state.scene.remove(state.grid);
+    const size = Math.max(.05, Math.ceil((span * 4) / .0254) * .0254); const divisions = Math.max(2, Math.round(size / .0254));
+    state.grid = new state.THREE.GridHelper(size, divisions, 0x46515d, 0x343a43); state.grid.visible = visible; state.scene.add(state.grid);
+  }
+  function inspectLoadedModel(state, root, blob, asset, variant) {
+    const THREE = state.THREE, box = new THREE.Box3().setFromObject(root), size = box.getSize(new THREE.Vector3()); let meshes = 0, triangles = 0; const materials = new Set();
+    root.traverse(o => { if (!o.isMesh) return; meshes++; const g = o.geometry; triangles += g?.index ? Math.floor(g.index.count / 3) : Math.floor((g?.attributes?.position?.count || 0) / 3); if (Array.isArray(o.material)) o.material.forEach(m => materials.add(m.uuid)); else if (o.material) materials.add(o.material.uuid); });
+    const actualW = size.x * 1000, actualD = size.z * 1000, actualH = size.y * 1000, expectedW = Number(asset.width) * Number(db.settings.cellSizeMm || 25.4), expectedD = Number(asset.depth) * Number(db.settings.cellSizeMm || 25.4), bottom = box.min.y * 1000;
+    const tolW = Math.max(.25, expectedW * .015), tolD = Math.max(.25, expectedD * .015), widthOk = Math.abs(actualW - expectedW) <= tolW, depthOk = Math.abs(actualD - expectedD) <= tolD, groundOk = Math.abs(bottom) <= .25;
+    const scaleSuspect = (actualW > 0 && (actualW < expectedW / 100 || actualW > expectedW * 100)) || (actualD > 0 && (actualD < expectedD / 100 || actualD > expectedD * 100));
+    lastInspection = { meshes, triangles, materials: materials.size, fileBytes: blob.size || 0, actualW, actualD, actualH, expectedW, expectedD, bottom, widthOk, depthOk, groundOk, scaleSuspect };
+    const f = n => Number.isFinite(n) ? n.toFixed(2) : '—'; const mb = bytes => bytes < 1024 * 1024 ? `${(bytes / 1024).toFixed(0)} KB` : `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+    els.modelInspector.innerHTML = `
+      <div class="inspect-item ${widthOk ? 'good' : 'warn'}"><span>Breedte</span><strong>${f(actualW)} / ${f(expectedW)} mm</strong></div>
+      <div class="inspect-item ${depthOk ? 'good' : 'warn'}"><span>Diepte</span><strong>${f(actualD)} / ${f(expectedD)} mm</strong></div>
+      <div class="inspect-item"><span>Hoogte</span><strong>${f(actualH)} mm</strong></div>
+      <div class="inspect-item ${groundOk ? 'good' : 'warn'}"><span>Bottom Z/Y</span><strong>${f(bottom)} mm</strong></div>
+      <div class="inspect-item"><span>Meshes / tris</span><strong>${meshes} / ${triangles.toLocaleString('nl-BE')}</strong></div>
+      <div class="inspect-item"><span>Materialen</span><strong>${materials.size}</strong></div>
+      <div class="inspect-item"><span>Bestand</span><strong>${mb(blob.size || 0)}</strong></div>
+      <div class="inspect-item"><span>Revision</span><strong>R${padRevision(activeRevisionFor(variant)?.revision || 1)}</strong></div>
+      <div class="inspect-item ${scaleSuspect ? 'bad' : widthOk && depthOk ? 'good' : 'warn'}"><span>Modelcheck</span><strong>${scaleSuspect ? 'Mogelijke m/mm schaalfout' : widthOk && depthOk && groundOk ? 'Footprint OK' : 'Controleer afmetingen/origin'}</strong></div>`;
+    updatePreviewGrid(state, Math.max(size.x, size.z, .0254));
+    if (state.boundsHelper) state.scene.remove(state.boundsHelper);
+    state.boundsHelper = new THREE.Box3Helper(box, 0xd7ff3f); state.boundsHelper.visible = false; state.scene.add(state.boundsHelper);
+  }
+  els.previewBtn.addEventListener('click', async () => {
+    const asset = selectedAsset(), variant = asset?.variants.find(v => v._key === els.previewVariant.value); if (!asset || !variant) return; els.previewMsg.textContent = 'Model laden…';
+    try { const state = await ensureThree(); clearThreeModel(); const blob = await modelBlobFor(asset, variant); if (!blob) throw new Error('Geen GLB op de actieve revision.'); previewObjectUrl = URL.createObjectURL(blob); const gltf = await state.loader.loadAsync(previewObjectUrl); state.modelGroup.add(gltf.scene); inspectLoadedModel(state, gltf.scene, blob, asset, variant); fitPreviewCamera(state, gltf.scene, 'iso'); els.previewMsg.textContent = ''; }
+    catch (e) { els.previewMsg.textContent = `Preview niet beschikbaar.\n${e.message}`; els.modelInspector.innerHTML = `<div class="inspect-item bad"><span>Inspector</span><strong>${escapeHtml(e.message)}</strong></div>`; }
+  });
+  els.resetPreviewBtn.addEventListener('click', () => { if (threeState?.currentRoot) fitPreviewCamera(threeState, threeState.currentRoot, 'iso'); });
+  els.topPreviewBtn.addEventListener('click', () => { if (threeState?.currentRoot) fitPreviewCamera(threeState, threeState.currentRoot, 'top'); });
+  els.frontPreviewBtn.addEventListener('click', () => { if (threeState?.currentRoot) fitPreviewCamera(threeState, threeState.currentRoot, 'front'); });
+  els.rightPreviewBtn.addEventListener('click', () => { if (threeState?.currentRoot) fitPreviewCamera(threeState, threeState.currentRoot, 'right'); });
+  els.gridPreviewBtn.addEventListener('click', () => { if (threeState?.grid) threeState.grid.visible = !threeState.grid.visible; });
+  els.boundsPreviewBtn.addEventListener('click', () => { if (threeState?.boundsHelper) threeState.boundsHelper.visible = !threeState.boundsHelper.visible; });
+
+  async function copyText(value, successMessage = 'ID gekopieerd.') {
+    const text = String(value || '');
+    if (!text) return;
+    try {
+      if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(text);
+      else {
+        const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+      }
+      toast(successMessage, 'good');
+    } catch (error) { toast(`Kopiëren mislukt: ${error.message}`, 'bad'); }
+  }
+  function escapeHtml(v) { return String(v ?? '').replace(/[&<>'"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[ch])); }
+  function escapeAttr(v) { return escapeHtml(v); }
+
+  bindEditorFields();
+  loadInitial().catch(error => { console.error(error); toast(error.message, 'bad'); });
+})();
+
+</script>
+</body>
+</html>
