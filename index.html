@@ -183,6 +183,7 @@
     .editor-panel { min-width: 0; position: relative; display: grid; grid-template-rows: auto 1fr auto; background: #0f1114; }
     .panel-title { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 13px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 12px; }
     .panel-heading { min-width: 0; display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap; }
+    .topdown-control-hint { color: var(--muted); font-size: 10px; white-space: nowrap; }
     .grid-size-controls { display: flex; align-items: center; justify-content: flex-end; gap: 6px; flex-wrap: wrap; }
     .grid-size-controls label { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
     .grid-size-controls input { width: 54px; height: 32px; padding: 4px 6px; border: 1px solid var(--line); border-radius: 7px; background: #101317; color: var(--text); text-align: center; font: inherit; }
@@ -194,6 +195,8 @@
     .canvas-wrap.expanded-grid #gridCanvas { max-width: none; max-height: none; margin: 0; }
     .canvas-wrap.pan-active, .canvas-wrap.pan-active #gridCanvas { cursor: grab; }
     .canvas-wrap.pan-dragging, .canvas-wrap.pan-dragging #gridCanvas { cursor: grabbing; }
+    .canvas-wrap.desktop-zoom-active { display: block; }
+    .canvas-wrap.desktop-zoom-active #gridCanvas { max-width: none; max-height: none; margin: 0 auto; }
     #gridCanvas { max-width: 100%; max-height: 100%; background: #15191d; border: 1px solid var(--line); border-radius: 8px; touch-action: none; cursor: crosshair; }
     .drawing-actions { position: absolute; z-index: 18; top: 54px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; padding: 6px; border: 1px solid var(--line); border-radius: 12px; background: rgba(18,21,24,.94); box-shadow: 0 8px 24px rgba(0,0,0,.26); backdrop-filter: blur(10px); }
     .drawing-actions button { width: 42px; height: 42px; padding: 0; border-radius: 9px; color: #fff; font-size: 22px; font-weight: 900; line-height: 1; }
@@ -387,6 +390,8 @@
       background: var(--panel);
       color: var(--text);
       box-shadow: 0 16px 44px rgba(0,0,0,.32);
+      max-height: calc(100vh - 20px);
+      overflow-y: auto;
     }
     .pdf-export-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 2px 2px 10px; border-bottom: 1px solid var(--line); }
     .pdf-export-head strong { font-size: 13px; }
@@ -612,11 +617,12 @@
 
   .panel-heading { gap: 5px !important; }
   #gridMeta { display: none; }
+  .topdown-control-hint { display: none !important; }
   .grid-size-controls { justify-content: flex-end; gap: 4px !important; }
   .grid-size-controls label { font-size: 10px; }
   .grid-size-controls input { width: 45px; height: 30px; }
   .grid-size-controls button { min-height: 30px; padding: 4px 6px; }
-  .grid-range-note, #desktopPanBtn { display: none !important; }
+  .grid-range-note, #desktopPanBtn, #desktopZoomOutBtn, #desktopZoomInBtn { display: none !important; }
 
   .canvas-wrap {
     position: relative;
@@ -880,25 +886,18 @@
       <aside class="sidebar">
         <p class="help" data-i18n="helpIntro">Alle onderdelen klikken op volledige gridvakken. Sleep een onderdeel naar het raster, of selecteer het en klik op een geldig vak.</p>
         <div id="packAccordion" class="pack-stack"></div>
-        <div class="legend">
-          <strong data-i18n="controls">Besturing</strong><br />
-          <span data-i18n="controlLine1">Randstukken klikken op rasterlijnen.</span><br /><span data-i18n="controlLine2">Props klikken in het midden van een vak.</span><br />
-          <span data-i18n="controlLine3">Klik een geplaatst onderdeel om het te selecteren.</span><br />
-          <span data-i18n="controlLine4">Sleep om te verplaatsen.</span><br />
-          <span class="kbd">R</span> <span data-i18n="controlRotate">roteert 90°.</span><br />
-          <span class="kbd">D</span> <span data-i18n="controlDuplicate">dupliceert het geselecteerde onderdeel.</span><br />
-          <span class="kbd">Esc</span> <span data-i18n="controlCancel">annuleert.</span>
-        </div>
       </aside>
 
       <section class="editor-panel">
         <div class="panel-title">
-          <div class="panel-heading"><span data-i18n="topdownEditor">Top-down editor</span><span id="gridMeta">14 × 11 vakken · 1 vak = 25,4 mm</span></div>
+          <div class="panel-heading"><span data-i18n="topdownEditor">Top-down editor</span><span id="gridMeta">14 × 11 vakken · 1 vak = 25,4 mm</span><span class="topdown-control-hint" data-i18n="topdownControls">Middelste muisknop + slepen om te pannen · scrollen om te zoomen</span></div>
           <div class="grid-size-controls" aria-label="Rastergrootte">
             <label><span data-i18n="width">Breedte</span> <input id="gridColsInput" type="number" min="10" max="30" step="1" value="14" /></label>
             <label><span data-i18n="height">Hoogte</span> <input id="gridRowsInput" type="number" min="10" max="30" step="1" value="11" /></label>
             <button id="applyGridBtn" type="button" data-i18n="apply">Toepassen</button>
             <button id="desktopPanBtn" type="button" data-i18n="hand" data-i18n-title="handTitle" title="Sleep met de muis om over een groot raster te bewegen">Hand</button>
+            <button id="desktopZoomOutBtn" type="button" data-i18n-title="zoomOutTitle" title="Uitzoomen" aria-label="Uitzoomen">−</button>
+            <button id="desktopZoomInBtn" type="button" data-i18n-title="zoomInTitle" title="Inzoomen" aria-label="Inzoomen">+</button>
             <span class="grid-range-note" data-i18n="gridRange">10–30 vakken</span>
           </div>
         </div>
@@ -912,7 +911,7 @@
 
       <section class="right-panel">
         <div class="three-wrap">
-          <div class="three-label" data-i18n="threeLabel">Live 3D-weergave · slepen om rond te kijken · scrollen om te zoomen · rechtermuisknop voor varianten</div>
+          <div class="three-label" data-i18n="threeLabel">Live 3D-weergave · slepen om rond te kijken · middelste muisknop + slepen om te pannen · scrollen om te zoomen · rechtermuisknop voor varianten</div>
           <div id="threeView" aria-label="3D preview"></div>
         </div>
       </section>
@@ -946,6 +945,14 @@
       <button class="pdf-export-option" type="button" data-pdf-mode="elements">
         <span class="pdf-export-icon">▦</span>
         <span><strong data-i18n="pdfElements">Elementen afgebakend</strong><small data-i18n="pdfElementsHelp">Elk fysiek onderdeel krijgt zijn eigen grens, zodat 1×1 en 2×1 stukken duidelijk herkenbaar zijn.</small></span>
+      </button>
+      <button class="pdf-export-option" type="button" data-pdf-mode="parts">
+        <span class="pdf-export-icon">☷</span>
+        <span><strong data-i18n="pdfPartsList">Stuklijst</strong><small data-i18n="pdfPartsListHelp">Exporteer alleen de volledige lijst met fysieke onderdelen, varianten, asset-ID's en aantallen.</small></span>
+      </button>
+      <button class="pdf-export-option" type="button" data-pdf-mode="all">
+        <span class="pdf-export-icon">▤</span>
+        <span><strong data-i18n="pdfAll">Alles</strong><small data-i18n="pdfAllHelp">Combineert de doorlopende outline, afgebakende elementen en stuklijst in één PDF.</small></span>
       </button>
     </div>
   </div>
@@ -1012,14 +1019,14 @@
     // SKALDIS BUILD — user options
     // Stored locally; no account or Supabase write is required.
     // ============================================================
-    const UI_STORAGE_KEY = 'skaldis-build-ui-options-v1';
+    const UI_STORAGE_KEY = 'skaldis-build-ui-options-v2';
     const I18N = {
       nl: {
         configurator:'Configurator', options:'Opties', library:'Bibliotheek', rotate:'Roteren', duplicate:'Dupliceren', multiSelect:'Multi select', lineTool:'Lijn', rectangleTool:'Rechthoek', delete:'Verwijder', clear:'Leegmaken', bom:'Stuklijst', exportPdf:'Exporteer PDF', openDesign:'Ontwerp openen', saveDesign:'Ontwerp opslaan', close:'Sluiten',
-        pdfExportTitle:'PDF export', pdfExportHelp:'Kies hoe de top-down weergave in de PDF moet worden opgebouwd.', pdfOutline:'Doorlopende outline', pdfOutlineHelp:'Een clean plan zonder naden tussen afzonderlijke fysieke onderdelen.', pdfElements:'Elementen afgebakend', pdfElementsHelp:'Elk fysiek onderdeel krijgt zijn eigen grens, zodat 1×1 en 2×1 stukken duidelijk herkenbaar zijn.', pdfExporting:'PDF wordt opgebouwd…', pdfExported:'Top-down PDF geëxporteerd.', pdfExportFailed:e=>`PDF-export mislukt: ${e}`, pdfTopdown:'Top-down plan', pdfModeOutline:'Doorlopende outline', pdfModeElements:'Elementen afgebakend', pdfScale:r=>`Schaal ca. 1:${r}`,
+        pdfExportTitle:'PDF export', pdfExportHelp:'Kies wat je als PDF wilt exporteren.', pdfOutline:'Doorlopende outline', pdfOutlineHelp:'Een clean plan zonder naden tussen afzonderlijke fysieke onderdelen.', pdfElements:'Elementen afgebakend', pdfElementsHelp:'Elk fysiek onderdeel krijgt zijn eigen grens, zodat 1×1 en 2×1 stukken duidelijk herkenbaar zijn.', pdfPartsList:'Stuklijst', pdfPartsListHelp:'Exporteer alleen de volledige lijst met fysieke onderdelen, varianten, asset-ID\'s en aantallen.', pdfAll:'Alles', pdfAllHelp:'Combineert de doorlopende outline, afgebakende elementen en stuklijst in één PDF.', pdfExporting:'PDF wordt opgebouwd…', pdfExported:'PDF geëxporteerd.', pdfExportFailed:e=>`PDF-export mislukt: ${e}`, pdfTopdown:'Top-down plan', pdfModeOutline:'Doorlopende outline', pdfModeElements:'Elementen afgebakend', pdfModeParts:'Stuklijst', pdfModeAll:'Alles', pdfScale:r=>`Schaal ca. 1:${r}`, pdfPartsSummary:(types,total)=>`${types} verschillende onderdelen · ${total} fysieke stukken`, pdfPartColumn:'Onderdeel', pdfIdColumn:'Asset-ID', pdfQtyColumn:'Aantal', pdfNoParts:'Nog geen onderdelen geplaatst.', pdfPage:(page,total)=>`Pagina ${page} / ${total}`,
         appearance:'Weergave', appearanceHelp:'Wissel tussen lichte en donkere modus.', language:'Taal', languageHelp:'Taal van de BUILD-interface.',
         helpIntro:'Alle onderdelen klikken op volledige gridvakken. Sleep een onderdeel naar het raster, of selecteer het en klik op een geldig vak.', controls:'Besturing', controlLine1:'Randstukken klikken op rasterlijnen.', controlLine2:'Props klikken in het midden van een vak.', controlLine3:'Klik een geplaatst onderdeel om het te selecteren.', controlLine4:'Sleep om te verplaatsen.', controlRotate:'roteert 90°.', controlDuplicate:'dupliceert het geselecteerde onderdeel.', controlCancel:'annuleert.',
-        topdownEditor:'Top-down editor', width:'Breedte', height:'Hoogte', apply:'Toepassen', hand:'Hand', handTitle:'Sleep met de muis om over een groot raster te bewegen', gridRange:'10–30 vakken', threeLabel:'Live 3D-weergave · slepen om rond te kijken · scrollen om te zoomen · rechtermuisknop voor varianten', bomFoot:'De lijst telt fysieke onderdelen, niet de afzonderlijke bezette gridsegmenten.',
+        topdownEditor:'Top-down editor', topdownControls:'Middelste muisknop + slepen om te pannen · scrollen om te zoomen', width:'Breedte', height:'Hoogte', apply:'Toepassen', hand:'Hand', handTitle:'Pan met middelste muisknop + slepen, of activeer Hand', zoomOutTitle:'Uitzoomen', zoomInTitle:'Inzoomen', gridRange:'10–30 vakken', threeLabel:'Live 3D-weergave · slepen om rond te kijken · middelste muisknop + slepen om te pannen · scrollen om te zoomen · rechtermuisknop voor varianten', bomFoot:'De lijst telt fysieke onderdelen, niet de afzonderlijke bezette gridsegmenten.',
         structures:'Structuurelementen', props:'Props', emptyCategory:'Deze categorie is voorlopig leeg.', emptyPack:'Deze pack bevat voorlopig geen actieve assets.', noAssets:'Geen actieve BUILD-assets gevonden.', assets:'assets', pieces:'stuks',
         cell:'vak', cells:'vakken', nothingSelected:'Niets geselecteerd', selectOrDrag:'Selecteer of sleep een onderdeel.', chooseVariant:'Kies een modelvariant', noVariants:'Geen extra variaties beschikbaar', standard:'Standaard',
         gridMeta:(c,r)=>`${c} × ${r} vakken · 1 vak = 25,4 mm`, gridChanged:(c,r)=>`Raster aangepast naar ${c} × ${r}.`, opened:f=>`Ontwerp geopend: ${f}`, openFailed:e=>`Openen mislukt: ${e}`, threeFailed:'3D-weergave kon niet laden. De top-down editor blijft bruikbaar.', threeFailedBody:'De 3D-module kon niet worden geladen. Controleer je internetverbinding of CDN-toegang.', gridInvalid:(a,b)=>`Rastergrootte moet tussen ${a} en ${b} vakken liggen.`, gridTooSmall:'Raster kan niet kleiner worden: één of meer onderdelen zouden buiten het raster vallen.', disabledPart:'Dit onderdeel is uitgeschakeld.', selectedToPlace:n=>`${n} geselecteerd om te plaatsen.`, invalidPosition:'Deze positie is niet geldig.', moved:'Onderdeel verplaatst.', moveCancelled:'Verplaatsing geannuleerd: positie ongeldig.',
@@ -1028,10 +1035,10 @@
       },
       en: {
         configurator:'Configurator', options:'Options', library:'Library', rotate:'Rotate', duplicate:'Duplicate', multiSelect:'Multi select', lineTool:'Line', rectangleTool:'Rectangle', delete:'Delete', clear:'Clear', bom:'Parts list', exportPdf:'Export PDF', openDesign:'Open design', saveDesign:'Save design', close:'Close',
-        pdfExportTitle:'PDF export', pdfExportHelp:'Choose how the top-down view should be built in the PDF.', pdfOutline:'Continuous outline', pdfOutlineHelp:'A clean plan without seams between individual physical parts.', pdfElements:'Separated elements', pdfElementsHelp:'Each physical part gets its own boundary, making 1×1 and 2×1 pieces easy to distinguish.', pdfExporting:'Building PDF…', pdfExported:'Top-down PDF exported.', pdfExportFailed:e=>`PDF export failed: ${e}`, pdfTopdown:'Top-down plan', pdfModeOutline:'Continuous outline', pdfModeElements:'Separated elements', pdfScale:r=>`Approx. scale 1:${r}`,
+        pdfExportTitle:'PDF export', pdfExportHelp:'Choose what you want to export as PDF.', pdfOutline:'Continuous outline', pdfOutlineHelp:'A clean plan without seams between individual physical parts.', pdfElements:'Separated elements', pdfElementsHelp:'Each physical part gets its own boundary, making 1×1 and 2×1 pieces easy to distinguish.', pdfPartsList:'Parts list', pdfPartsListHelp:'Export only the complete list of physical parts, variants, asset IDs and quantities.', pdfAll:'All', pdfAllHelp:'Combines the continuous outline, separated elements and parts list in one PDF.', pdfExporting:'Building PDF…', pdfExported:'PDF exported.', pdfExportFailed:e=>`PDF export failed: ${e}`, pdfTopdown:'Top-down plan', pdfModeOutline:'Continuous outline', pdfModeElements:'Separated elements', pdfModeParts:'Parts list', pdfModeAll:'All', pdfScale:r=>`Approx. scale 1:${r}`, pdfPartsSummary:(types,total)=>`${types} different parts · ${total} physical pieces`, pdfPartColumn:'Part', pdfIdColumn:'Asset ID', pdfQtyColumn:'Qty', pdfNoParts:'No parts placed yet.', pdfPage:(page,total)=>`Page ${page} / ${total}`,
         appearance:'Appearance', appearanceHelp:'Switch between light and dark mode.', language:'Language', languageHelp:'Language of the BUILD interface.',
         helpIntro:'All parts snap to full grid cells. Drag a part onto the grid, or select it and click a valid cell.', controls:'Controls', controlLine1:'Edge elements snap to grid lines.', controlLine2:'Props snap to the center of a cell.', controlLine3:'Click a placed part to select it.', controlLine4:'Drag to move.', controlRotate:'rotates 90°.', controlDuplicate:'duplicates the selected part.', controlCancel:'cancels.',
-        topdownEditor:'Top-down editor', width:'Width', height:'Height', apply:'Apply', hand:'Hand', handTitle:'Drag with the mouse to navigate a large grid', gridRange:'10–30 cells', threeLabel:'Live 3D view · drag to orbit · scroll to zoom · right-click for variants', bomFoot:'The list counts physical parts, not individual occupied grid cells.',
+        topdownEditor:'Top-down editor', topdownControls:'Middle mouse + drag to pan · scroll to zoom', width:'Width', height:'Height', apply:'Apply', hand:'Hand', handTitle:'Pan with middle mouse + drag, or activate Hand', zoomOutTitle:'Zoom out', zoomInTitle:'Zoom in', gridRange:'10–30 cells', threeLabel:'Live 3D view · drag to orbit · middle mouse + drag to pan · scroll to zoom · right-click for variants', bomFoot:'The list counts physical parts, not individual occupied grid cells.',
         structures:'Structural elements', props:'Props', emptyCategory:'This category is currently empty.', emptyPack:'This pack currently has no active assets.', noAssets:'No active BUILD assets found.', assets:'assets', pieces:'pieces',
         cell:'cell', cells:'cells', nothingSelected:'Nothing selected', selectOrDrag:'Select or drag a part.', chooseVariant:'Choose a model variant', noVariants:'No additional variants available', standard:'Standard',
         gridMeta:(c,r)=>`${c} × ${r} cells · 1 cell = 25.4 mm`, gridChanged:(c,r)=>`Grid resized to ${c} × ${r}.`, opened:f=>`Design opened: ${f}`, openFailed:e=>`Open failed: ${e}`, threeFailed:'3D view could not load. The top-down editor remains available.', threeFailedBody:'The 3D module could not be loaded. Check your internet connection or CDN access.', gridInvalid:(a,b)=>`Grid size must be between ${a} and ${b} cells.`, gridTooSmall:'The grid cannot be reduced: one or more parts would fall outside it.', disabledPart:'This part is disabled.', selectedToPlace:n=>`${n} selected for placement.`, invalidPosition:'This position is not valid.', moved:'Part moved.', moveCancelled:'Move cancelled: invalid position.',
@@ -1051,17 +1058,8 @@
     function readUiOptions() {
       try {
         const saved = JSON.parse(localStorage.getItem(UI_STORAGE_KEY) || '{}');
-    
-        return {
-          theme: saved.theme === 'dark' ? 'dark' : 'light',
-          language: saved.language === 'nl' ? 'nl' : 'en'
-        };
-      } catch (_) {
-        return {
-          theme: 'light',
-          language: 'en'
-        };
-      }
+        return { theme: saved.theme === 'dark' ? 'dark' : 'light', language: saved.language === 'nl' ? 'nl' : 'en' };
+      } catch (_) { return { theme:'light', language:'en' }; }
     }
     let uiOptions = readUiOptions();
     function t(key, ...args) {
@@ -1258,6 +1256,8 @@
     const gridMeta = document.getElementById('gridMeta');
     const canvasWrap = canvas.closest('.canvas-wrap');
     const desktopPanBtn = document.getElementById('desktopPanBtn');
+    const desktopZoomOutBtn = document.getElementById('desktopZoomOutBtn');
+    const desktopZoomInBtn = document.getElementById('desktopZoomInBtn');
     const variantMenu = document.getElementById('variantMenu');
     const optionsBtn = document.getElementById('optionsBtn');
     const optionsPanel = document.getElementById('optionsPanel');
@@ -2197,72 +2197,207 @@
       });
     }
 
-    async function exportTopdownPdf(mode = 'outline') {
+    function pdfPartsListEntries() {
+      const counts = {};
+      pieces.forEach(piece => {
+        const storeId = pieceStoreId(piece);
+        const key = `${piece.partId}::${piece.variantId || ''}`;
+        if (!counts[key]) counts[key] = { count: 0, name: pieceDisplayName(piece), storeId };
+        counts[key].count += 1;
+      });
+      return Object.values(counts).sort((a, b) => a.name.localeCompare(b.name, uiOptions.language === 'en' ? 'en' : 'nl'));
+    }
+
+    function topdownPdfOrientation() {
+      return GRID_COLS >= GRID_ROWS ? 'landscape' : 'portrait';
+    }
+
+    function drawTopdownPdfPage(pdf, mode = 'outline', addPage = false) {
       const exportMode = mode === 'elements' ? 'elements' : 'outline';
-      setPdfExportPanel(false);
-      updateStatus(t('pdfExporting'));
-      try {
-        const jsPDF = await loadJsPdf();
-        const orientation = GRID_COLS >= GRID_ROWS ? 'landscape' : 'portrait';
-        const pdf = new jsPDF({ orientation, unit: 'mm', format: 'a4', compress: true });
+      const orientation = topdownPdfOrientation();
+      if (addPage) pdf.addPage('a4', orientation);
+
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 12;
+      const headerHeight = 15;
+      const footerHeight = 7;
+      const availableWidth = pageWidth - margin * 2;
+      const availableHeight = pageHeight - margin * 2 - headerHeight - footerHeight;
+      const cellMm = Math.min(availableWidth / GRID_COLS, availableHeight / GRID_ROWS);
+      const drawingWidth = GRID_COLS * cellMm;
+      const drawingHeight = GRID_ROWS * cellMm;
+      const originX = (pageWidth - drawingWidth) / 2;
+      const originY = margin + headerHeight + Math.max(0, (availableHeight - drawingHeight) / 2);
+      const mapX = gridX => originX + gridX * cellMm;
+      const mapY = gridY => originY + gridY * cellMm;
+
+      pdf.setTextColor(28, 31, 35);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(12);
+      pdf.text('SKALDIS BUILD', margin, margin + 1);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(8.5);
+      pdf.setTextColor(90, 95, 101);
+      const modeLabel = exportMode === 'elements' ? t('pdfModeElements') : t('pdfModeOutline');
+      pdf.text(`${t('pdfTopdown')} · ${GRID_COLS} × ${GRID_ROWS} · ${modeLabel}`, margin, margin + 6);
+      const scaleRatio = Math.max(0.1, 25.4 / cellMm);
+      const formattedRatio = scaleRatio < 10 ? scaleRatio.toFixed(1) : scaleRatio.toFixed(0);
+      pdf.text(t('pdfScale', formattedRatio), pageWidth - margin, margin + 6, { align: 'right' });
+
+      drawPdfGrid(pdf, mapX, mapY, cellMm);
+
+      if (exportMode === 'elements') {
+        // Light per-piece footprint fill first. Internal cell borders are deliberately
+        // omitted: the outline represents one physical printed element.
+        pieces.forEach(piece => {
+          const part = PARTS[piece.partId];
+          if (!part || part.category !== 'structure') return;
+          pdf.setFillColor(248, 249, 250);
+          transformedCells(piece).forEach(cellId => {
+            const [x, y] = cellId.split(':').map(Number);
+            pdf.rect(mapX(x), mapY(y), cellMm, cellMm, 'F');
+          });
+        });
+        pieces.forEach(piece => drawPdfElementBoundary(pdf, piece, mapX, mapY));
+      }
+
+      pieces.forEach(piece => {
+        const part = PARTS[piece.partId];
+        if (!part) return;
+        if (part.category === 'structure') drawPdfStructurePaths(pdf, piece, mapX, mapY, cellMm);
+        else drawPdfProp(pdf, piece, mapX, mapY, cellMm, exportMode === 'elements');
+      });
+
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(7);
+      pdf.setTextColor(125, 130, 136);
+      pdf.text('1 grid cell = 25.4 mm', margin, pageHeight - margin + 1);
+    }
+
+    function drawPartsListPdfPages(pdf, addFirstPage = false) {
+      const entries = pdfPartsListEntries();
+      const totalPieces = entries.reduce((sum, entry) => sum + entry.count, 0);
+      const margin = 14;
+      const top = 14;
+      const bottom = 14;
+      const headerTableY = 31;
+      const nameWidth = 92;
+      const idWidth = 65;
+      const qtyWidth = 15;
+      let y = 0;
+
+      function startPartsPage(addPage) {
+        if (addPage) pdf.addPage('a4', 'portrait');
         const pageWidth = pdf.internal.pageSize.getWidth();
-        const pageHeight = pdf.internal.pageSize.getHeight();
-        const margin = 12;
-        const headerHeight = 15;
-        const footerHeight = 7;
-        const availableWidth = pageWidth - margin * 2;
-        const availableHeight = pageHeight - margin * 2 - headerHeight - footerHeight;
-        const cellMm = Math.min(availableWidth / GRID_COLS, availableHeight / GRID_ROWS);
-        const drawingWidth = GRID_COLS * cellMm;
-        const drawingHeight = GRID_ROWS * cellMm;
-        const originX = (pageWidth - drawingWidth) / 2;
-        const originY = margin + headerHeight + Math.max(0, (availableHeight - drawingHeight) / 2);
-        const mapX = gridX => originX + gridX * cellMm;
-        const mapY = gridY => originY + gridY * cellMm;
 
         pdf.setTextColor(28, 31, 35);
         pdf.setFont('helvetica', 'bold');
         pdf.setFontSize(12);
-        pdf.text('SKALDIS BUILD', margin, margin + 1);
+        pdf.text('SKALDIS BUILD', margin, top);
+
         pdf.setFont('helvetica', 'normal');
         pdf.setFontSize(8.5);
         pdf.setTextColor(90, 95, 101);
-        const modeLabel = exportMode === 'elements' ? t('pdfModeElements') : t('pdfModeOutline');
-        pdf.text(`${t('pdfTopdown')} · ${GRID_COLS} × ${GRID_ROWS} · ${modeLabel}`, margin, margin + 6);
-        const scaleRatio = Math.max(0.1, 25.4 / cellMm);
-        const formattedRatio = scaleRatio < 10 ? scaleRatio.toFixed(1) : scaleRatio.toFixed(0);
-        pdf.text(t('pdfScale', formattedRatio), pageWidth - margin, margin + 6, { align: 'right' });
+        pdf.text(`${t('pdfModeParts')} · ${t('pdfPartsSummary', entries.length, totalPieces)}`, margin, top + 5.5);
 
-        drawPdfGrid(pdf, mapX, mapY, cellMm);
+        y = headerTableY;
+        pdf.setFillColor(244, 246, 248);
+        pdf.rect(margin, y - 5, pageWidth - margin * 2, 7, 'F');
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(7.5);
+        pdf.setTextColor(72, 77, 83);
+        pdf.text(t('pdfPartColumn'), margin + 2, y);
+        pdf.text(t('pdfIdColumn'), margin + nameWidth + 4, y);
+        pdf.text(t('pdfQtyColumn'), pageWidth - margin - 2, y, { align: 'right' });
+        y += 6;
+      }
 
-        if (exportMode === 'elements') {
-          // Light per-piece footprint fill first. Internal cell borders are deliberately
-          // omitted: the outline represents one physical printed element.
-          pieces.forEach(piece => {
-            const part = PARTS[piece.partId];
-            if (!part || part.category !== 'structure') return;
-            pdf.setFillColor(248, 249, 250);
-            transformedCells(piece).forEach(cellId => {
-              const [x, y] = cellId.split(':').map(Number);
-              pdf.rect(mapX(x), mapY(y), cellMm, cellMm, 'F');
-            });
-          });
-          pieces.forEach(piece => drawPdfElementBoundary(pdf, piece, mapX, mapY));
+      startPartsPage(addFirstPage);
+
+      if (!entries.length) {
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(9);
+        pdf.setTextColor(110, 115, 121);
+        pdf.text(t('pdfNoParts'), margin + 2, y + 5);
+        return;
+      }
+
+      entries.forEach(entry => {
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const nameLines = pdf.splitTextToSize(entry.name, nameWidth - 4);
+        const idLines = pdf.splitTextToSize(entry.storeId, idWidth - 4);
+        const lineCount = Math.max(nameLines.length, idLines.length, 1);
+        const rowHeight = Math.max(9, lineCount * 3.6 + 4);
+
+        if (y + rowHeight > pageHeight - bottom) {
+          startPartsPage(true);
         }
 
-        pieces.forEach(piece => {
-          const part = PARTS[piece.partId];
-          if (!part) return;
-          if (part.category === 'structure') drawPdfStructurePaths(pdf, piece, mapX, mapY, cellMm);
-          else drawPdfProp(pdf, piece, mapX, mapY, cellMm, exportMode === 'elements');
-        });
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        pdf.setDrawColor(222, 225, 229);
+        pdf.setLineWidth(0.15);
+        pdf.line(margin, y + rowHeight - 1.5, pageWidth - margin, y + rowHeight - 1.5);
 
         pdf.setFont('helvetica', 'normal');
-        pdf.setFontSize(7);
-        pdf.setTextColor(125, 130, 136);
-        pdf.text('1 grid cell = 25.4 mm', margin, pageHeight - margin + 1);
+        pdf.setFontSize(7.8);
+        pdf.setTextColor(35, 39, 44);
+        pdf.text(nameLines, margin + 2, y + 3.3);
+
+        pdf.setFont('courier', 'normal');
+        pdf.setFontSize(6.4);
+        pdf.setTextColor(95, 100, 106);
+        pdf.text(idLines, margin + nameWidth + 4, y + 3.3);
+
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(8.5);
+        pdf.setTextColor(35, 39, 44);
+        pdf.text(`× ${entry.count}`, pageWidth - margin - 2, y + 3.3, { align: 'right' });
+
+        y += rowHeight;
+      });
+    }
+
+    function addPdfPageNumbers(pdf) {
+      const totalPages = pdf.getNumberOfPages();
+      for (let page = 1; page <= totalPages; page += 1) {
+        pdf.setPage(page);
+        const width = pdf.internal.pageSize.getWidth();
+        const height = pdf.internal.pageSize.getHeight();
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(6.5);
+        pdf.setTextColor(145, 150, 156);
+        pdf.text(t('pdfPage', page, totalPages), width - 12, height - 6, { align: 'right' });
+      }
+    }
+
+    async function exportBuildPdf(mode = 'outline') {
+      const allowedModes = new Set(['outline', 'elements', 'parts', 'all']);
+      const exportMode = allowedModes.has(mode) ? mode : 'outline';
+      setPdfExportPanel(false);
+      updateStatus(t('pdfExporting'));
+      try {
+        const jsPDF = await loadJsPdf();
+        let pdf;
+
+        if (exportMode === 'outline' || exportMode === 'elements') {
+          pdf = new jsPDF({ orientation: topdownPdfOrientation(), unit: 'mm', format: 'a4', compress: true });
+          drawTopdownPdfPage(pdf, exportMode, false);
+        } else if (exportMode === 'parts') {
+          pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
+          drawPartsListPdfPages(pdf, false);
+        } else {
+          // Combined BUILD export: the two construction plans followed by the parts list.
+          pdf = new jsPDF({ orientation: topdownPdfOrientation(), unit: 'mm', format: 'a4', compress: true });
+          drawTopdownPdfPage(pdf, 'outline', false);
+          drawTopdownPdfPage(pdf, 'elements', true);
+          drawPartsListPdfPages(pdf, true);
+        }
+
+        addPdfPageNumbers(pdf);
         const stamp = new Date().toISOString().slice(0, 10);
-        pdf.save(`skaldis-build-topdown-${exportMode}-${stamp}.pdf`);
+        const fileMode = exportMode === 'parts' ? 'parts-list' : exportMode;
+        pdf.save(`skaldis-build-${fileMode}-${stamp}.pdf`);
         updateStatus(t('pdfExported'));
       } catch (error) {
         console.error('SKALDIS PDF export failed:', error);
@@ -2271,7 +2406,7 @@
     }
 
     pdfExportPanel.querySelectorAll('[data-pdf-mode]').forEach(button => {
-      button.addEventListener('click', () => exportTopdownPdf(button.dataset.pdfMode));
+      button.addEventListener('click', () => exportBuildPdf(button.dataset.pdfMode));
     });
 
     function drawGrid() {
@@ -2671,6 +2806,54 @@
     });
     window.addEventListener('resize', closeVariantMenu);
 
+    const DESKTOP_ZOOM_MIN = 0.3;
+    const DESKTOP_ZOOM_MAX = 3;
+
+    function currentDesktopCanvasScale() {
+      const rect = canvas.getBoundingClientRect();
+      return rect.width > 0 && canvas.width > 0 ? rect.width / canvas.width : 1;
+    }
+
+    function setDesktopCanvasScale(nextScale, anchorClient = null) {
+      if (window.matchMedia('(max-width: 760px)').matches) return;
+      const previousRect = canvas.getBoundingClientRect();
+      const previousScale = currentDesktopCanvasScale();
+      const scale = Math.max(DESKTOP_ZOOM_MIN, Math.min(DESKTOP_ZOOM_MAX, Number(nextScale) || previousScale));
+
+      let anchorRatioX = .5;
+      let anchorRatioY = .5;
+      if (anchorClient && previousRect.width && previousRect.height) {
+        anchorRatioX = Math.max(0, Math.min(1, (anchorClient.x - previousRect.left) / previousRect.width));
+        anchorRatioY = Math.max(0, Math.min(1, (anchorClient.y - previousRect.top) / previousRect.height));
+      }
+
+      const beforeAnchorX = canvas.offsetLeft + anchorRatioX * previousRect.width;
+      const beforeAnchorY = canvas.offsetTop + anchorRatioY * previousRect.height;
+
+      canvasWrap.classList.add('desktop-zoom-active');
+      canvas.style.width = `${Math.round(canvas.width * scale)}px`;
+      canvas.style.height = `${Math.round(canvas.height * scale)}px`;
+
+      const nextRect = canvas.getBoundingClientRect();
+      const afterAnchorX = canvas.offsetLeft + anchorRatioX * nextRect.width;
+      const afterAnchorY = canvas.offsetTop + anchorRatioY * nextRect.height;
+      canvasWrap.scrollLeft += afterAnchorX - beforeAnchorX;
+      canvasWrap.scrollTop += afterAnchorY - beforeAnchorY;
+    }
+
+    function zoomDesktopCanvas(factor, anchorClient = null) {
+      setDesktopCanvasScale(currentDesktopCanvasScale() * factor, anchorClient);
+    }
+
+    desktopZoomOutBtn.addEventListener('click', () => zoomDesktopCanvas(0.8));
+    desktopZoomInBtn.addEventListener('click', () => zoomDesktopCanvas(1.25));
+
+    canvasWrap.addEventListener('wheel', event => {
+      if (window.matchMedia('(max-width: 760px)').matches) return;
+      event.preventDefault();
+      zoomDesktopCanvas(event.deltaY < 0 ? 1.12 : 1 / 1.12, { x: event.clientX, y: event.clientY });
+    }, { passive: false });
+
     let desktopPanMode = false;
     let desktopPanState = null;
     function setDesktopPanMode(enabled) {
@@ -3001,7 +3184,10 @@
       // Rechtermuisknop is in BUILD gereserveerd voor het variantenmenu.
       // OrbitControls gebruikt rechts standaard om te pannen; dat zou anders
       // interfereren met een gewone rechtermuisklik op een geplaatst model.
-      if (controls.mouseButtons) controls.mouseButtons.RIGHT = null;
+      if (controls.mouseButtons) {
+        controls.mouseButtons.MIDDLE = THREE.MOUSE.PAN;
+        controls.mouseButtons.RIGHT = null;
+      }
       scene.add(new THREE.HemisphereLight(0xe9f1ff,0x25231f,1.5));
       const keyLight=new THREE.DirectionalLight(0xffffff,2.2);keyLight.position.set(8,14,5);keyLight.castShadow=true;scene.add(keyLight);
       const gridSurfaceGroup = new THREE.Group();
