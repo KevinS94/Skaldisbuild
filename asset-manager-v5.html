@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="SKALDIS BUILD Asset Manager" />
-  <title>SKALDIS BUILD — Asset Manager v4.4</title>
+  <title>SKALDIS BUILD — Asset Manager v4.4.1</title>
   <style>
     :root {
       color-scheme: dark;
@@ -269,7 +269,7 @@
 <body>
 <div class="app">
   <header>
-    <div class="brand"><strong>SKALDIS BUILD</strong><span>Asset Manager v4.4</span></div>
+    <div class="brand"><strong>SKALDIS BUILD</strong><span>Asset Manager v4.4.1</span></div>
     <div class="toolbar">
       <div id="cloudStatus" class="cloud-status"><span class="dot"></span><span>Niet ingelogd</span></div>
       <button id="loginBtn" type="button">Inloggen</button>
@@ -1149,8 +1149,8 @@
         item.familyUuid = family?.familyUuid || '';
       }
       let variants = bundleVariantsForFamily(family, item.variantUuid);
-      let match = variantByUuid(item.variantUuid);
-      let variant = match?.asset?.familyUuid === family?.familyUuid ? match.variant : null;
+      const match = item.variantUuid ? variantByUuid(item.variantUuid) : null;
+      let variant = match && family && match.asset.familyUuid === family.familyUuid ? match.variant : null;
       if (!variant) {
         variant = variants[0] || null;
         item.variantUuid = variant?.variantUuid || '';
@@ -1163,8 +1163,8 @@
       row.className = 'bundle-item-row';
       row.innerHTML = `
         <div class="field"><label>Pack</label><select data-bi="pack">${(db.packs || []).map(p => `<option value="${escapeAttr(p.id)}">${escapeHtml(p.name)}</option>`).join('')}</select></div>
-        <div class="field"><label>Family</label><select data-bi="family">${families.length ? families.map(a => `<option value="${escapeAttr(a.familyUuid)}">${escapeHtml(a.displayName)} · ${escapeHtml(a.id)}</option>`).join('') : '<option value="">Geen families</option>'}</select></div>
-        <div class="field"><label>Variant</label><select data-bi="variant">${variants.length ? variants.map(v => `<option value="${escapeAttr(v.variantUuid)}">${escapeHtml(v.name || v.code)} · ${escapeHtml(v.id)}</option>`).join('') : '<option value="">Geen varianten</option>'}</select></div>
+        <div class="field"><label>Family</label><select data-bi="family">${families.length ? families.map(a => `<option value="${escapeAttr(a.familyUuid)}">${escapeHtml(a.displayName)} · ${escapeHtml(a.id)}</option>`).join('') : '<option value="">Geen families in dit pack</option>'}</select></div>
+        <div class="field"><label>Variant</label><select data-bi="variant">${variants.length ? variants.map(v => `<option value="${escapeAttr(v.variantUuid)}">${escapeHtml(v.name || v.code)} · ${escapeHtml(v.id)}</option>`).join('') : '<option value="">Geen varianten beschikbaar</option>'}</select></div>
         <div class="field"><label>Aantal</label><input data-bi="quantity" type="number" min="1" step="1" value="${qty}" /></div>
         <div class="bundle-item-actions">
           <button data-bi-up type="button" title="Omhoog" ${index === 0 ? 'disabled' : ''}>↑</button>
